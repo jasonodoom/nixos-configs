@@ -7,6 +7,14 @@
     enable = true;
   };
 
+  # Display manager for Hyprland
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = true;
+  };
+
+  services.displayManager.defaultSession = "hyprland";
+
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
     # Monitor configuration - Framework Desktop with dual displays
