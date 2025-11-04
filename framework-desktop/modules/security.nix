@@ -39,21 +39,57 @@
   # Smartcard support
   services.pcscd.enable = true;
 
-  # YubiKey PAM
+  # YubiKey PAM configuration
   security.pam.yubico = {
     enable = true;
     debug = true;
     mode = "challenge-response";
+    challengeResponsePath = "/etc/yubico";
+  };
+
+  # Automated YubiKey challenge-response setup
+  systemd.services.yubikey-setup = {
+    description = "Set up YubiKey challenge-response authentication";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.writeShellScript "yubikey-setup" ''
+        # Create yubico directory
+        mkdir -p /etc/yubico
+
+        # Only run setup if challenge file doesn't exist
+        if [ ! -f /etc/yubico/challenge-5252959 ]; then
+          echo "Setting up YubiKey challenge-response for serial 5252959..."
+          ${pkgs.yubikey-personalization}/bin/ykpamcfg -2 -v
+
+          # Set proper permissions
+          if [ -f /etc/yubico/challenge-5252959 ]; then
+            chmod 600 /etc/yubico/challenge-5252959
+            chown root:root /etc/yubico/challenge-5252959
+            echo "YubiKey challenge-response setup completed"
+          else
+            echo "Warning: YubiKey challenge-response setup failed"
+          fi
+        else
+          echo "YubiKey challenge-response already configured"
+        fi
+      ''}";
+    };
   };
 
   security.pam.services = {
-    sudo.yubicoAuth = true;
+    # Enable YubiKey challenge-response for doas (our sudo replacement)
+    doas.yubicoAuth = true;
+
     login = {
       enableGnomeKeyring = true;
-      u2fAuth = true;
+      yubicoAuth = true;  # Enable YubiKey for login
     };
-    sudo.u2fAuth = true;
-    lightdm.u2fAuth = true;
+
+    # Enable YubiKey for SDDM display manager
+    sddm.yubicoAuth = true;
   };
 
   # GNOME Keyring

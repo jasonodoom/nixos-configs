@@ -2,6 +2,22 @@
 
 This is a NixOS configuration written specifically for the Framework Desktop Max+ 395 (16-core/32-thread, 64GB RAM, Radeon 8060S Graphics) with Hyprland window manager.
 
+## Table of Contents
+
+- [Features](#features)
+- [Structure](#structure)
+- [Development Shells](#development-shells)
+- [Installation](#installation)
+  - [Partition and Format Drives (LUKS + LVM Setup)](#partition-and-format-drives-luks--lvm-setup)
+  - [Prepare the System](#prepare-the-system)
+  - [Generate Hardware Configuration](#generate-hardware-configuration)
+  - [Install NixOS](#install-nixos)
+  - [Post-Installation](#post-installation)
+- [YubiKey Authentication](#yubikey-authentication)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Updates](#updates)
+
 ## Features
 
 - **Framework Desktop Max+ 395 optimized**: Specific hardware configurations for 16-core Ryzen 7, Radeon 8060S
@@ -13,7 +29,7 @@ This is a NixOS configuration written specifically for the Framework Desktop Max
 - **Flake-based**: Reproducible builds and dependency management
 - **Pure NixOS**: No Home Manager dependency, everything in standard NixOS modules
 - **VS Code ready**: Extensions and language servers available via development shells
-- **Security focused**: YubiKey support, doas instead of sudo, encrypted storage
+- **Security focused**: Automated YubiKey challenge-response setup, doas instead of sudo, encrypted storage
 - **Complete shell environment**: Bash/zsh with git configuration and SSH setup
 
 ## Structure
@@ -209,6 +225,55 @@ nix flake update
 
 # All user configurations are part of the system rebuild
 ```
+
+## YubiKey Authentication
+
+This configuration includes automated YubiKey challenge-response authentication setup.
+
+### Features
+
+- **Automated setup**: YubiKey challenge-response mapping is created automatically on first boot
+- **Multi-service support**: Enabled for login, doas (sudo replacement) and SDDM display manager
+- **Hardware-specific**: Pre-configured for YubiKey serial 5252959
+- **Secure permissions**: Challenge files are automatically secured with proper ownership and permissions
+
+### How It Works
+
+1. **Systemd service**: `yubikey-setup.service` runs on first boot
+2. **Challenge-response mapping**: Creates `/etc/yubico/challenge-5252959` using `ykpamcfg`
+3. **PAM integration**: Enables YubiKey authentication for:
+   - System login
+   - SDDM display manager
+   - doas commands
+
+### Manual Setup (if needed)
+
+If automatic setup fails, you can manually configure:
+
+```bash
+# Create yubico directory
+sudo mkdir -p /etc/yubico
+
+# Set up challenge-response (YubiKey must be plugged in)
+sudo ykpamcfg -2 -v
+
+# Set proper permissions
+sudo chmod 600 /etc/yubico/challenge-*
+sudo chown root:root /etc/yubico/challenge-*
+```
+
+### Usage
+
+- **Login**: Enter your password, then touch the YubiKey when it blinks
+- **doas commands**: Same process for elevated privileges
+- **Display manager**: YubiKey authentication at the login screen
+
+### Troubleshooting
+
+- Ensure YubiKey is plugged in during setup
+- Check service status: `systemctl status yubikey-setup.service`
+- View logs: `journalctl -u yubikey-setup.service`
+- Verify mapping file exists: `ls -la /etc/yubico/`
 
 ## Testing
 
