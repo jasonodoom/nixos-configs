@@ -10,17 +10,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, hyprland, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       inherit system;
@@ -42,8 +38,6 @@
 
         # Framework Desktop hardware modules
         nixos-hardware.nixosModules.framework-13-7040-amd
-
-        hyprland.nixosModules.default
 
         # Agenix for secrets management
         agenix.nixosModules.default
