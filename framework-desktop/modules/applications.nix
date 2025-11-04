@@ -1,0 +1,99 @@
+# Desktop applications and user packages
+{ config, pkgs, lib, ... }:
+
+{
+  # System-wide applications
+  environment.systemPackages = with pkgs; [
+    # Browsers
+    firefox
+
+    # Communication
+    signal-desktop
+    thunderbird
+    weechat
+    pidgin
+    pidgin-otr
+    element-web
+    slack
+
+    # Media and Graphics
+    vlc
+    audacity
+    gimp
+    krita
+    blender
+    inkscape
+    evince
+    imagemagick
+    handbrake
+    obs-studio
+    cider  
+
+    # Productivity and Office
+    transmission_4-qt
+    shutter
+    xournalpp
+    libreoffice-qt6
+
+    # AI/ML Tools
+    ollama
+
+    # Hardware and Electronics
+    arduino
+    qFlipper  # Flipper Zero
+
+    # 3D Printing
+    cura-appimage  # Using AppImage version to avoid libarcus issues
+    prusa-slicer
+
+    # File Management
+    gparted
+    parted
+    udiskie
+
+    # Archive and Text Processing 
+    pdftk
+
+    # Security and System Tools
+    cyberchef
+
+    # Screen and Display
+    arandr
+    maim
+    scrot
+    xclip  
+    xcowsay
+
+    # Spell checking
+    aspell
+    aspellDicts.en
+
+    # WeeChat extensions
+    weechatScripts.weechat-notify-send
+
+    # X11 utilities 
+    xorg.xprop
+
+    # Remote access
+    remmina
+
+    # Additional applications
+    google-chrome
+    discord
+    dbeaver-bin
+    burpsuite
+    postman
+    appimage-run
+
+    # keybase
+    # keybase-gui
+  ];
+
+  # Enable some applications that need system-level configuration
+  programs.dconf.enable = true;
+
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+}
