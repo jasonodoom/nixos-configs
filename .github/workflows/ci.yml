@@ -12,8 +12,6 @@ jobs:
     strategy:
       matrix:
         host: [framework-desktop]
-        # Add more hosts here as you create them
-        # host: [framework-desktop, laptop, server]
 
     steps:
     - name: Checkout repository

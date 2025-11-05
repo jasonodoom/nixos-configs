@@ -18,14 +18,10 @@ in
   };
 
   # Display manager for Hyprland
-  services.displayManager.sddm = {
+  services.xserver.displayManager.sddm = {
     enable = true;
-    package = pkgs.kdePackages.sddm; # Qt6 SDDM version
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
-    extraPackages = [
-      customized_sddm_astronaut
-    ];
     settings = {
       General = {
         DisplayServer = "x11";
@@ -330,7 +326,10 @@ in
     kdePackages.qtvirtualkeyboard
     kdePackages.qtmultimedia
 
-    # Qt5 compatibility for SDDM theme
+    # SDDM Astronaut theme
+    customized_sddm_astronaut
+
+    # Qt5 compatibility for SDDM theme (keeping for compatibility)
     qt5.qtgraphicaleffects
     qt5.qtquickcontrols2
     qt5.qtsvg
