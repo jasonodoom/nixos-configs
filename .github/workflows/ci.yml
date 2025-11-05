@@ -46,8 +46,8 @@ jobs:
         extra-conf: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-          substituters = https://cache.nixos.org/ https://cache.garnix.io
-          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=
+          substituters = https://cache.garnix.io https://cache.nixos.org/
+          trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
     - name: Check flake syntax
       run: |
@@ -60,8 +60,8 @@ jobs:
         # Use Garnix cache for faster builds
         nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
           --accept-flake-config \
-          --option substituters "https://cache.nixos.org/ https://cache.garnix.io" \
-          --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" \
+          --option substituters "https://cache.garnix.io https://cache.nixos.org/" \
+          --option trusted-public-keys "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
           --option max-jobs 1 \
           --option cores 2
         # Clean up after build to save space
