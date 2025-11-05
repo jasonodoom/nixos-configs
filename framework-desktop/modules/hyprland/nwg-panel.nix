@@ -10,6 +10,7 @@
     nwg-look          # GTK settings editor
     nwg-displays      # Display management utility
     nwg-menu          # Right-click menu
+    pwvucontrol       # PipeWire volume control for custom controls
 
     # Icon themes for proper category display
     papirus-icon-theme
@@ -40,7 +41,7 @@
       modules-center = ["hyprland-taskbar"];
       modules-right = ["tray" "controls" "clock"];
       controls-settings = {
-        components = ["volume"];
+        components = [];  # Explicitly empty - only show volume via custom items
         commands = {};
         show-values = false;
         interval = 1;
@@ -50,6 +51,11 @@
         click-closes = false;
         css-name = "controls-window";
         custom-items = [
+          {
+            name = "Volume";
+            icon = "audio-volume-medium-symbolic";
+            cmd = "pwvucontrol";
+          }
           {
             name = "Panel settings";
             icon = "nwg-panel";
