@@ -36,6 +36,15 @@ systems:
 # Optional: Custom build timeout (default is 1 hour)
 # buildTimeoutMinutes: 60
 
+# Binary cache configuration - ensure Garnix cache is used
+substituters:
+  - "https://cache.garnix.io"
+  - "https://cache.nixos.org"
+
+trusted-public-keys:
+  - "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+  - "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+
 # Branch-based hosting configuration
 # https://garnix.io/docs/hosting/branch
 hosting:
