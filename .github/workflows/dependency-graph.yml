@@ -42,7 +42,7 @@ jobs:
 
         # Generate build dependency graph for the main configuration
         echo "Building dependency graph..."
-        nix show-derivation .#nixosConfigurations.perdurabo --accept-flake-config | \
+        nix show-derivation .#nixosConfigurations.perdurabo.config.system.build.toplevel --accept-flake-config | \
           jq -r '
             to_entries[] |
             select(.value.inputDrvs != {}) |
@@ -68,10 +68,10 @@ jobs:
 
         # Show Nix store info using Determinate installer features
         echo "=== Nix Store Analysis ===" > store-analysis.txt
-        nix path-info .#nixosConfigurations.perdurabo --closure-size --human-readable >> store-analysis.txt
+        nix path-info .#nixosConfigurations.perdurabo.config.system.build.toplevel --closure-size --human-readable >> store-analysis.txt
         echo "" >> store-analysis.txt
         echo "=== Top 20 Dependencies by Size ===" >> store-analysis.txt
-        nix path-info .#nixosConfigurations.perdurabo --closure-size --json | \
+        nix path-info .#nixosConfigurations.perdurabo.config.system.build.toplevel --closure-size --json | \
           jq -r '.[] | "\(.closureSize) \(.path)"' | \
           sort -nr | head -20 >> store-analysis.txt
 
