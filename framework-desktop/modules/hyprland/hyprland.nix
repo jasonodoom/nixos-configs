@@ -150,10 +150,13 @@
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
 
+    # Wallpaper - set a dark background to avoid black screen
+    exec-once = swaybg -c "#1e1e2e"
+
     # Autostart applications
-    exec-once = sleep 2 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
-    exec-once = /run/current-system/sw/bin/nm-applet --indicator
-    exec-once = /run/current-system/sw/bin/blueman-applet
+    exec-once = sleep 1 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
+    exec-once = nm-applet --indicator
+    exec-once = blueman-applet
   '';
 
   # Kitty terminal configuration
@@ -263,6 +266,7 @@
     slurp
     swayidle
     swaylock-effects
+    swaybg
 
     libnotify
     dunst
