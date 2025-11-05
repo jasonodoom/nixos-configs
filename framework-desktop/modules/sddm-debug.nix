@@ -31,12 +31,12 @@
     pkgs.qt5.qtsvg
   ];
 
-  # Override SDDM configuration - use default SDDM (Qt5) like working commit
+  # Override SDDM configuration - FORCE Qt5 SDDM for astronaut theme compatibility
   services.displayManager.sddm = lib.mkForce {
     enable = true;
 
-    # DO NOT override package - use default Qt5 SDDM like working commit
-    # package = pkgs.kdePackages.sddm;
+    # FORCE Qt5 SDDM package (astronaut theme expects sddm-greeter, not sddm-greeter-qt6)
+    package = pkgs.sddm;
 
     wayland.enable = false;
     theme = "sddm-astronaut-theme";
