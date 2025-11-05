@@ -320,9 +320,12 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
-    # SDDM Astronaut theme with post-apocalyptic hacker variant
+    # SDDM Astronaut theme with post-apocalyptic hacker variant (Qt5 compatible)
     (pkgs.sddm-astronaut.override {
       embeddedTheme = "post-apocalyptic_hacker";
+      themeConfig = {
+        QtVersion = "5";
+      };
     })
   ];
 
