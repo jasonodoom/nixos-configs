@@ -106,11 +106,12 @@
     $mod = SUPER
 
     # Program shortcuts
-    bind = $mod, Return, exec, /run/current-system/sw/bin/kitty
+    bind = $mod, Return, exec, kitty
+    bind = $mod, T, exec, kitty
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
-    bind = $mod, R, exec, /run/current-system/sw/bin/wofi --show drun
+    bind = $mod, R, exec, rofi -show drun
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
@@ -157,7 +158,7 @@
     bindm = $mod, mouse:273, resizewindow
 
     # Autostart applications
-    exec-once = /run/current-system/sw/bin/waybar
+    exec-once = sleep 2 && /run/current-system/sw/bin/waybar
     exec-once = /run/current-system/sw/bin/nm-applet --indicator
     exec-once = /run/current-system/sw/bin/blueman-applet
   '';
