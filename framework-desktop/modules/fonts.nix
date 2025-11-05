@@ -1,0 +1,41 @@
+# Font configuration for Framework Desktop
+{ config, pkgs, ... }:
+
+{
+  # Font packages
+  fonts.packages = with pkgs; [
+    # System fonts
+    noto-fonts
+    noto-fonts-emoji
+    liberation_ttf
+    dejavu_fonts
+    open-sans
+    roboto
+
+    # Development fonts
+    fira-code
+    fira-code-symbols
+    jetbrains-mono
+    (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" ]; })
+
+    # Icon and emoji fonts
+    twemoji-color-font # Twitter emoji font
+    font-awesome
+    material-design-icons
+
+    # Legacy fonts
+    dina-font
+    proggyfonts
+  ];
+
+  # Font configuration
+  fonts.fontconfig = {
+    enable = true;
+    defaultFonts = {
+      serif = [ "Noto Serif" ];
+      sansSerif = [ "Noto Sans" ];
+      monospace = [ "JetBrains Mono Nerd Font" "Fira Code" ];
+      emoji = [ "Twemoji" "Noto Color Emoji" ];
+    };
+  };
+}

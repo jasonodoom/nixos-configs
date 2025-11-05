@@ -1,6 +1,12 @@
 {
   description = "NixOS configuration for Framework Desktop with Hyprland";
 
+  # Garnix CI cache configuration
+  nixConfig = {
+    substituters = [ "https://cache.garnix.io" ];
+    trusted-public-keys = [ "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -47,6 +53,7 @@
         ./modules/bluetooth.nix
         ./modules/development.nix
         ./modules/firefox.nix
+        ./modules/fonts.nix
         ./modules/gaming.nix
         ./modules/graphics.nix
         ./modules/hyprland/hyprland.nix

@@ -257,21 +257,6 @@
     ];
   };
 
-  # Fonts for Hyprland
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-emoji
-    liberation_ttf
-    fira-code
-    fira-code-symbols
-    font-awesome
-    dejavu_fonts
-    open-sans
-    roboto
-    material-design-icons
-    dina-font
-    proggyfonts
-  ];
 
   # Essential Hyprland packages
   environment.systemPackages = with pkgs; [
@@ -284,6 +269,14 @@
     slurp
     swayidle
     swaylock-effects
+
+    libnotify
+    dunst
+    pamixer
+    xdg-user-dirs
+    libcanberra
+    wireless-tools
+    blueberry
 
     # File manager
     xfce.thunar
