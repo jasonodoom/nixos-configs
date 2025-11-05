@@ -15,12 +15,6 @@
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme with post-apocalyptic hacker variant
     settings = {
-      Theme = {
-        Current = "sddm-astronaut-theme";
-        ThemeDir = "/run/current-system/sw/share/sddm/themes";
-        CursorTheme = "breeze_cursors";
-        Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
-      };
       General = {
         DisplayServer = "x11";
       };
@@ -29,30 +23,6 @@
 
   services.displayManager.defaultSession = "hyprland-uwsm";
 
-  # Configure SDDM theme variant for post-apocalyptic hacker
-  environment.etc."sddm.conf.d/theme.conf".text = ''
-    [Theme]
-    Current=sddm-astronaut-theme
-    ThemeDir=/run/current-system/sw/share/sddm/themes
-    CursorTheme=breeze_cursors
-    Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
-
-    # Post-apocalyptic hacker theme variant configuration
-    [sddm-astronaut-theme]
-    type=post-apocalyptic_hacker
-    Background=Backgrounds/post-apocalyptic_hacker.png
-    ScreenWidth=1920
-    ScreenHeight=1080
-    FormPosition=right
-    HaveVirtualKeyboard=true
-    VirtualKeyboardPosition=right
-    OverrideLoginButtonTextColor=#fc2e64
-    LoginButtonTextColor=#fc2e64
-    OverridePasswordFieldTextColor=#685841
-    PasswordFieldTextColor=#685841
-    AccentColor=#4d1927
-    BackgroundColor=#000000
-  '';
 
 
 
@@ -362,6 +332,10 @@
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
+
+        # Configure metadata.desktop to use post-apocalyptic hacker theme
+        sed -i 's/ConfigFile=Themes\/astronaut.conf/ConfigFile=Themes\/post-apocalyptic_hacker.conf/' \
+          $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
       '';
     })
   ];
