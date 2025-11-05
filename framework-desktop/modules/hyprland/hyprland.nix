@@ -12,7 +12,7 @@
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = true;
+    wayland.enable = false;  # Try X11 mode instead of Wayland
     theme = "elarun";  # Use built-in SDDM theme
     settings = {
       Theme = {
@@ -21,8 +21,8 @@
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
       General = {
-        DisplayServer = "wayland";
-        GreeterEnvironment = "QT_WAYLAND_SHELL_INTEGRATION=layer-shell";
+        DisplayServer = "x11";
+        # Remove Wayland-specific environment
       };
     };
   };
@@ -261,6 +261,9 @@
     ];
   };
 
+
+  # Enable X11 support for SDDM
+  services.xserver.enable = true;
 
   # Essential Hyprland packages
   environment.systemPackages = with pkgs; [
