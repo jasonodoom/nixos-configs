@@ -40,13 +40,13 @@
   # Smartcard support
   services.pcscd.enable = true;
 
-  # YubiKey PAM configuration (temporarily disabled for debugging)
-  # security.pam.yubico = {
-  #   enable = true;
-  #   debug = true;
-  #   mode = "challenge-response";
-  #   id = [ "5252959" ];  # YubiKey serial number
-  # };
+  # YubiKey PAM configuration
+  security.pam.yubico = {
+    enable = true;
+    debug = false;
+    mode = "challenge-response";
+    id = [ "5252959" ];  # YubiKey serial number
+  };
 
   # Automated YubiKey challenge-response setup
   systemd.services.yubikey-setup = {
@@ -97,16 +97,16 @@
   };
 
   security.pam.services = {
-    # Temporarily disable YubiKey for debugging
-    # doas.yubicoAuth = true;
+    # Enable YubiKey for doas
+    doas.yubicoAuth = true;
 
     login = {
       enableGnomeKeyring = true;
-      # yubicoAuth = true;  # Temporarily disabled for debugging
+      yubicoAuth = true;
     };
 
-    # Temporarily disable YubiKey for SDDM
-    # sddm.yubicoAuth = true;
+    # Enable YubiKey for SDDM
+    sddm.yubicoAuth = true;
   };
 
   # GNOME Keyring
