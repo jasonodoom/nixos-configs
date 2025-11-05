@@ -100,6 +100,9 @@
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
+    # Additional app launcher shortcut (Space for quick access)
+    bind = $mod, space, exec, rofi -show drun -config /etc/xdg/rofi/config.rasi
+
     # Waybar controls
     bind = $mod SHIFT, B, exec, killall waybar && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css &
     bind = $mod CTRL, B, exec, killall waybar
@@ -165,6 +168,10 @@
 
     # Wallpaper - use swaybg as fallback to avoid startup issues
     exec-once = swaybg -c "#1e1e2e"
+
+    # Kill any duplicate applets that might autostart
+    exec-once = pkill nm-applet || true
+    exec-once = pkill blueman-applet || true
 
     # Autostart applications with proper timing and error handling
     exec-once = sleep 1 && pkill waybar || true
@@ -473,6 +480,11 @@
     dbus.enable = true;
     gnome.gnome-keyring.enable = true;
     upower.enable = true;
+  };
+
+  # Disable NetworkManager applet autostart to prevent duplicate network icons
+  systemd.user.services.nm-applet = {
+    enable = false;
   };
 
   # Fix PAM configuration for gnome-keyring to resolve challenge-response errors

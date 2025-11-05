@@ -6,7 +6,8 @@
   environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
         modi: "run,drun,window";
-        lines: 5;
+        lines: 8;
+        columns: 2;
         font: "Fira Code 12";
         show-icons: true;
         terminal: "kitty";
@@ -36,7 +37,7 @@
         fg-col2: #9ece6a;
         grey: #565f89;
 
-        width: 600;
+        width: 800;
         font: "Fira Code 14";
     }
 
@@ -46,7 +47,7 @@
     }
 
     window {
-        height: 360px;
+        height: 500px;
         border: 3px;
         border-color: @border-col;
         background-color: @bg-col;
@@ -88,7 +89,7 @@
         padding: 6px 0px 0px;
         margin: 10px 0px 0px 20px;
         columns: 2;
-        lines: 5;
+        lines: 8;
         background-color: @bg-col;
     }
 

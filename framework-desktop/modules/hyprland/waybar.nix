@@ -29,14 +29,6 @@
       disable-scroll = true;
       all-outputs = true;
       format = "{icon}";
-      swap-icon-label = false;  # Fix for 'swap-icon-label' must be a bool warning
-      persistent_workspaces = {
-        "1" = [];
-        "2" = [];
-        "3" = [];
-        "4" = [];
-        "5" = [];
-      };
       format-icons = {
         "1" = "1";
         "2" = "2";
@@ -51,6 +43,13 @@
         urgent = "";
         focused = "";
         default = "";
+      };
+      persistent_workspaces = {
+        "1" = [];
+        "2" = [];
+        "3" = [];
+        "4" = [];
+        "5" = [];
       };
     };
 
