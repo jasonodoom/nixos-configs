@@ -320,36 +320,9 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
-    # SDDM Astronaut theme (includes post-apocalyptic hacker variant)
-    (stdenv.mkDerivation {
-      name = "sddm-astronaut-theme";
-      src = fetchFromGitHub {
-        owner = "Keyitdev";
-        repo = "sddm-astronaut-theme";
-        rev = "11c0bf6147bbea466ce2e2b0559e9a9abdbcc7c3";
-        hash = "sha256-gBSz+k/qgEaIWh1Txdgwlou/Lfrfv3ABzyxYwlrLjDk=";
-      };
-      installPhase =
-        let
-          basePath = "$out/share/sddm/themes/sddm-astronaut-theme";
-          sedString = "ConfigFile=Themes/";
-          embeddedTheme = "post-apocalyptic_hacker";
-        in
-        ''
-          mkdir -p ${basePath}
-          cp -r $src/* ${basePath}
-
-          # Replace astronaut.conf with post-apocalyptic_hacker theme in metadata.desktop
-          sed -i "s|^${sedString}.*\\.conf$|${sedString}${embeddedTheme}.conf|" ${basePath}/metadata.desktop
-
-          # Debug: Show what we have
-          echo "=== Theme configs available ==="
-          ls -la ${basePath}/Themes/ || echo "Themes directory not found"
-          echo "=== metadata.desktop content ==="
-          cat ${basePath}/metadata.desktop
-          echo "=== Verifying post-apocalyptic_hacker.conf exists ==="
-          ls -la ${basePath}/Themes/post-apocalyptic_hacker.conf
-        '';
+    # SDDM Astronaut theme with post-apocalyptic hacker variant
+    (pkgs.sddm-astronaut.override {
+      embeddedTheme = "post-apocalyptic_hacker";
     })
   ];
 
