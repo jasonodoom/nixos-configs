@@ -86,9 +86,6 @@
     input {
         kb_layout = us
         follow_mouse = 1
-        touchpad {
-            natural_scroll = true
-        }
         sensitivity = 0
     }
 
@@ -335,9 +332,6 @@
     # Screenshot tools
     flameshot
 
-    # Brightness control
-    brightnessctl
-
     # Audio control
     pamixer
 
@@ -370,6 +364,4 @@
     HYPRLAND_NO_RT = "1";  # Disable Hyprland update notifications
   };
 
-  # Enable touchpad support
-  services.libinput.enable = true;
 }
