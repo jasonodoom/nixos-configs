@@ -1,4 +1,0 @@
-# Simplified Garnix CI configuration
-builds:
-  framework-desktop:
-    dir: framework-desktop
