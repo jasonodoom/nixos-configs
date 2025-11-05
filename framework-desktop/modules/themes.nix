@@ -63,20 +63,33 @@ in {
   };
 
   config = {
-    # Install theme package if needed
+    # Install theme package and Qt6 dependencies for astronaut themes
     environment.systemPackages = lib.optionals (selectedTheme.package != null) [
       selectedTheme.package
+    ] ++ lib.optionals (cfg == "astronaut-default" || cfg == "astronaut-hacker") [
+      # Additional Qt6 packages needed for astronaut theme based on GitHub issues
+      pkgs.kdePackages.qtmultimedia
+      pkgs.kdePackages.qtsvg
     ];
 
-    # Configure SDDM with selected theme
+    # Configure SDDM with conditional settings based on theme
     services.displayManager.sddm = {
       enable = true;
-      package = pkgs.kdePackages.sddm; # Qt6 SDDM version for Qt6 themes
-      wayland.enable = false; # Use X11 mode for better theme compatibility
-      theme = selectedTheme.name;
-      extraPackages = selectedTheme.extraPackages;
 
-      # Security settings - require manual username entry
+      # Use Qt6 only for themes that specifically need it
+      package = if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
+                then pkgs.kdePackages.sddm
+                else null; # Use default Qt5 SDDM for other themes
+
+      wayland.enable = false;
+      theme = selectedTheme.name;
+
+      # Only add extraPackages for Qt6 themes
+      extraPackages = if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
+                      then selectedTheme.extraPackages
+                      else [];
+
+      # Settings optimized for astronaut theme vs others
       settings = {
         General = {
           DisplayServer = "x11";
@@ -85,7 +98,8 @@ in {
           Current = selectedTheme.name;
         };
         Users = {
-          HideUsers = "jason";
+          # Hide all users for security - no username shown
+          HideUsers = "*";
           HideShells = "/bin/false,/usr/bin/nologin";
           RememberLastUser = false;
         };
