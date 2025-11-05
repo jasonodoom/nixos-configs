@@ -20,9 +20,10 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Install Nix with Garnix cache
-      uses: cachix/install-nix-action@v23
+      uses: DeterminateSystems/nix-installer-action@v13
       with:
-        extra_nix_config: |
+        source-tag: "v3.12.1"
+        extra-conf: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
           substituters = https://cache.nixos.org/ https://cache.garnix.io
@@ -58,9 +59,10 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Install Nix
-      uses: cachix/install-nix-action@v23
+      uses: DeterminateSystems/nix-installer-action@v13
       with:
-        extra_nix_config: |
+        source-tag: "v3.12.1"
+        extra-conf: |
           experimental-features = nix-command flakes
 
     - name: Check Nix formatting
@@ -87,7 +89,7 @@ jobs:
         echo "Running basic security checks..."
 
         # Check for hardcoded passwords or secrets
-        if grep -r -i "password.*=" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets"; then
+        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton"; then
           echo "Found potential hardcoded passwords"
           exit 1
         fi
