@@ -10,7 +10,7 @@
 
     modules-left = [ "hyprland/workspaces" "hyprland/mode" ];
     modules-center = [ "hyprland/window" ];
-    modules-right = [ "pulseaudio" "network" "cpu" "memory" "temperature" "backlight" "battery" "clock" "tray" ];
+    modules-right = [ "pulseaudio" "network" "cpu" "memory" "temperature" "clock" "tray" ];
 
     "hyprland/workspaces" = {
       disable-scroll = true;
@@ -48,22 +48,6 @@
       format-icons = ["" "" ""];
     };
 
-    backlight = {
-      format = "{percent}% {icon}";
-      format-icons = ["" "" "" "" "" "" "" "" ""];
-    };
-
-    battery = {
-      states = {
-        warning = 30;
-        critical = 15;
-      };
-      format = "{capacity}% {icon}";
-      format-charging = "{capacity}% ";
-      format-plugged = "{capacity}% ";
-      format-alt = "{time} {icon}";
-      format-icons = ["" "" "" "" ""];
-    };
 
     network = {
       format-wifi = "{essid} ({signalStrength}%) ";
@@ -145,11 +129,9 @@
     }
 
     #clock,
-    #battery,
     #cpu,
     #memory,
     #temperature,
-    #backlight,
     #network,
     #pulseaudio,
     #tray,
@@ -170,15 +152,6 @@
       background-color: #64727d;
     }
 
-    #battery {
-      background-color: #ffffff;
-      color: #000000;
-    }
-
-    #battery.charging {
-      color: #ffffff;
-      background-color: #26a65b;
-    }
 
     @keyframes blink {
       to {
@@ -187,15 +160,6 @@
       }
     }
 
-    #battery.critical:not(.charging) {
-      background-color: #f53c3c;
-      color: #ffffff;
-      animation-name: blink;
-      animation-duration: 0.5s;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-      animation-direction: alternate;
-    }
 
     #cpu {
       background-color: #2ecc71;
@@ -206,9 +170,6 @@
       background-color: #9b59b6;
     }
 
-    #backlight {
-      background-color: #90b1b1;
-    }
 
     #network {
       background-color: #2980b9;
