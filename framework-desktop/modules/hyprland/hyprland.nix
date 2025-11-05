@@ -334,8 +334,16 @@
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
 
         # Configure metadata.desktop to use post-apocalyptic hacker theme
-        sed -i 's/ConfigFile=Themes\/astronaut.conf/ConfigFile=Themes\/post-apocalyptic_hacker.conf/' \
+        sed -i 's/ConfigFile=Themes\/astronaut\.conf/ConfigFile=Themes\/post-apocalyptic_hacker.conf/' \
           $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
+
+        # Verify the change was made
+        echo "=== metadata.desktop after modification ==="
+        cat $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
+
+        # Verify post-apocalyptic_hacker.conf exists
+        echo "=== Available theme configs ==="
+        ls -la $out/share/sddm/themes/sddm-astronaut-theme/Themes/
       '';
     })
   ];
