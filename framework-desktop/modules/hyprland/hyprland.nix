@@ -13,16 +13,10 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;  # Use X11 mode for better theme compatibility
-    theme = "sddm-astronaut-theme";  # Astronaut theme with post-apocalyptic hacker variant
+    theme = "sddm-astronaut-theme";  # Astronaut theme
     settings = {
       General = {
         DisplayServer = "x11";
-      };
-      Theme = {
-        Current = "sddm-astronaut-theme";
-        ThemeDir = "/run/current-system/sw/share/sddm/themes";
-        CursorTheme = "breeze_cursors";
-        Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
     };
   };
@@ -332,32 +326,13 @@
       src = fetchFromGitHub {
         owner = "Keyitdev";
         repo = "sddm-astronaut-theme";
-        rev = "c9a8ab46aea6f1bab39f1a9d8cd3178f6e89b745";
-        sha256 = "sha256-6rUfsLlX3oSPS3b5br5xUjKSi7ypNp3jvMUyaWfeMZ4=";
+        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
+        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
       };
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
 
-        # Configure metadata.desktop to use post-apocalyptic hacker theme
-        echo "ConfigFile=Themes/post-apocalyptic_hacker.conf" >> \
-          $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
-
-        # Verify the change was made
-        echo "=== metadata.desktop after modification ==="
-        cat $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
-
-        # Verify post-apocalyptic_hacker.conf exists
-        echo "=== Available theme configs ==="
-        ls -la $out/share/sddm/themes/sddm-astronaut-theme/Themes/
-
-        # Verify theme structure
-        echo "=== Complete theme directory structure ==="
-        find $out/share/sddm/themes/sddm-astronaut-theme -type f | head -20
-
-        # Check Main.qml exists
-        echo "=== Main.qml verification ==="
-        ls -la $out/share/sddm/themes/sddm-astronaut-theme/Main.qml
       '';
     })
   ];
