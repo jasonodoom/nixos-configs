@@ -1,3 +1,4 @@
 builds:
   include:
-    - "framework-desktop#*"
+    - "framework-desktop#nixosConfigurations.*"
+    - "framework-desktop#devShells.*"
