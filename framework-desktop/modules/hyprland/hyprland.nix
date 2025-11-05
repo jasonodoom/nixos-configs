@@ -94,18 +94,20 @@
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
-    bind = $mod, R, exec, rofi -show drun
-    bind = $mod, D, exec, rofi -show run
-    bind = $mod SHIFT, R, exec, rofi -show window
+    bind = $mod, R, exec, nwg-drawer
+    bind = $mod, D, exec, nwg-drawer
+    bind = $mod SHIFT, R, exec, nwg-drawer
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
-    # Additional app launcher shortcut (Space for quick access)
-    bind = $mod, space, exec, rofi -show drun
+    # Additional app launcher shortcut (Space for quick access - Launchpad style)
+    bind = $mod, space, exec, nwg-drawer
 
-    # Waybar controls
-    bind = $mod SHIFT, B, exec, killall waybar && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css &
-    bind = $mod CTRL, B, exec, killall waybar
+    # nwg-shell controls
+    bind = $mod SHIFT, B, exec, nwg-panel
+    bind = $mod CTRL, B, exec, pkill nwg-panel
+    bind = $mod SHIFT, D, exec, nwg-dock-hyprland
+    bind = $mod CTRL, D, exec, pkill nwg-dock-hyprland
 
     # Hyprland reload
     bind = $mod CTRL, R, exec, hyprctl reload
@@ -172,10 +174,12 @@
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
+    exec-once = pkill waybar || true
 
-    # Fixed waybar autostart (race condition solution from research)
-    exec-once = sleep 1 && waybar
-    # Removed nm-applet and blueman-applet - waybar handles these with styled modules
+    # nwg-shell autostart with debugging
+    exec-once = sleep 2 && nwg-panel > /tmp/nwg-panel.log 2>&1
+    exec-once = sleep 3 && nwg-dock-hyprland > /tmp/nwg-dock.log 2>&1
+    # nwg-drawer launches on demand via shortcuts and dock
   '';
 
   # Wlogout configuration (beautiful graphical power menu)
@@ -407,13 +411,11 @@
   # Enable X11 support for SDDM
   services.xserver.enable = true;
 
-  # Essential Hyprland packages
+  # Essential Hyprland packages (cleaned up)
   environment.systemPackages = with pkgs; [
-    # Wayland utilities
+    # Core Wayland utilities
     wl-clipboard
     wlr-randr
-    waybar
-    wofi
     grim
     slurp
     swayidle
@@ -421,52 +423,25 @@
     swaybg
     wlogout
 
+    # System utilities
     libnotify
     dunst
     pamixer
     xdg-user-dirs
     libcanberra
-    wirelesstools
 
-    # File manager
-    xfce.thunar
+    # Applications
+    xfce.thunar        # File manager
+    kitty              # Terminal
+    rofi-wayland       # Fallback launcher (nwg-drawer is primary)
+    flameshot          # Screenshot tool
 
-    # Terminal
-    kitty
-
-    # Application launcher
-    rofi-wayland
-
-    # Screenshot tools
-    flameshot
-
-    # Audio control
-    pamixer
-
-    # Network applet
-    networkmanagerapplet
-
-    # Bluetooth applet
-    blueman
-
-    # SDDM themes and icons
+    # SDDM themes and icons (kept for theme compatibility)
     libsForQt5.breeze-qt5
     libsForQt5.breeze-icons
     libsForQt5.breeze-gtk
-    kdePackages.breeze
-    kdePackages.breeze-icons
 
-    # SDDM theme packages
-    libsForQt5.sddm-kcm  # SDDM configuration module
-
-    # Qt6 dependencies for SDDM astronaut theme
-    kdePackages.qtsvg
-    kdePackages.qtvirtualkeyboard
-    kdePackages.qtmultimedia
-
-    # SDDM theme packages are now managed by themes.nix
-
-    # Qt5 compatibility for SDDM theme (keeping for compatibility)
+    # Qt5 compatibility for SDDM astronaut theme
     qt5.qtgraphicaleffects
     qt5.qtquickcontrols2
     qt5.qtsvg
@@ -479,10 +454,9 @@
     upower.enable = true;
   };
 
-  # Disable NetworkManager applet autostart to prevent duplicate network icons
-  systemd.user.services.nm-applet = {
-    enable = false;
-  };
+  # Disable duplicate applets (nwg-panel handles these)
+  systemd.user.services.nm-applet.enable = false;
+  systemd.user.services.blueman-applet.enable = false;
 
   # Fix PAM configuration for gnome-keyring to resolve challenge-response errors
   security.pam.services = {
