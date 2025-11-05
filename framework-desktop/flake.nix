@@ -69,7 +69,7 @@
         ./modules/networking.nix
         ./modules/security.nix
         ./modules/system.nix
-        ./modules/themes.nix
+        # ./modules/themes.nix  # Temporarily disabled to test debug config
         ./modules/ba-usr-theme.nix
         ./modules/sddm-debug.nix  # Temporary debugging module
         ./modules/unfree.nix
