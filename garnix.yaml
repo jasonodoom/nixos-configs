@@ -1,0 +1,71 @@
+# Garnix CI configuration for NixOS configurations
+builds:
+  # Framework Desktop configuration
+  framework-desktop.nixosConfigurations.perdurabo: {}
+  framework-desktop.devShells.x86_64-linux.go: {}
+  framework-desktop.devShells.x86_64-linux.python: {}
+  framework-desktop.devShells.x86_64-linux.node: {}
+  framework-desktop.devShells.x86_64-linux.rust: {}
+  framework-desktop.devShells.x86_64-linux.devops: {}
+  framework-desktop.devShells.x86_64-linux.default: {}
+  framework-desktop.checks.x86_64-linux: {}
+
+  # Add more hosts here as needed
+  # laptop.nixosConfigurations.mylaptop: {}
+  # server.nixosConfigurations.myserver: {}
+
+# Include patterns - build everything by default
+include:
+  - "*"
+
+# Exclude patterns (add build artifacts, temp files, etc.)
+exclude:
+  - "result"
+  - "result-*"
+  - ".git"
+  - "*.log"
+  - ".github"
+
+# Supported systems
+systems:
+  - x86_64-linux
+  - aarch64-linux
+
+# Enable organization access tokens if using private repos
+# enableGithubOrgAccessTokens: true
+
+# Optional: Custom build timeout (default is 1 hour)
+# buildTimeoutMinutes: 60
+
+# Branch-based hosting configuration
+# https://garnix.io/docs/hosting/branch
+hosting:
+  # Enable hosting for branches
+  branches:
+    # Host the main branch
+    main:
+      # You can specify which flake outputs to host
+      # For NixOS configurations, we typically want to host the system
+      outputs:
+        - framework-desktop.nixosConfigurations.perdurabo
+    # Enable hosting for pull requests
+    "pull/*":
+      outputs:
+        - framework-desktop.nixosConfigurations.perdurabo
+    # Enable hosting for feature branches
+    "feature/*":
+      outputs:
+        - framework-desktop.nixosConfigurations.perdurabo
+    # Enable hosting for development branches
+    "dev/*":
+      outputs:
+        - framework-desktop.nixosConfigurations.perdurabo
+
+  # Optional: Configure hosting settings
+  settings:
+    # Enable preview deployments for pull requests
+    pullRequestPreviews: true
+    # Automatically clean up old deployments
+    autoCleanup: true
+    # Custom domain configuration (if you have one)
+    # domain: "nixos-config.yourdomain.com"
