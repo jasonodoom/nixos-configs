@@ -20,6 +20,7 @@ in
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
+    package = pkgs.kdePackages.sddm; # Qt6 SDDM version for Qt6 themes
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
     settings = {
