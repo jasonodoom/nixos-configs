@@ -1,4 +1,5 @@
 # BA_usr inspired theme configuration for Hyprland
+# Inspired by: https://gitlab.com/BA_usr/dotfiles-for-hyperland
 { config, pkgs, lib, ... }:
 
 {
@@ -148,11 +149,16 @@
     }
   '';
 
-  # Default wallpaper directory and sample wallpaper
-  environment.etc."wallpapers/default.png".source = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/catppuccin/wallpapers/main/landscapes/tropic_island_day.png";
-    sha256 = "0h7zjxnw5d1r6k2w1v0qamvgf5k9k3p7jk7j2k8j9l0m1n2o3p4q";
-  };
+  # Create wallpapers directory - users can add their own wallpapers here
+  environment.etc."wallpapers/.keep".text = "";
+
+  # Create a default wallpaper using imagemagick
+  system.activationScripts.createDefaultWallpaper = ''
+    mkdir -p /etc/wallpapers
+    if [ ! -f /etc/wallpapers/default.png ]; then
+      ${pkgs.imagemagick}/bin/convert -size 3840x2160 xc:"#1e1e2e" /etc/wallpapers/default.png
+    fi
+  '';
 
   # System packages for BA_usr theme
   environment.systemPackages = with pkgs; [
