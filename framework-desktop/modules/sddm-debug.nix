@@ -8,8 +8,8 @@
     enable = true;
     # Use default Qt5 SDDM to eliminate Qt6 as a variable
     wayland.enable = false;
-    # Use a known working built-in theme
-    theme = "breeze";
+    # Test astronaut theme with Qt5
+    theme = "sddm-astronaut-theme";
 
     # Minimal settings - no custom configurations
     settings = {
