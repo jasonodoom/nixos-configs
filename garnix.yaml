@@ -1,14 +1,16 @@
 # Garnix CI configuration for NixOS configurations
 builds:
-  # Framework Desktop configuration
-  framework-desktop.nixosConfigurations.perdurabo: {}
-  framework-desktop.devShells.x86_64-linux.go: {}
-  framework-desktop.devShells.x86_64-linux.python: {}
-  framework-desktop.devShells.x86_64-linux.node: {}
-  framework-desktop.devShells.x86_64-linux.rust: {}
-  framework-desktop.devShells.x86_64-linux.devops: {}
-  framework-desktop.devShells.x86_64-linux.default: {}
-  framework-desktop.checks.x86_64-linux: {}
+  # Framework Desktop configuration (specify the subdirectory)
+  framework-desktop:
+    dir: framework-desktop
+    outputs:
+      nixosConfigurations.perdurabo: {}
+      devShells.x86_64-linux.go: {}
+      devShells.x86_64-linux.python: {}
+      devShells.x86_64-linux.node: {}
+      devShells.x86_64-linux.rust: {}
+      devShells.x86_64-linux.devops: {}
+      checks.x86_64-linux: {}
 
   # Add more hosts here as needed
   # laptop.nixosConfigurations.mylaptop: {}
@@ -47,19 +49,23 @@ hosting:
       # You can specify which flake outputs to host
       # For NixOS configurations, we typically want to host the system
       outputs:
-        - framework-desktop.nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo
+      dir: framework-desktop
     # Enable hosting for pull requests
     "pull/*":
       outputs:
-        - framework-desktop.nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo
+      dir: framework-desktop
     # Enable hosting for feature branches
     "feature/*":
       outputs:
-        - framework-desktop.nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo
+      dir: framework-desktop
     # Enable hosting for development branches
     "dev/*":
       outputs:
-        - framework-desktop.nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo
+      dir: framework-desktop
 
   # Optional: Configure hosting settings
   settings:
