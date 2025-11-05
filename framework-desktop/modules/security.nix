@@ -14,8 +14,9 @@
   }];
 
   # YubiKey support
+  # https://nixos.wiki/wiki/Yubikey
   services.udev.packages = with pkgs; [
-    yubikey-personalization
+    yubikey-personalization  # Required for YubiKey udev rules
     android-udev-rules
   ];
 
@@ -39,57 +40,73 @@
   # Smartcard support
   services.pcscd.enable = true;
 
-  # YubiKey PAM configuration
-  security.pam.yubico = {
-    enable = true;
-    debug = true;
-    mode = "challenge-response";
-    challengeResponsePath = "/etc/yubico";
-  };
+  # YubiKey PAM configuration (temporarily disabled for debugging)
+  # security.pam.yubico = {
+  #   enable = true;
+  #   debug = true;
+  #   mode = "challenge-response";
+  #   id = [ "5252959" ];  # YubiKey serial number
+  # };
 
   # Automated YubiKey challenge-response setup
   systemd.services.yubikey-setup = {
     description = "Set up YubiKey challenge-response authentication";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
+    after = [ "systemd-udev-settle.service" ];  # Wait for USB devices
+    wants = [ "systemd-udev-settle.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      # Add retry and timeout
+      Restart = "on-failure";
+      RestartSec = "5s";
+      TimeoutStartSec = "30s";
       ExecStart = "${pkgs.writeShellScript "yubikey-setup" ''
         # Create yubico directory
         mkdir -p /etc/yubico
 
-        # Only run setup if challenge file doesn't exist
-        if [ ! -f /etc/yubico/challenge-5252959 ]; then
-          echo "Setting up YubiKey challenge-response for serial 5252959..."
-          ${pkgs.yubikey-personalization}/bin/ykpamcfg -2 -v
-
-          # Set proper permissions
-          if [ -f /etc/yubico/challenge-5252959 ]; then
-            chmod 600 /etc/yubico/challenge-5252959
-            chown root:root /etc/yubico/challenge-5252959
-            echo "YubiKey challenge-response setup completed"
-          else
-            echo "Warning: YubiKey challenge-response setup failed"
+        # Wait for YubiKey to be detected
+        echo "Waiting for YubiKey..."
+        for i in {1..10}; do
+          if ${pkgs.yubikey-manager}/bin/ykman list >/dev/null 2>&1; then
+            echo "YubiKey detected"
+            break
           fi
-        else
+          echo "Attempt $i: YubiKey not found, waiting..."
+          sleep 2
+        done
+
+        # Check if YubiKey is our expected serial
+        SERIAL=$(${pkgs.yubikey-manager}/bin/ykman list --serials 2>/dev/null | head -1 || echo "none")
+        if [ "$SERIAL" != "5252959" ]; then
+          echo "Expected YubiKey serial 5252959, found: $SERIAL"
+          exit 1
+        fi
+
+        # Check if challenge-response is already configured
+        if ${pkgs.yubikey-manager}/bin/ykman otp info 2>/dev/null | grep -q "Slot 2.*configured"; then
           echo "YubiKey challenge-response already configured"
+        else
+          echo "Setting up YubiKey challenge-response for serial 5252959..."
+          echo "Please touch your YubiKey when it blinks..."
+          ${pkgs.yubikey-manager}/bin/ykman otp chalresp --touch --generate 2
+          echo "YubiKey challenge-response setup completed"
         fi
       ''}";
     };
   };
 
   security.pam.services = {
-    # Enable YubiKey challenge-response for doas (our sudo replacement)
-    doas.yubicoAuth = true;
+    # Temporarily disable YubiKey for debugging
+    # doas.yubicoAuth = true;
 
     login = {
       enableGnomeKeyring = true;
-      yubicoAuth = true;  # Enable YubiKey for login
+      # yubicoAuth = true;  # Temporarily disabled for debugging
     };
 
-    # Enable YubiKey for SDDM display manager
-    sddm.yubicoAuth = true;
+    # Temporarily disable YubiKey for SDDM
+    # sddm.yubicoAuth = true;
   };
 
   # GNOME Keyring

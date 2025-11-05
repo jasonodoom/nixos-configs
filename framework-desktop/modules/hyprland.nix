@@ -5,6 +5,8 @@
   # Enable Hyprland
   programs.hyprland = {
     enable = true;
+    withUWSM = true;  # Universal Wayland Session Manager (recommended)
+    xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
 
   # Display manager for Hyprland
@@ -473,6 +475,7 @@
     enable = true;
     wlr.enable = true;
     extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland  # Required for Hyprland
       xdg-desktop-portal-gtk
     ];
   };

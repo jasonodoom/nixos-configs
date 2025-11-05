@@ -240,26 +240,20 @@ This configuration includes automated YubiKey challenge-response authentication 
 ### How It Works
 
 1. **Systemd service**: `yubikey-setup.service` runs on first boot
-2. **Challenge-response mapping**: Creates `/etc/yubico/challenge-5252959` using `ykpamcfg`
-3. **PAM integration**: Enables YubiKey authentication for:
-   - System login
-   - SDDM display manager
-   - doas commands
+2. **Challenge-response setup**: Configures slot 2 using `ykman otp chalresp --touch --generate 2`
+3. **PAM integration**: Uses serial number `5252959` directly in configuration
+4. **Authentication**: Enabled for system login, SDDM display manager and doas commands
 
 ### Manual Setup (if needed)
 
 If automatic setup fails, you can manually configure:
 
 ```bash
-# Create yubico directory
-sudo mkdir -p /etc/yubico
-
 # Set up challenge-response (YubiKey must be plugged in)
-sudo ykpamcfg -2 -v
+ykman otp chalresp --touch --generate 2
 
-# Set proper permissions
-sudo chmod 600 /etc/yubico/challenge-*
-sudo chown root:root /etc/yubico/challenge-*
+# Verify configuration
+ykman otp info
 ```
 
 ### Usage
@@ -273,7 +267,8 @@ sudo chown root:root /etc/yubico/challenge-*
 - Ensure YubiKey is plugged in during setup
 - Check service status: `systemctl status yubikey-setup.service`
 - View logs: `journalctl -u yubikey-setup.service`
-- Verify mapping file exists: `ls -la /etc/yubico/`
+- Verify YubiKey configuration: `ykman otp info`
+- Check serial number: `ykman list --serials`
 
 ## Testing
 
