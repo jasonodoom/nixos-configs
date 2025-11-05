@@ -115,14 +115,14 @@ jobs:
         git add flake.lock
 
         # Create detailed commit message
-        cat > ../commit-message.txt << 'EOF'
-auto: update flake inputs
-
-$(cat ../update-summary.md)
-
-Automated update by GitHub Actions
-All tests passed locally
-EOF
+        {
+          echo "auto: update flake inputs"
+          echo ""
+          cat ../update-summary.md
+          echo ""
+          echo "Automated update by GitHub Actions"
+          echo "All tests passed locally"
+        } > ../commit-message.txt
 
         git commit -F ../commit-message.txt
         git push origin unstable
