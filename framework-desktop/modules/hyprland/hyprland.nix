@@ -152,12 +152,11 @@
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
 
-    # Wallpaper - BA_usr style with hyprpaper
-    exec-once = hyprpaper
-    exec-once = hyprctl hyprpaper wallpaper ",/etc/wallpapers/default.png"
+    # Wallpaper - use swaybg as fallback to avoid startup issues
+    exec-once = swaybg -c "#1e1e2e"
 
     # Autostart applications
-    exec-once = sleep 1 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
+    exec-once = sleep 2 && waybar
     exec-once = nm-applet --indicator
     exec-once = blueman-applet
   '';

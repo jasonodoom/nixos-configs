@@ -6,7 +6,7 @@
   system.stateVersion = "25.05";
 
   # SDDM theme selection
-  # services.displayManager.sddm.theme-config = "astronaut-hacker";  # Temporarily disabled for debug testing
+  services.displayManager.sddm.theme-config = "astronaut-hacker";
 
   # Nix configuration
   nix = {
