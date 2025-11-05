@@ -1,6 +1,6 @@
 # NixOS Configuration for Framework Desktop
 
-[![Garnix Build](https://img.shields.io/endpoint?url=https://garnix.io/api/v2/badges/jasonodoom/nixos-configs?dir=framework-desktop&output=nixosConfigurations.perdurabo.config.system.build.toplevel)](https://garnix.io/jasonodoom/nixos-configs)
+[![Garnix Build](https://img.shields.io/endpoint?url=https://garnix.io/api/v2/badges/jasonodoom/nixos-configs)](https://garnix.io/jasonodoom/nixos-configs)
 [![GitHub Actions CI](https://github.com/jasonodoom/nixos-configs/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonodoom/nixos-configs/actions/workflows/ci.yml)
 [![Built with Nix](https://img.shields.io/badge/Built_With-Nix-5277C3.svg?logo=nixos&labelColor=73C3D5)](https://nixos.org)
 

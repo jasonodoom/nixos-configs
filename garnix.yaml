@@ -5,6 +5,9 @@ builds:
     dir: framework-desktop
     outputs:
       nixosConfigurations.perdurabo.config.system.build.toplevel: {}
+    exclude:
+      - "devShells.*"
+      - "checks.*"
 
   # Add more hosts here as needed
   # laptop.nixosConfigurations.mylaptop: {}
