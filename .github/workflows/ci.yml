@@ -1,0 +1,104 @@
+name: NixOS Configuration CI with Garnix
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-with-garnix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [framework-desktop]
+        # Add more hosts here as you create them
+        # host: [framework-desktop, laptop, server]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Install Nix with Garnix cache
+      uses: cachix/install-nix-action@v23
+      with:
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org/ https://cache.garnix.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=
+
+    - name: Check flake syntax
+      run: |
+        cd ${{ matrix.host }}
+        nix flake check --accept-flake-config
+
+    - name: Build NixOS configuration via Garnix cache
+      run: |
+        cd ${{ matrix.host }}
+        # Use Garnix cache for faster builds
+        nix build .#nixosConfigurations.$(basename $(pwd) | sed 's/framework-desktop/perdurabo/') \
+          --accept-flake-config \
+          --option substituters "https://cache.nixos.org/ https://cache.garnix.io" \
+          --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+
+    - name: Test development shells
+      run: |
+        cd ${{ matrix.host }}
+        # Test that all dev shells can be built
+        for shell in go python node rust devops; do
+          echo "Testing $shell development shell..."
+          nix develop .#$shell --command echo "$shell shell works"
+        done
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v23
+      with:
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+
+    - name: Check Nix formatting
+      run: |
+        # Check if nixfmt is available, otherwise skip
+        if command -v nixfmt &> /dev/null; then
+          find . -name "*.nix" -exec nixfmt --check {} \; || {
+            echo "Nix files are not properly formatted"
+            echo "Run 'nixfmt' on the files to fix formatting issues"
+            exit 1
+          }
+        else
+          echo "nixfmt not available, skipping format check"
+        fi
+
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Basic security audit
+      run: |
+        echo "Running basic security checks..."
+
+        # Check for hardcoded passwords or secrets
+        if grep -r -i "password.*=" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets"; then
+          echo "Found potential hardcoded passwords"
+          exit 1
+        fi
+
+        # Check for common misconfigurations
+        if grep -r "permitRootLogin.*yes" --include="*.nix" .; then
+          echo "Root login is enabled - ensure this is intentional"
+        fi
+
+        if grep -r "passwordAuthentication.*true" --include="*.nix" .; then
+          echo "Password authentication is enabled - consider key-only auth"
+        fi
+
+        echo "Basic security checks passed"

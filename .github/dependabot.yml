@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "18:00"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps"
+      include: "scope"
+    reviewers:
+      - "jasonodoom"
+    open-pull-requests-limit: 5

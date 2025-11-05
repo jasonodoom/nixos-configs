@@ -1,0 +1,192 @@
+name: Dependency Graph Visualization
+
+on:
+  push:
+    branches: [ main, unstable ]
+  pull_request:
+    branches: [ main, unstable ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  dependency-graph:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [framework-desktop]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v13
+      with:
+        source-tag: "v3.12.1"
+        extra-conf: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install GraphViz
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+
+    - name: Generate dependency graph
+      run: |
+        cd ${{ matrix.host }}
+        echo "Generating flake dependency tree..."
+
+        # Generate flake info
+        nix flake show --json > flake-outputs.json
+        nix flake show --all-systems > flake-structure.txt
+
+        # Generate build dependency graph for the main configuration
+        echo "Building dependency graph..."
+        nix show-derivation .#nixosConfigurations.perdurabo --accept-flake-config | \
+          jq -r '
+            to_entries[] |
+            select(.value.inputDrvs != {}) |
+            .key as $drv |
+            (.key | split("/")[-1] | split("-"; 2)[1]) as $drvname |
+            .value.inputDrvs |
+            to_entries[] |
+            (.key | split("/")[-1] | split("-"; 2)[1]) as $depname |
+            "\"\($drvname)\" -> \"\($depname)\""
+          ' > dependencies.dot.partial
+
+        # Create a proper DOT file
+        echo "digraph dependencies {" > dependencies.dot
+        echo "  rankdir=TB;" >> dependencies.dot
+        echo "  node [shape=box, style=\"rounded,filled\", fillcolor=lightblue];" >> dependencies.dot
+        echo "  edge [color=gray];" >> dependencies.dot
+        cat dependencies.dot.partial >> dependencies.dot
+        echo "}" >> dependencies.dot
+
+        # Generate visualizations
+        dot -Tsvg dependencies.dot -o dependency-graph.svg
+        dot -Tpng dependencies.dot -o dependency-graph.png
+
+        # Show Nix store info using Determinate installer features
+        echo "=== Nix Store Analysis ===" > store-analysis.txt
+        nix path-info .#nixosConfigurations.perdurabo --closure-size --human-readable >> store-analysis.txt
+        echo "" >> store-analysis.txt
+        echo "=== Top 20 Dependencies by Size ===" >> store-analysis.txt
+        nix path-info .#nixosConfigurations.perdurabo --closure-size --json | \
+          jq -r '.[] | "\(.closureSize) \(.path)"' | \
+          sort -nr | head -20 >> store-analysis.txt
+
+        echo "Generated files:"
+        ls -la *.svg *.png *.json *.txt
+
+    - name: Upload dependency artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-graphs-${{ matrix.host }}
+        path: |
+          ${{ matrix.host }}/dependency-graph.svg
+          ${{ matrix.host }}/dependency-graph.png
+          ${{ matrix.host }}/flake-outputs.json
+          ${{ matrix.host }}/flake-structure.txt
+          ${{ matrix.host }}/store-analysis.txt
+        retention-days: 30
+
+    - name: Generate dependency summary
+      run: |
+        cd ${{ matrix.host }}
+        echo "# Dependency Analysis Summary" > dependency-summary.md
+        echo "Generated on: $(date)" >> dependency-summary.md
+        echo "" >> dependency-summary.md
+
+        echo "## Flake Outputs" >> dependency-summary.md
+        echo '```json' >> dependency-summary.md
+        cat flake-outputs.json >> dependency-summary.md
+        echo '```' >> dependency-summary.md
+        echo "" >> dependency-summary.md
+
+        echo "## Flake Structure" >> dependency-summary.md
+        echo '```' >> dependency-summary.md
+        cat flake-structure.txt >> dependency-summary.md
+        echo '```' >> dependency-summary.md
+
+        echo "## Input Dependencies" >> dependency-summary.md
+        nix flake metadata --json | jq -r '
+          .locks.nodes |
+          to_entries[] |
+          select(.key != "root") |
+          "- **\(.key)**: \(.value.original.owner // "local")/\(.value.original.repo // .value.original.path // "unknown") (\(.value.locked.rev // .value.locked.narHash // "latest")[0:7])"
+        ' >> dependency-summary.md
+
+    - name: Upload image to GitHub and embed in PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+
+          // Read the dependency summary
+          const summaryPath = '${{ matrix.host }}/dependency-summary.md';
+          const summary = fs.existsSync(summaryPath) ? fs.readFileSync(summaryPath, 'utf8') : 'No summary available';
+
+          // Read and base64 encode the PNG image
+          const imagePath = '${{ matrix.host }}/dependency-graph.png';
+          let imageContent = '';
+
+          if (fs.existsSync(imagePath)) {
+            const imageBuffer = fs.readFileSync(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+
+            // Create a temporary file in the repo to host the image
+            const imageFileName = `dependency-graph-${Date.now()}.png`;
+
+            try {
+              // Upload the image to the repository
+              await github.rest.repos.createOrUpdateFileContents({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: `.github/temp/${imageFileName}`,
+                message: 'Add dependency graph image',
+                content: base64Image,
+                branch: context.payload.pull_request.head.ref
+              });
+
+              const imageUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.payload.pull_request.head.ref}/.github/temp/${imageFileName}`;
+              imageContent = `\n\n## Dependency Graph\n\n![Dependency Graph](${imageUrl})\n\n`;
+            } catch (error) {
+              console.log('Failed to upload image:', error.message);
+              imageContent = '\n\n## Dependency Graph\n\n*Graph image available in workflow artifacts*\n\n';
+            }
+          }
+
+          // Create the PR comment with embedded image
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## Dependency Analysis\n\n${summary}${imageContent}[Download all artifacts](${context.payload.pull_request.html_url}/checks)`
+          });
+
+    - name: Add to job summary
+      run: |
+        cd ${{ matrix.host }}
+        echo "## Dependency Analysis Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ -f "store-analysis.txt" ]; then
+          echo "### Nix Store Analysis" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat store-analysis.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "### Flake Structure" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat flake-structure.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+        echo "### Generated Files" >> $GITHUB_STEP_SUMMARY
+        echo "- Dependency Graph (SVG): \`dependency-graph.svg\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Dependency Graph (PNG): \`dependency-graph.png\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Flake Outputs: \`flake-outputs.json\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Store Analysis: \`store-analysis.txt\`" >> $GITHUB_STEP_SUMMARY
