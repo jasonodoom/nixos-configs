@@ -19,6 +19,26 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
+    - name: Free up disk space
+      run: |
+        echo "Disk usage before cleanup:"
+        df -h
+        # Remove unnecessary packages and files
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /usr/local/graalvm
+        sudo rm -rf /usr/local/share/chromium
+        sudo rm -rf /usr/local/share/powershell
+        sudo rm -rf /opt/microsoft
+        sudo docker image prune --all --force
+        sudo apt-get autoremove -y
+        sudo apt-get autoclean
+        echo "Disk usage after cleanup:"
+        df -h
+
     - name: Install Nix with Garnix cache
       uses: DeterminateSystems/nix-installer-action@v13
       with:
@@ -41,7 +61,13 @@ jobs:
         nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
           --accept-flake-config \
           --option substituters "https://cache.nixos.org/ https://cache.garnix.io" \
-          --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+          --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" \
+          --option max-jobs 1 \
+          --option cores 2
+        # Clean up after build to save space
+        nix-collect-garbage
+        echo "Disk usage after build:"
+        df -h
 
     - name: Test development shells
       run: |

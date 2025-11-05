@@ -13,10 +13,10 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;  # Use X11 mode for better theme compatibility
-    theme = "sddm-astronaut-theme";  # Use astronaut theme
+    theme = "sddm-apocalypse-theme";  # Post-apocalyptic hacker theme
     settings = {
       Theme = {
-        Current = "sddm-astronaut-theme";
+        Current = "sddm-apocalypse-theme";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
@@ -324,18 +324,18 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
-    # SDDM Astronaut theme
+    # SDDM Post-apocalyptic hacker theme
     (stdenv.mkDerivation {
-      name = "sddm-astronaut-theme";
+      name = "sddm-apocalypse-theme";
       src = fetchFromGitHub {
-        owner = "Keyitdev";
-        repo = "sddm-astronaut-theme";
-        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+        owner = "rototrash";
+        repo = "sddm-apocalypse-theme";
+        rev = "6cdbb83dbb92b3e1f7ff3331cd75edaf3b503d09";
+        sha256 = "sha256-29V7LbvPrDwQDLDNnqgZE6r6b2n3bwVpAD1QWhjrZQo=";
       };
       installPhase = ''
-        mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
-        cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
+        mkdir -p $out/share/sddm/themes/sddm-apocalypse-theme
+        cp -R * $out/share/sddm/themes/sddm-apocalypse-theme/
       '';
     })
   ];
