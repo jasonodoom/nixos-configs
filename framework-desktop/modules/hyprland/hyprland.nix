@@ -12,7 +12,7 @@
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = true;
+    wayland.enable = false;  # Temporarily disable Wayland to test theme
     theme = "sddm-astronaut-theme";
     settings = {
       Theme = {
@@ -313,6 +313,11 @@
     kdePackages.qtsvg
     kdePackages.qtvirtualkeyboard
     kdePackages.qtmultimedia
+
+    # Qt5 compatibility for SDDM theme
+    qt5.qtgraphicaleffects
+    qt5.qtquickcontrols2
+    qt5.qtsvg
 
     # SDDM Astronaut theme
     (stdenv.mkDerivation {
