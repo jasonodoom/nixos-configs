@@ -13,10 +13,10 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
-    theme = "astronaut";
+    theme = "sddm-astronaut-theme";
     settings = {
       Theme = {
-        Current = "astronaut";
+        Current = "sddm-astronaut-theme";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
@@ -29,46 +29,7 @@
 
   services.displayManager.defaultSession = "hyprland-uwsm";
 
-  # SDDM Astronaut theme configuration
-  environment.etc."sddm/themes/astronaut" = {
-    source = pkgs.fetchFromGitHub {
-      owner = "Keyitdev";
-      repo = "sddm-astronaut-theme";
-      rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-      sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
-    };
-  };
 
-  # Post-apocalyptic hacker theme config
-  # https://github.com/Keyitdev/sddm-astronaut-theme/blob/master/Themes/post-apocalyptic_hacker.conf
-  environment.etc."sddm/themes/astronaut/theme.conf".text = ''
-    [General]
-    type=image
-    color=#000000
-    fontSize=15
-    font=JetBrains Mono
-    fontColor=#bfb098
-
-    [Background]
-    background=Backgrounds/post-apocalyptic_hacker.png
-    scaleImageCropped=true
-
-    [UserPicture]
-    userPictureEnabled=false
-
-    [Interface]
-    showLoginButton=true
-    showUserList=false
-    showPasswordVisibilityButton=false
-    hideVirtualKeyboard=true
-    hideSystemButtons=true
-
-    [Input]
-    placeholderColor=#685841
-    color=#bfb098
-    backgroundColor=#33151f
-    borderColor=#4d1927
-  '';
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
@@ -348,12 +309,24 @@
     kdePackages.breeze
     kdePackages.breeze-icons
 
+    # Qt6 dependencies for SDDM astronaut theme
+    kdePackages.qtsvg
+    kdePackages.qtvirtualkeyboard
+    kdePackages.qtmultimedia
+
     # SDDM Astronaut theme
-    (pkgs.fetchFromGitHub {
-      owner = "Keyitdev";
-      repo = "sddm-astronaut-theme";
-      rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-      sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+    (stdenv.mkDerivation {
+      name = "sddm-astronaut-theme";
+      src = fetchFromGitHub {
+        owner = "Keyitdev";
+        repo = "sddm-astronaut-theme";
+        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
+        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+      };
+      installPhase = ''
+        mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
+        cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
+      '';
     })
   ];
 
