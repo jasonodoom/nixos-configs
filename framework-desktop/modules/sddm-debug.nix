@@ -50,8 +50,12 @@
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
-      # Restore default user settings - no hiding
-      Users = {};
+      # Hide usernames for security (like original themes.nix)
+      Users = {
+        HideUsers = "*";
+        HideShells = "/bin/false,/usr/bin/nologin";
+        RememberLastUser = false;
+      };
     };
   };
 
