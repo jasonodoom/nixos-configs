@@ -18,7 +18,7 @@ in
   };
 
   # Display manager for Hyprland
-  services.xserver.displayManager.sddm = {
+  services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
