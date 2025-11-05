@@ -1,15 +1,33 @@
 # Temporary SDDM debugging configuration
-# This module temporarily disables complex SDDM settings to isolate the black screen issue
+# This module tests astronaut theme with proper packages installed
 { config, pkgs, lib, ... }:
 
 {
-  # Completely override the themes.nix SDDM configuration for debugging
+  # Install astronaut theme package and Qt6 dependencies
+  environment.systemPackages = [
+    (pkgs.sddm-astronaut.override {
+      embeddedTheme = "astronaut";
+      themeConfig = {};
+    })
+    pkgs.kdePackages.qtmultimedia
+    pkgs.kdePackages.qtsvg
+  ];
+
+  # Override SDDM configuration with proper astronaut theme setup
   services.displayManager.sddm = lib.mkForce {
     enable = true;
-    # Use default Qt5 SDDM to eliminate Qt6 as a variable
+
+    # Use Qt6 SDDM package for astronaut theme
+    package = pkgs.kdePackages.sddm;
+
     wayland.enable = false;
-    # Test astronaut theme with Qt5
     theme = "sddm-astronaut-theme";
+
+    # Add Qt6 packages needed for astronaut theme
+    extraPackages = [
+      pkgs.kdePackages.qtmultimedia
+      pkgs.kdePackages.qtsvg
+    ];
 
     # Minimal settings - no custom configurations
     settings = {
@@ -18,25 +36,26 @@
         # Enable more verbose logging
         LogLevel = "DEBUG";
       };
+      Theme = {
+        Current = "sddm-astronaut-theme";
+      };
       # Restore default user settings - no hiding
       Users = {};
     };
   };
 
-  # Ensure X11 input drivers are properly configured
-  services.xserver = {
+  # Ensure X11 and input drivers are properly configured
+  services.xserver.enable = true;
+
+  services.libinput = {
     enable = true;
-    # Explicitly configure input drivers
-    libinput = {
-      enable = true;
-      mouse = {
-        accelProfile = "flat";
-        accelSpeed = "0";
-      };
-      touchpad = {
-        accelProfile = "flat";
-        accelSpeed = "0";
-      };
+    mouse = {
+      accelProfile = "flat";
+      accelSpeed = "0";
+    };
+    touchpad = {
+      accelProfile = "flat";
+      accelSpeed = "0";
     };
   };
 }
