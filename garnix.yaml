@@ -4,7 +4,7 @@ builds:
   framework-desktop:
     dir: framework-desktop
     outputs:
-      nixosConfigurations.perdurabo: {}
+      nixosConfigurations.perdurabo.config.system.build.toplevel: {}
       devShells.x86_64-linux.go: {}
       devShells.x86_64-linux.python: {}
       devShells.x86_64-linux.node: {}
@@ -49,22 +49,22 @@ hosting:
       # You can specify which flake outputs to host
       # For NixOS configurations, we typically want to host the system
       outputs:
-        - nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo.config.system.build.toplevel
       dir: framework-desktop
     # Enable hosting for pull requests
     "pull/*":
       outputs:
-        - nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo.config.system.build.toplevel
       dir: framework-desktop
     # Enable hosting for feature branches
     "feature/*":
       outputs:
-        - nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo.config.system.build.toplevel
       dir: framework-desktop
     # Enable hosting for development branches
     "dev/*":
       outputs:
-        - nixosConfigurations.perdurabo
+        - nixosConfigurations.perdurabo.config.system.build.toplevel
       dir: framework-desktop
 
   # Optional: Configure hosting settings
