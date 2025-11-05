@@ -19,13 +19,9 @@
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
-    # Monitor configuration - Framework Desktop with dual displays
-    # Based on detected displays: DP-10, DP-11 (connected), HDMI-A-1 (connected)
-    monitor=DP-10,1920x1080@60,0x0,1
-    monitor=DP-11,1920x1080@60,1920x0,1
-    monitor=HDMI-A-1,disable  # Disable HDMI if using DP monitors
-    # Alternatively, if using HDMI instead of one DP:
-    # monitor=HDMI-A-1,1920x1080@60,1920x0,1
+    # Monitor configuration - auto-detect displays
+    # Let Hyprland automatically detect and configure displays
+    monitor=,preferred,auto,1
 
     # Input configuration
     input {
