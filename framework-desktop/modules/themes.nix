@@ -33,6 +33,9 @@ let
         pkgs.qt5.qtquickcontrols2
         pkgs.qt5.qtsvg
         pkgs.qt5.qtmultimedia
+        # Cursor theme packages to fix "Could not setup default cursor"
+        pkgs.libsForQt5.breeze-qt5
+        pkgs.libsForQt5.breeze-icons
       ];
     };
 
@@ -57,6 +60,9 @@ let
         pkgs.qt5.qtquickcontrols2
         pkgs.qt5.qtsvg
         pkgs.qt5.qtmultimedia
+        # Cursor theme packages to fix "Could not setup default cursor"
+        pkgs.libsForQt5.breeze-qt5
+        pkgs.libsForQt5.breeze-icons
       ];
     };
 
