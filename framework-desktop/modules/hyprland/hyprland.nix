@@ -152,8 +152,8 @@
     bind = $mod SHIFT, L, exec, loginctl lock-session
     bind = $mod SHIFT, Q, exec, hyprctl dispatch exit
     bind = $mod SHIFT, S, exec, systemctl suspend
-    bind = $mod, Escape, exec, wlogout -p layer-shell
-    bind = $mod SHIFT, P, exec, wlogout -p layer-shell
+    bind = $mod, Escape, exec, wlogout --layer-shell
+    bind = $mod SHIFT, P, exec, wlogout --layer-shell
 
     # Direct power shortcuts (with confirmation)
     bind = $mod CTRL SHIFT, R, exec, systemctl reboot
@@ -166,10 +166,11 @@
     # Wallpaper - use swaybg as fallback to avoid startup issues
     exec-once = swaybg -c "#1e1e2e"
 
-    # Autostart applications - using explicit paths and better error handling
-    exec-once = sleep 3 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
-    # Alternative waybar startup method if first fails
-    exec-once = sleep 5 && pkill waybar; waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
+    # Autostart applications with proper timing and error handling
+    exec-once = sleep 1 && pkill waybar || true
+    exec-once = sleep 2 && waybar --config /etc/xdg/waybar/config --style /etc/xdg/waybar/style.css --log-level info
+    # Fallback waybar startup if first attempt fails
+    exec-once = sleep 8 && pgrep waybar || waybar --config /etc/xdg/waybar/config --style /etc/xdg/waybar/style.css
     # Removed nm-applet and blueman-applet - waybar handles these with styled modules
   '';
 
@@ -472,6 +473,14 @@
     dbus.enable = true;
     gnome.gnome-keyring.enable = true;
     upower.enable = true;
+  };
+
+  # Fix PAM configuration for gnome-keyring to resolve challenge-response errors
+  security.pam.services = {
+    login.enableGnomeKeyring = true;
+    sddm.enableGnomeKeyring = true;
+    sddm-greeter.enableGnomeKeyring = true;
+    passwd.enableGnomeKeyring = true;
   };
 
   # Session variables

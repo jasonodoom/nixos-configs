@@ -2,7 +2,7 @@
 { config, pkgs, ... }:
 
 {
-  # Rofi configuration - place in correct location
+  # Rofi configuration with inline theme
   environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
         modi: "run,drun,window";
@@ -20,27 +20,8 @@
         display-Network: " 󰤨  Network";
         sidebar-mode: true;
     }
-  '';
 
-  # Also create config in user's home directory as fallback
-  environment.etc."skel/.config/rofi/config.rasi".text = ''
-    configuration {
-        modi: "run,drun,window";
-        lines: 5;
-        font: "Fira Code 12";
-        show-icons: true;
-        terminal: "kitty";
-        drun-display-format: "{icon} {name}";
-        location: 0;
-        disable-history: false;
-        hide-scrollbar: true;
-        display-drun: "   Apps ";
-        display-run: "   Run ";
-        display-window: " 﩯  Window";
-        display-Network: " 󰤨  Network";
-        sidebar-mode: true;
-        theme: "/etc/xdg/rofi/themes/style.rasi";
-    }
+    @theme "/etc/xdg/rofi/themes/style.rasi"
   '';
 
   # Rofi theme configuration (Tokyo Night inspired)
