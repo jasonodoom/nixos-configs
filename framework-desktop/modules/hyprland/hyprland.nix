@@ -34,6 +34,11 @@ in
       Theme = {
         Current = "sddm-astronaut-theme";
       };
+      Users = {
+        HideUsers = "";
+        HideShells = "/bin/false,/usr/bin/nologin";
+        RememberLastUser = false;
+      };
     };
   };
 
