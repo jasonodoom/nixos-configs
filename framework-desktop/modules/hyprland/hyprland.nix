@@ -12,8 +12,14 @@
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
+    package = pkgs.kdePackages.sddm; # Qt6 SDDM version
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
+    extraPackages = [
+      (pkgs.sddm-astronaut.override {
+        embeddedTheme = "post-apocalyptic_hacker";
+      })
+    ];
     settings = {
       General = {
         DisplayServer = "x11";
@@ -320,16 +326,6 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
-    # SDDM Astronaut theme with post-apocalyptic hacker variant (Qt5 compatible)
-    ((pkgs.sddm-astronaut.override {
-      embeddedTheme = "post-apocalyptic_hacker";
-    }).overrideAttrs (oldAttrs: {
-      postPatch = (oldAttrs.postPatch or "") + ''
-        # Fix QtVersion in metadata.desktop for Qt5 compatibility
-        substituteInPlace metadata.desktop \
-          --replace-fail "QtVersion=6" "QtVersion=5"
-      '';
-    }))
   ];
 
   # Enable required services
