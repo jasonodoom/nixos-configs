@@ -15,11 +15,6 @@
     package = pkgs.kdePackages.sddm; # Qt6 SDDM version
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
-    extraPackages = [
-      (pkgs.sddm-astronaut.override {
-        embeddedTheme = "post-apocalyptic_hacker";
-      })
-    ];
     settings = {
       General = {
         DisplayServer = "x11";
@@ -326,6 +321,10 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
+    # SDDM Astronaut theme with post-apocalyptic hacker variant
+    (pkgs.sddm-astronaut.override {
+      embeddedTheme = "post-apocalyptic_hacker";
+    })
   ];
 
   # Enable required services

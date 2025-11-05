@@ -1,3 +1,4 @@
 builds:
-  framework-desktop:
-    dir: framework-desktop
+  include:
+    - "framework-desktop#nixosConfigurations.perdurabo"
+    - "framework-desktop#devShells.*"
