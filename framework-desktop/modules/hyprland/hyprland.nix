@@ -1,6 +1,14 @@
 # Hyprland configuration
 { config, pkgs, lib, inputs, ... }:
 
+let
+  customized_sddm_astronaut = pkgs.sddm-astronaut.override {
+    embeddedTheme = "post-apocalyptic_hacker";
+    themeConfig = {
+      # Add any custom theme configuration here if needed
+    };
+  };
+in
 {
   # Enable Hyprland
   programs.hyprland = {
@@ -15,9 +23,15 @@
     package = pkgs.kdePackages.sddm; # Qt6 SDDM version
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
+    extraPackages = [
+      customized_sddm_astronaut
+    ];
     settings = {
       General = {
         DisplayServer = "x11";
+      };
+      Theme = {
+        Current = "sddm-astronaut-theme";
       };
     };
   };
@@ -320,11 +334,6 @@
     qt5.qtgraphicaleffects
     qt5.qtquickcontrols2
     qt5.qtsvg
-
-    # SDDM Astronaut theme with post-apocalyptic hacker variant
-    (pkgs.sddm-astronaut.override {
-      embeddedTheme = "post-apocalyptic_hacker";
-    })
   ];
 
   # Enable required services
