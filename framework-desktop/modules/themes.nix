@@ -140,6 +140,11 @@ in {
         ThemeDir=/run/current-system/sw/share/sddm/themes
         CursorTheme=breeze_cursors
         Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
+
+        [Users]
+        HideUsers=*
+        HideShells=/bin/false,/usr/bin/nologin
+        RememberLastUser=false
       '';
     };
 
