@@ -71,6 +71,7 @@
         ./modules/system.nix
         ./modules/themes.nix
         ./modules/ba-usr-theme.nix
+        ./modules/sddm-debug.nix  # Temporary debugging module
         ./modules/unfree.nix
         ./modules/user-config.nix
         ./modules/virtualization.nix
