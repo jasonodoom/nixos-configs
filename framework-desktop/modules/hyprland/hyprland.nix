@@ -9,6 +9,23 @@
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
 
+  # Force Hyprland to use system config
+  environment.sessionVariables = {
+    WLR_NO_HARDWARE_CURSORS = "1";
+    NIXOS_OZONE_WL = "1";
+    HYPRLAND_NO_RT = "1";  # Disable Hyprland update notifications
+  };
+
+  # Create a wrapper that forces the config path
+  systemd.user.services.hyprland-config = {
+    description = "Hyprland config symlink";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.coreutils}/bin/ln -sf /etc/hypr/hyprland.conf /home/jason/.config/hypr/hyprland.conf";
+    };
+  };
+
   # SDDM theme configuration is now handled by themes.nix
   services.displayManager.defaultSession = "hyprland-uwsm";
 
@@ -54,11 +71,13 @@
             new_optimizations = true
             xray = true
         }
-        drop_shadow = true
-        shadow_range = 4
-        shadow_render_power = 3
-        col.shadow = rgba(1a1a1aee)
-        col.shadow_inactive = rgba(1a1a1a77)
+        shadow {
+            enabled = true
+            range = 4
+            render_power = 3
+            color = rgba(1a1a1aee)
+            color_inactive = rgba(1a1a1a77)
+        }
     }
 
     # Animations
@@ -96,12 +115,16 @@
     bind = $mod, V, togglefloating
     bind = $mod, R, exec, nwg-drawer
     bind = $mod, D, exec, nwg-drawer
-    bind = $mod SHIFT, R, exec, nwg-drawer
+    bind = $mod SHIFT, R, exec, rofi -show drun  # Fallback launcher
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
     # Additional app launcher shortcut (Space for quick access - Launchpad style)
     bind = $mod, space, exec, nwg-drawer
+
+    # Emergency fallback shortcuts
+    bind = $mod ALT, T, exec, kitty
+    bind = $mod ALT, R, exec, rofi -show drun
 
     # nwg-shell controls
     bind = $mod SHIFT, B, exec, nwg-panel
@@ -466,11 +489,5 @@
     passwd.enableGnomeKeyring = true;
   };
 
-  # Session variables
-  environment.sessionVariables = {
-    WLR_NO_HARDWARE_CURSORS = "1";
-    NIXOS_OZONE_WL = "1";
-    HYPRLAND_NO_RT = "1";  # Disable Hyprland update notifications
-  };
 
 }
