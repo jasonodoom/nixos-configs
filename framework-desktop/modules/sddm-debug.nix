@@ -20,15 +20,11 @@
       '';
     })
 
-    # Qt6 packages for rendering
-    pkgs.kdePackages.qtsvg
-    pkgs.kdePackages.qtmultimedia
-    pkgs.kdePackages.qtvirtualkeyboard
-
-    # Critical Qt5 packages (missing from current config)
+    # Qt5 packages only (to avoid Qt dependency conflicts with Qt5 SDDM)
     pkgs.qt5.qtgraphicaleffects
     pkgs.qt5.qtquickcontrols2
     pkgs.qt5.qtsvg
+    pkgs.qt5.qtmultimedia
   ];
 
   # Override SDDM configuration - FORCE Qt5 SDDM for astronaut theme compatibility
