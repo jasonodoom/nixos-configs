@@ -47,9 +47,13 @@ This is a NixOS configuration written specifically for the Framework Desktop Max
     ├── audio.nix              # Audio system (PipeWire)
     ├── bluetooth.nix          # Bluetooth configuration
     ├── development.nix        # System development tools (no languages)
-    ├── gaming.nix             # Gaming setup 
+    ├── gaming.nix             # Gaming setup
     ├── graphics.nix           # AMD graphics configuration
-    ├── hyprland.nix           # Hyprland window manager + Tokyo Night theme
+    ├── hyprland/              # Hyprland window manager configuration
+    │   ├── hyprland.nix       # Main Hyprland config + Tokyo Night theme
+    │   ├── dunst.nix          # Notification daemon configuration
+    │   ├── waybar.nix         # Status bar configuration
+    │   └── rofi.nix           # Application launcher configuration
     ├── networking.nix         # Network and SSH configuration
     ├── security.nix           # Security configuration
     ├── system.nix             # Core system settings

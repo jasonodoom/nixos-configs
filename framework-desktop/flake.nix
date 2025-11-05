@@ -49,7 +49,10 @@
         ./modules/firefox.nix
         ./modules/gaming.nix
         ./modules/graphics.nix
-        ./modules/hyprland.nix
+        ./modules/hyprland/hyprland.nix
+        ./modules/hyprland/dunst.nix
+        ./modules/hyprland/waybar.nix
+        ./modules/hyprland/rofi.nix
         ./modules/networking.nix
         ./modules/security.nix
         ./modules/system.nix
