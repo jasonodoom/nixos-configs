@@ -52,7 +52,7 @@ jobs:
       run: |
         echo "Running basic security checks..."
 
-        if grep -r -i "password.*=" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets"; then
+        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton"; then
           echo "Found potential hardcoded passwords"
           exit 1
         fi

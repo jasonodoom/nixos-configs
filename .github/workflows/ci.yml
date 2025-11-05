@@ -38,7 +38,7 @@ jobs:
       run: |
         cd ${{ matrix.host }}
         # Use Garnix cache for faster builds
-        nix build .#nixosConfigurations.$(basename $(pwd) | sed 's/framework-desktop/perdurabo/') \
+        nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
           --accept-flake-config \
           --option substituters "https://cache.nixos.org/ https://cache.garnix.io" \
           --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="

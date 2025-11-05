@@ -1,0 +1,2 @@
+# Temporarily ignore secrets until host key is configured
+framework-desktop/secrets/
