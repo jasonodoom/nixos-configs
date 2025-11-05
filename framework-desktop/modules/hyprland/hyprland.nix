@@ -13,10 +13,11 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;  # Use X11 mode for better theme compatibility
-    theme = "sddm-apocalypse-theme";  # Post-apocalyptic hacker theme
+    theme = "sddm-astronaut-theme";  # Astronaut theme with post-apocalyptic hacker variant
     settings = {
       Theme = {
-        Current = "sddm-apocalypse-theme";
+        Current = "sddm-astronaut-theme";
+        ThemeDir = "/run/current-system/sw/share/sddm/themes";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
@@ -27,6 +28,31 @@
   };
 
   services.displayManager.defaultSession = "hyprland-uwsm";
+
+  # Configure SDDM theme variant for post-apocalyptic hacker
+  environment.etc."sddm.conf.d/theme.conf".text = ''
+    [Theme]
+    Current=sddm-astronaut-theme
+    ThemeDir=/run/current-system/sw/share/sddm/themes
+    CursorTheme=breeze_cursors
+    Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
+
+    # Post-apocalyptic hacker theme variant configuration
+    [sddm-astronaut-theme]
+    type=post-apocalyptic_hacker
+    Background=Backgrounds/post-apocalyptic_hacker.png
+    ScreenWidth=1920
+    ScreenHeight=1080
+    FormPosition=right
+    HaveVirtualKeyboard=true
+    VirtualKeyboardPosition=right
+    OverrideLoginButtonTextColor=#fc2e64
+    LoginButtonTextColor=#fc2e64
+    OverridePasswordFieldTextColor=#685841
+    PasswordFieldTextColor=#685841
+    AccentColor=#4d1927
+    BackgroundColor=#000000
+  '';
 
 
 
@@ -324,18 +350,18 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
 
-    # SDDM Post-apocalyptic hacker theme
+    # SDDM Astronaut theme (includes post-apocalyptic hacker variant)
     (stdenv.mkDerivation {
-      name = "sddm-apocalypse-theme";
+      name = "sddm-astronaut-theme";
       src = fetchFromGitHub {
-        owner = "rototrash";
-        repo = "sddm-apocalypse-theme";
-        rev = "6cdbb83dbb92b3e1f7ff3331cd75edaf3b503d09";
-        sha256 = "sha256-29V7LbvPrDwQDLDNnqgZE6r6b2n3bwVpAD1QWhjrZQo=";
+        owner = "Keyitdev";
+        repo = "sddm-astronaut-theme";
+        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
+        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
       };
       installPhase = ''
-        mkdir -p $out/share/sddm/themes/sddm-apocalypse-theme
-        cp -R * $out/share/sddm/themes/sddm-apocalypse-theme/
+        mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
+        cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
       '';
     })
   ];
