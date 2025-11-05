@@ -57,40 +57,36 @@
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      # Add retry and timeout
-      Restart = "on-failure";
-      RestartSec = "5s";
+      # Don't restart on failure - YubiKey may not be present
       TimeoutStartSec = "30s";
       ExecStart = "${pkgs.writeShellScript "yubikey-setup" ''
         # Create yubico directory
         mkdir -p /etc/yubico
 
-        # Wait for YubiKey to be detected
-        echo "Waiting for YubiKey..."
-        for i in {1..10}; do
-          if ${pkgs.yubikey-manager}/bin/ykman list >/dev/null 2>&1; then
-            echo "YubiKey detected"
-            break
-          fi
-          echo "Attempt $i: YubiKey not found, waiting..."
-          sleep 2
-        done
-
-        # Check if YubiKey is our expected serial
-        SERIAL=$(${pkgs.yubikey-manager}/bin/ykman list --serials 2>/dev/null | head -1 || echo "none")
-        if [ "$SERIAL" != "5252959" ]; then
-          echo "Expected YubiKey serial 5252959, found: $SERIAL"
-          exit 1
+        # Check if any YubiKey is present first
+        echo "Checking for YubiKey..."
+        if ! ${pkgs.yubikey-manager}/bin/ykman list >/dev/null 2>&1; then
+          echo "No YubiKey detected, skipping setup"
+          exit 0  # Success - no YubiKey present, nothing to do
         fi
 
-        # Check if challenge-response is already configured
-        if ${pkgs.yubikey-manager}/bin/ykman otp info 2>/dev/null | grep -q "Slot 2.*configured"; then
-          echo "YubiKey challenge-response already configured"
+        # Get YubiKey serial
+        SERIAL=$(${pkgs.yubikey-manager}/bin/ykman list --serials 2>/dev/null | head -1 || echo "none")
+        echo "Found YubiKey with serial: $SERIAL"
+
+        # If it's our expected YubiKey, configure it
+        if [ "$SERIAL" = "5252959" ]; then
+          # Check if challenge-response is already configured
+          if ${pkgs.yubikey-manager}/bin/ykman otp info 2>/dev/null | grep -q "Slot 2.*configured"; then
+            echo "YubiKey challenge-response already configured"
+          else
+            echo "Setting up YubiKey challenge-response for serial 5252959..."
+            echo "Please touch your YubiKey when it blinks..."
+            ${pkgs.yubikey-manager}/bin/ykman otp chalresp --touch --generate 2
+            echo "YubiKey challenge-response setup completed"
+          fi
         else
-          echo "Setting up YubiKey challenge-response for serial 5252959..."
-          echo "Please touch your YubiKey when it blinks..."
-          ${pkgs.yubikey-manager}/bin/ykman otp chalresp --touch --generate 2
-          echo "YubiKey challenge-response setup completed"
+          echo "YubiKey serial $SERIAL does not match expected 5252959, skipping setup"
         fi
       ''}";
     };

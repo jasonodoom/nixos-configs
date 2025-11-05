@@ -12,17 +12,16 @@
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = false;  # Try X11 mode instead of Wayland
-    theme = "elarun";  # Use built-in SDDM theme
+    wayland.enable = false;  # Use X11 mode for better theme compatibility
+    theme = "sddm-astronaut-theme";  # Use astronaut theme
     settings = {
       Theme = {
-        Current = "elarun";
+        Current = "sddm-astronaut-theme";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
       General = {
         DisplayServer = "x11";
-        # Remove Wayland-specific environment
       };
     };
   };
