@@ -13,10 +13,10 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
-    theme = "breeze";  # Use a known-working theme first
+    theme = "elarun";  # Use built-in SDDM theme
     settings = {
       Theme = {
-        Current = "breeze";
+        Current = "elarun";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
@@ -308,6 +308,9 @@
     libsForQt5.breeze-gtk
     kdePackages.breeze
     kdePackages.breeze-icons
+
+    # SDDM theme packages
+    libsForQt5.sddm-kcm  # SDDM configuration module
 
     # Qt6 dependencies for SDDM astronaut theme
     kdePackages.qtsvg

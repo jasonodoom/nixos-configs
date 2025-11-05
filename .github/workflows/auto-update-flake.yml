@@ -147,7 +147,7 @@ jobs:
 
 ## Automated Flake Update
 
-This PR contains automated updates to flake inputs. The changes have been tested on the \`unstable\` branch.
+This PR contains automated updates to flake inputs. The changes have been tested on the \\`unstable\\` branch.
 
 ### Tests Performed:
 - Flake syntax validation
