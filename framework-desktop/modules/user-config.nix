@@ -2,11 +2,6 @@
 { config, pkgs, lib, inputs, ... }:
 
 {
-  # Temporary root user for debugging
-  users.users.root = {
-    initialPassword = "nixos-debug";
-  };
-
   # User account
   users.users.jason = {
     isNormalUser = true;
