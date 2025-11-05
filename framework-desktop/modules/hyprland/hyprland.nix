@@ -326,8 +326,8 @@
       src = fetchFromGitHub {
         owner = "Keyitdev";
         repo = "sddm-astronaut-theme";
-        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+        rev = "c10bd950544036c7418e0f34cbf1b597dae2b72f";
+        sha256 = "sha256-ITufiMTnSX9cg83mlmuufNXxG1dp9OKG90VBZdDeMxw=";
       };
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
