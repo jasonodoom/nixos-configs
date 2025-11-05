@@ -23,6 +23,10 @@ in
     package = pkgs.kdePackages.sddm; # Qt6 SDDM version for Qt6 themes
     wayland.enable = false;  # Use X11 mode for better theme compatibility
     theme = "sddm-astronaut-theme";  # Astronaut theme
+    extraPackages = [
+      pkgs.kdePackages.qtmultimedia
+      pkgs.kdePackages.qtsvg
+    ];
     settings = {
       General = {
         DisplayServer = "x11";
