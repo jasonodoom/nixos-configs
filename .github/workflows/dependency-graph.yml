@@ -1,11 +1,12 @@
 name: Dependency Graph Visualization
 
 on:
-  push:
-    branches: [ main, unstable ]
-  pull_request:
-    branches: [ main, unstable ]
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:  # Only allow manual triggering
+  # Disabled automatic runs to reduce CI overhead
+  # push:
+  #   branches: [ main, unstable ]
+  # pull_request:
+  #   branches: [ main, unstable ]
 
 jobs:
   dependency-graph:
@@ -39,6 +40,14 @@ jobs:
         # Generate flake info
         nix flake show --json > flake-outputs.json
         nix flake show --all-systems > flake-structure.txt
+
+        # Build the system first to ensure it exists in the Nix store
+        echo "Building system configuration..."
+        nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
+          --accept-flake-config \
+          --no-link \
+          --option max-jobs 1 \
+          --option cores 2
 
         # Generate build dependency graph for the main configuration
         echo "Building dependency graph..."
