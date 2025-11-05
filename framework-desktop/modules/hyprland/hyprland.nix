@@ -1,14 +1,6 @@
 # Hyprland configuration
 { config, pkgs, lib, inputs, ... }:
 
-let
-  customized_sddm_astronaut = pkgs.sddm-astronaut.override {
-    embeddedTheme = "post-apocalyptic_hacker";
-    themeConfig = {
-      # Add any custom theme configuration here if needed
-    };
-  };
-in
 {
   # Enable Hyprland
   programs.hyprland = {
@@ -17,31 +9,7 @@ in
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
 
-  # Display manager for Hyprland
-  services.displayManager.sddm = {
-    enable = true;
-    package = pkgs.kdePackages.sddm; # Qt6 SDDM version for Qt6 themes
-    wayland.enable = false;  # Use X11 mode for better theme compatibility
-    theme = "sddm-astronaut-theme";  # Astronaut theme
-    extraPackages = [
-      pkgs.kdePackages.qtmultimedia
-      pkgs.kdePackages.qtsvg
-    ];
-    settings = {
-      General = {
-        DisplayServer = "x11";
-      };
-      Theme = {
-        Current = "sddm-astronaut-theme";
-      };
-      Users = {
-        HideUsers = "";
-        HideShells = "/bin/false,/usr/bin/nologin";
-        RememberLastUser = false;
-      };
-    };
-  };
-
+  # SDDM theme configuration is now handled by themes.nix
   services.displayManager.defaultSession = "hyprland-uwsm";
 
 
@@ -174,6 +142,9 @@ in
     # Screenshots
     bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
     bind = $mod, Print, exec, grim - | wl-copy
+
+    # Screen lock binding
+    bind = $mod, L, exec, swaylock-effects -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000
 
     # Mouse binds
     bindm = $mod, mouse:272, movewindow
@@ -336,8 +307,7 @@ in
     kdePackages.qtvirtualkeyboard
     kdePackages.qtmultimedia
 
-    # SDDM Astronaut theme
-    customized_sddm_astronaut
+    # SDDM theme packages are now managed by themes.nix
 
     # Qt5 compatibility for SDDM theme (keeping for compatibility)
     qt5.qtgraphicaleffects

@@ -69,6 +69,7 @@
         ./modules/networking.nix
         ./modules/security.nix
         ./modules/system.nix
+        ./modules/themes.nix
         ./modules/unfree.nix
         ./modules/user-config.nix
         ./modules/virtualization.nix
