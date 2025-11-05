@@ -15,7 +15,7 @@
     wayland.enable = true;
   };
 
-  services.displayManager.defaultSession = "hyprland";
+  services.displayManager.defaultSession = "hyprland-uwsm";
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
