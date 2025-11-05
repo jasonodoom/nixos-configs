@@ -99,7 +99,7 @@
     bind = $mod, J, togglesplit
 
     # Waybar controls
-    bind = $mod SHIFT, B, exec, killall waybar && waybar &
+    bind = $mod SHIFT, B, exec, killall waybar && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css &
     bind = $mod CTRL, B, exec, killall waybar
 
     # Hyprland reload
@@ -151,7 +151,7 @@
     bindm = $mod, mouse:273, resizewindow
 
     # Autostart applications
-    exec-once = sleep 2 && /run/current-system/sw/bin/waybar
+    exec-once = sleep 2 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
     exec-once = /run/current-system/sw/bin/nm-applet --indicator
     exec-once = /run/current-system/sw/bin/blueman-applet
   '';

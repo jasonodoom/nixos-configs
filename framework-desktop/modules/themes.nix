@@ -85,7 +85,7 @@ in {
           Current = selectedTheme.name;
         };
         Users = {
-          HideUsers = "";
+          HideUsers = "*";
           HideShells = "/bin/false,/usr/bin/nologin";
           RememberLastUser = false;
         };
