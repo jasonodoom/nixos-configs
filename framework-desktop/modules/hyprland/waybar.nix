@@ -11,12 +11,12 @@
 
     modules-left = [ "custom/os" "hyprland/workspaces" "custom/separator" ];
     modules-center = [ "hyprland/window" ];
-    modules-right = [ "tray" "bluetooth" "network" "pulseaudio" "cpu" "memory" "temperature" "clock" ];
+    modules-right = [ "bluetooth" "network" "pulseaudio" "cpu" "memory" "temperature" "clock" ];
 
     "custom/os" = {
       format = " ";
       tooltip-format = "Click to open applications";
-      on-click = "rofi -show drun -config /etc/xdg/rofi/config.rasi";
+      on-click = "rofi -show drun";
       tooltip = true;
     };
 
@@ -137,10 +137,6 @@
       max-length = 50;
     };
 
-    tray = {
-      icon-size = 21;
-      spacing = 10;
-    };
   };
 
   # Modern CSS styling inspired by BA_usr
@@ -309,22 +305,6 @@
       color: #f4f4f5;
     }
 
-    #tray {
-      background: rgba(69, 71, 90, 0.4);
-      border-radius: 12px;
-      padding: 6px 10px;
-      margin: 4px 4px 4px 8px;
-    }
-
-    #tray > .passive {
-      -gtk-icon-effect: dim;
-    }
-
-    #tray > .needs-attention {
-      -gtk-icon-effect: highlight;
-      background-color: #f38ba8;
-      border-radius: 8px;
-    }
 
     /* Smooth hover animations */
     #cpu:hover, #memory:hover, #temperature:hover,

@@ -94,14 +94,14 @@
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
-    bind = $mod, R, exec, rofi -show drun -config /etc/xdg/rofi/config.rasi
-    bind = $mod, D, exec, rofi -show run -config /etc/xdg/rofi/config.rasi
-    bind = $mod SHIFT, R, exec, rofi -show window -config /etc/xdg/rofi/config.rasi
+    bind = $mod, R, exec, rofi -show drun
+    bind = $mod, D, exec, rofi -show run
+    bind = $mod SHIFT, R, exec, rofi -show window
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
     # Additional app launcher shortcut (Space for quick access)
-    bind = $mod, space, exec, rofi -show drun -config /etc/xdg/rofi/config.rasi
+    bind = $mod, space, exec, rofi -show drun
 
     # Waybar controls
     bind = $mod SHIFT, B, exec, killall waybar && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css &
@@ -149,7 +149,7 @@
     bind = $mod, Print, exec, grim - | wl-copy
 
     # Screen lock binding
-    bind = $mod, L, exec, swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator
+    bind = $mod, L, exec, swaylock
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session
@@ -173,11 +173,8 @@
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
 
-    # Autostart applications with proper timing and error handling
-    exec-once = sleep 1 && pkill waybar || true
-    exec-once = sleep 2 && waybar --config /etc/xdg/waybar/config --style /etc/xdg/waybar/style.css --log-level info
-    # Fallback waybar startup if first attempt fails
-    exec-once = sleep 8 && pgrep waybar || waybar --config /etc/xdg/waybar/config --style /etc/xdg/waybar/style.css
+    # Fixed waybar autostart (race condition solution from research)
+    exec-once = sleep 1 && waybar
     # Removed nm-applet and blueman-applet - waybar handles these with styled modules
   '';
 
