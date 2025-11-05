@@ -326,15 +326,15 @@
       src = fetchFromGitHub {
         owner = "Keyitdev";
         repo = "sddm-astronaut-theme";
-        rev = "c10bd950544036c7418e0f34cbf1b597dae2b72f";
-        sha256 = "sha256-ITufiMTnSX9cg83mlmuufNXxG1dp9OKG90VBZdDeMxw=";
+        rev = "c9a8ab46aea6f1bab39f1a9d8cd3178f6e89b745";
+        sha256 = "sha256-6rUfsLlX3oSPS3b5br5xUjKSi7ypNp3jvMUyaWfeMZ4=";
       };
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
 
         # Configure metadata.desktop to use post-apocalyptic hacker theme
-        sed -i 's/ConfigFile=theme\.conf/ConfigFile=Themes\/post-apocalyptic_hacker.conf/' \
+        echo "ConfigFile=Themes/post-apocalyptic_hacker.conf" >> \
           $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
 
         # Verify the change was made
