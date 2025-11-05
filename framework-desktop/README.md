@@ -1,7 +1,7 @@
 # NixOS Configuration for Framework Desktop
 
-[![Garnix Build](https://img.shields.io/endpoint?url=https://garnix.io/api/v2/badges/jasonodoom/nixos-configs?dir=framework-desktop&output=nixosConfigurations.perdurabo)](https://garnix.io/jasonodoom/nixos-configs)
-[![Garnix Dev Shells](https://img.shields.io/endpoint?url=https://garnix.io/api/v2/badges/jasonodoom/nixos-configs?dir=framework-desktop&output=devShells.x86_64-linux.go)](https://garnix.io/jasonodoom/nixos-configs)
+[![Garnix Build](https://img.shields.io/endpoint?url=https://garnix.io/api/v2/badges/jasonodoom/nixos-configs?dir=framework-desktop&output=nixosConfigurations.perdurabo.config.system.build.toplevel)](https://garnix.io/jasonodoom/nixos-configs)
+[![GitHub Actions CI](https://github.com/jasonodoom/nixos-configs/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonodoom/nixos-configs/actions/workflows/ci.yml)
 [![Built with Nix](https://img.shields.io/badge/Built_With-Nix-5277C3.svg?logo=nixos&labelColor=73C3D5)](https://nixos.org)
 
 This is a NixOS configuration written specifically for the Framework Desktop Max+ 395 (16-core/32-thread, 64GB RAM, Radeon 8060S Graphics) with Hyprland window manager.
