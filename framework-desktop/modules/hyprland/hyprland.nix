@@ -18,6 +18,12 @@
       General = {
         DisplayServer = "x11";
       };
+      Theme = {
+        Current = "sddm-astronaut-theme";
+        ThemeDir = "/run/current-system/sw/share/sddm/themes";
+        CursorTheme = "breeze_cursors";
+        Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
+      };
     };
   };
 
@@ -344,6 +350,14 @@
         # Verify post-apocalyptic_hacker.conf exists
         echo "=== Available theme configs ==="
         ls -la $out/share/sddm/themes/sddm-astronaut-theme/Themes/
+
+        # Verify theme structure
+        echo "=== Complete theme directory structure ==="
+        find $out/share/sddm/themes/sddm-astronaut-theme -type f | head -20
+
+        # Check Main.qml exists
+        echo "=== Main.qml verification ==="
+        ls -la $out/share/sddm/themes/sddm-astronaut-theme/Main.qml
       '';
     })
   ];
