@@ -50,14 +50,14 @@ let
   };
 
   # Configuration option for selecting theme
-  cfg = config.services.displayManager.sddm.theme-config or "astronaut-hacker";
-  selectedTheme = themes.${cfg} or themes.astronaut-hacker;
+  cfg = config.services.displayManager.sddm.theme-config or "astronaut-default";
+  selectedTheme = themes.${cfg} or themes.astronaut-default;
 
 in {
   # Option to select theme
   options.services.displayManager.sddm.theme-config = lib.mkOption {
     type = lib.types.enum (builtins.attrNames themes);
-    default = "astronaut-hacker";
+    default = "astronaut-default";
     description = "SDDM theme to use";
     example = "astronaut-default";
   };
@@ -85,7 +85,7 @@ in {
           Current = selectedTheme.name;
         };
         Users = {
-          HideUsers = "*";
+          HideUsers = "jason";
           HideShells = "/bin/false,/usr/bin/nologin";
           RememberLastUser = false;
         };
