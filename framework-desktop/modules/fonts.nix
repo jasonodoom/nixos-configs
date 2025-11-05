@@ -16,7 +16,8 @@
     fira-code
     fira-code-symbols
     jetbrains-mono
-    (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" ]; })
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
 
     # Icon and emoji fonts
     twemoji-color-font # Twitter emoji font

@@ -13,21 +13,62 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
-    theme = "breeze";
+    theme = "astronaut";
     settings = {
       Theme = {
-        Current = "breeze";
+        Current = "astronaut";
         CursorTheme = "breeze_cursors";
-        Font = "Noto Sans,10,-1,0,50,0,0,0,0,0";
+        Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
       General = {
-        Background = "/run/current-system/sw/share/pixmaps/nixos-logo.svg";
         DisplayServer = "wayland";
+        GreeterEnvironment = "QT_WAYLAND_SHELL_INTEGRATION=layer-shell";
       };
     };
   };
 
   services.displayManager.defaultSession = "hyprland-uwsm";
+
+  # SDDM Astronaut theme configuration
+  environment.etc."sddm/themes/astronaut" = {
+    source = pkgs.fetchFromGitHub {
+      owner = "Keyitdev";
+      repo = "sddm-astronaut-theme";
+      rev = "468a100460d5feaa701c2215c737b55789cba0fc";
+      sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+    };
+  };
+
+  # Post-apocalyptic hacker theme config
+  # https://github.com/Keyitdev/sddm-astronaut-theme/blob/master/Themes/post-apocalyptic_hacker.conf
+  environment.etc."sddm/themes/astronaut/theme.conf".text = ''
+    [General]
+    type=image
+    color=#000000
+    fontSize=15
+    font=JetBrains Mono
+    fontColor=#bfb098
+
+    [Background]
+    background=Backgrounds/post-apocalyptic_hacker.png
+    scaleImageCropped=true
+
+    [UserPicture]
+    userPictureEnabled=false
+
+    [Interface]
+    showLoginButton=true
+    showUserList=false
+    showPasswordVisibilityButton=false
+    hideVirtualKeyboard=true
+    hideSystemButtons=true
+
+    [Input]
+    placeholderColor=#685841
+    color=#bfb098
+    backgroundColor=#33151f
+    borderColor=#4d1927
+  '';
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
@@ -115,6 +156,13 @@
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
+    # Waybar controls
+    bind = $mod SHIFT, B, exec, killall waybar && waybar &
+    bind = $mod CTRL, B, exec, killall waybar
+
+    # Hyprland reload
+    bind = $mod CTRL, R, exec, hyprctl reload
+
     # Move focus
     bind = $mod, left, movefocus, l
     bind = $mod, right, movefocus, r
@@ -162,8 +210,6 @@
     exec-once = /run/current-system/sw/bin/nm-applet --indicator
     exec-once = /run/current-system/sw/bin/blueman-applet
   '';
-
-  # Waybar configuration moved to waybar.nix
 
   # Kitty terminal configuration
   environment.etc."xdg/kitty/kitty.conf".text = ''
@@ -275,8 +321,7 @@
     pamixer
     xdg-user-dirs
     libcanberra
-    wireless-tools
-    blueberry
+    wirelesstools
 
     # File manager
     xfce.thunar
@@ -308,6 +353,7 @@
     libsForQt5.breeze-gtk
     kdePackages.breeze
     kdePackages.breeze-icons
+
   ];
 
   # Enable required services
