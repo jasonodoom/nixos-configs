@@ -321,7 +321,7 @@
     qt5.qtsvg
 
     # SDDM Astronaut theme with post-apocalyptic hacker variant (Qt5 compatible)
-    (pkgs.sddm-astronaut.override {
+    ((pkgs.sddm-astronaut.override {
       embeddedTheme = "post-apocalyptic_hacker";
     }).overrideAttrs (oldAttrs: {
       postInstall = (oldAttrs.postInstall or "") + ''
@@ -329,7 +329,7 @@
         substituteInPlace $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop \
           --replace-fail "QtVersion=6" "QtVersion=5"
       '';
-    })
+    }))
   ];
 
   # Enable required services
