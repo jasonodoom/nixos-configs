@@ -10,13 +10,18 @@
     nwg-look          # GTK settings editor
     nwg-displays      # Display management utility
     nwg-menu          # Right-click menu
+
+    # Icon themes for proper category display
+    papirus-icon-theme
+    adwaita-icon-theme
+    gnome-themes-extra
   ];
 
-  # nwg-panel configuration for Hyprland
-  environment.etc."xdg/nwg-panel/config".text = builtins.toJSON [
+  # nwg-panel configuration for Hyprland (system-wide)
+  environment.etc."nwg-panel/config".text = builtins.toJSON [
     {
       name = "panel-top";
-      output = "";
+      output = "*";
       layer = "bottom";
       position = "top";
       controls = "right";
@@ -35,10 +40,8 @@
       modules-center = ["hyprland-taskbar"];
       modules-right = ["tray" "controls" "clock"];
       controls-settings = {
-        components = ["brightness" "volume" "battery"];
-        commands = {
-          battery = "";
-        };
+        components = ["volume"];
+        commands = {};
         show-values = false;
         interval = 1;
         icon-size = 16;
@@ -111,7 +114,7 @@
       menu-start = {
         cmd = "nwg-drawer";
         icon = "view-app-grid-symbolic";
-        label = "";
+        label = "Apps";
         label-position = "right";
         css-name = "menu-start";
         icon-size = 16;
