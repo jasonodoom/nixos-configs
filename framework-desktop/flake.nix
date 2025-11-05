@@ -70,6 +70,7 @@
         ./modules/security.nix
         ./modules/system.nix
         ./modules/themes.nix
+        ./modules/ba-usr-theme.nix
         ./modules/unfree.nix
         ./modules/user-config.nix
         ./modules/virtualization.nix

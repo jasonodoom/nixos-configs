@@ -94,7 +94,9 @@
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
-    bind = $mod, R, exec, rofi -show drun
+    bind = $mod, R, exec, rofi -show drun -config /etc/xdg/rofi/config.rasi
+    bind = $mod, D, exec, rofi -show run -config /etc/xdg/rofi/config.rasi
+    bind = $mod SHIFT, R, exec, rofi -show window -config /etc/xdg/rofi/config.rasi
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
@@ -150,8 +152,9 @@
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
 
-    # Wallpaper - set a dark background to avoid black screen
-    exec-once = swaybg -c "#1e1e2e"
+    # Wallpaper - BA_usr style with hyprpaper
+    exec-once = hyprpaper
+    exec-once = hyprctl hyprpaper wallpaper ",/etc/wallpapers/default.png"
 
     # Autostart applications
     exec-once = sleep 1 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
