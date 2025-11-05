@@ -203,10 +203,26 @@ sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/nixos-configs
 
 ### Install NixOS
 
-```bash
-# Install with flakes (Framework Desktop)
-sudo nixos-install --flake .#perdurabo
+You can install using either the remote flake (no cloning needed) or a local copy:
 
+#### Option A: Remote Flake (Recommended)
+
+```bash
+# Install directly from GitHub
+sudo nixos-install --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo"
+```
+
+#### Option B: Local Flake
+
+```bash
+# If you've cloned the repo locally, navigate to framework-desktop directory
+cd /mnt/etc/nixos/framework-desktop
+sudo nixos-install --flake .#perdurabo
+```
+
+#### Complete Installation
+
+```bash
 # Set password for jason user
 sudo nixos-enter --root /mnt
 passwd jason
@@ -220,14 +236,31 @@ sudo reboot
 
 After rebooting into your new system:
 
+#### Option A: Remote Flake
+
 ```bash
+# Build and switch to the configuration
+sudo nixos-rebuild switch --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo"
+
+# Update flake inputs (requires local clone)
+git clone https://github.com/jasonodoom/nixos-configs.git /etc/nixos
+cd /etc/nixos/framework-desktop
+nix flake update
+sudo nixos-rebuild switch --flake .#perdurabo
+```
+
+#### Option B: Local Flake
+
+```bash
+# Navigate to your local configuration
+cd /etc/nixos/framework-desktop
+
 # Build and switch to the configuration
 sudo nixos-rebuild switch --flake .#perdurabo
 
 # Update flake inputs
 nix flake update
-
-# All user configurations are part of the system rebuild
+sudo nixos-rebuild switch --flake .#perdurabo
 ```
 
 ## YubiKey Authentication
@@ -265,6 +298,7 @@ ykman otp info
 - **Login**: Enter your password, then touch the YubiKey when it blinks
 - **doas commands**: Same process for elevated privileges
 - **Display manager**: YubiKey authentication at the login screen
+- **SSH**: YubiKey authentication works for SSH connections
 
 ### Troubleshooting
 
@@ -284,6 +318,12 @@ nix flake check
 
 Test building the configuration:
 
+#### Remote Flake
+```bash
+sudo nixos-rebuild test --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo"
+```
+
+#### Local Flake
 ```bash
 sudo nixos-rebuild test --flake .#perdurabo
 ```
@@ -317,7 +357,24 @@ The configuration should work out of the box with Framework Desktop Max+ 395, bu
 
 To update the system manually:
 
+#### Remote Flake
 ```bash
+# For remote updates, clone repo first
+git clone https://github.com/jasonodoom/nixos-configs.git /tmp/nixos-configs
+cd /tmp/nixos-configs/framework-desktop
+
+# Update flake inputs
+nix flake update
+
+# Rebuild system
+sudo nixos-rebuild switch --flake .#perdurabo
+```
+
+#### Local Flake
+```bash
+# Navigate to your local configuration
+cd /etc/nixos/framework-desktop
+
 # Update flake inputs
 nix flake update
 
@@ -329,7 +386,7 @@ sudo nixos-rebuild switch --flake .#perdurabo
 
 <https://nixos.wiki/wiki/Automatic_system_upgrades>
 
-Automatic updates are **enabled** and will pull daily from `github:jasonodoom/nixos-configs`.
+Automatic updates are **enabled** and will pull daily from `github:jasonodoom/nixos-configs?dir=framework-desktop`.
 
 ```bash
 # Check auto-upgrade status
