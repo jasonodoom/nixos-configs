@@ -324,9 +324,9 @@
     ((pkgs.sddm-astronaut.override {
       embeddedTheme = "post-apocalyptic_hacker";
     }).overrideAttrs (oldAttrs: {
-      postInstall = (oldAttrs.postInstall or "") + ''
+      postPatch = (oldAttrs.postPatch or "") + ''
         # Fix QtVersion in metadata.desktop for Qt5 compatibility
-        substituteInPlace $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop \
+        substituteInPlace metadata.desktop \
           --replace-fail "QtVersion=6" "QtVersion=5"
       '';
     }))
