@@ -326,22 +326,22 @@
       src = fetchFromGitHub {
         owner = "Keyitdev";
         repo = "sddm-astronaut-theme";
-        rev = "c9a8ab46aea6f1bab39f1a9d8cd3178f6e89b745";
-        sha256 = "sha256-6rUfsLlX3oSPS3b5br5xUjKSi7ypNp3jvMUyaWfeMZ4=";
+        rev = "c10bd950544036c7418e0f34cbf1b597dae2b72f";
+        sha256 = "sha256-ITufiMTnSX9cg83mlmuufNXxG1dp9OKG90VBZdDeMxw=";
       };
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
 
-        # Configure metadata.desktop to use post-apocalyptic hacker theme
-        echo "ConfigFile=Themes/post-apocalyptic_hacker.conf" >> \
-          $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
+        # Copy post-apocalyptic hacker theme as the main theme.conf
+        cp $out/share/sddm/themes/sddm-astronaut-theme/Themes/post-apocalyptic_hacker.conf \
+           $out/share/sddm/themes/sddm-astronaut-theme/theme.conf
 
         # Debug: Show what we have
         echo "=== Theme configs available ==="
         ls -la $out/share/sddm/themes/sddm-astronaut-theme/Themes/ || echo "Themes directory not found"
-        echo "=== metadata.desktop content ==="
-        cat $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
+        echo "=== Using theme.conf ==="
+        head -10 $out/share/sddm/themes/sddm-astronaut-theme/theme.conf
       '';
     })
   ];
