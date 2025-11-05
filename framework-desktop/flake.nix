@@ -75,7 +75,8 @@
         ./modules/vscode.nix
       ];
     };
-  in {
+  in
+  {
     # Overlays for custom packages
     overlays.default = import ./overlays/default.nix { inherit inputs; };
 
@@ -95,7 +96,7 @@
       };
     in
     {
-      # Development shells 
+      # Development shells
       devShells = {
         # Go development environment
         go = pkgs.mkShell {
