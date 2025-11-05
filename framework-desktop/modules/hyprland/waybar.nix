@@ -176,7 +176,6 @@
     #workspaces button:hover {
       background: rgba(116, 199, 236, 0.2);
       color: #74c7ec;
-      transform: scale(1.05);
     }
 
     #workspaces button.active {
@@ -317,7 +316,6 @@
     /* Smooth hover animations */
     #cpu:hover, #memory:hover, #temperature:hover,
     #network:hover, #pulseaudio:hover, #clock:hover {
-      transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       transition: all 0.2s ease;
     }
