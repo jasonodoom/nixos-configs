@@ -5,8 +5,12 @@ builds:
     dir: framework-desktop
     outputs:
       nixosConfigurations.perdurabo.config.system.build.toplevel: {}
+      devShells.x86_64-linux.go: {}
+      devShells.x86_64-linux.python: {}
+      devShells.x86_64-linux.node: {}
+      devShells.x86_64-linux.rust: {}
+      devShells.x86_64-linux.devops: {}
     exclude:
-      - "devShells.*"
       - "checks.*"
 
   # Add more hosts here as needed
