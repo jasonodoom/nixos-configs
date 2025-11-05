@@ -27,6 +27,7 @@
       disable-scroll = true;
       all-outputs = true;
       format = "{icon}";
+      swap-icon-label = false;  # Fix for 'swap-icon-label' must be a bool warning
       persistent_workspaces = {
         "1" = [];
         "2" = [];
@@ -109,19 +110,26 @@
         default = ["󰕿" "󰖀" "󰕾"];
       };
       on-click = "pavucontrol";
+      on-click-right = "pamixer --toggle-mute";
+      on-scroll-up = "pamixer -i 5";
+      on-scroll-down = "pamixer -d 5";
       scroll-step = 5;
+      tooltip-format = "Volume: {volume}%\nLeft click: Open mixer\nRight click: Toggle mute\nScroll: Adjust volume";
     };
 
     bluetooth = {
-      format = "󰂯";
-      format-disabled = "󰂲";
-      format-off = "󰂲";
-      format-on = "󰂯";
-      format-connected = "󰂱";
-      tooltip-format = "{controller_alias}\t{controller_address}";
+      format = "󰂯 {status}";
+      format-disabled = "󰂲 Off";
+      format-off = "󰂲 Off";
+      format-on = "󰂯 On";
+      format-connected = "󰂱 {device_alias}";
+      format-connected-battery = "󰂱 {device_alias} {device_battery_percentage}%";
+      tooltip-format = "{controller_alias}\t{controller_address}\n{num_connections} connected";
       tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{device_enumerate}";
       tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
-      on-click = "blueberry";
+      tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
+      on-click = "blueman-manager";
+      max-length = 50;
     };
 
     tray = {

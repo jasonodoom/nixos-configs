@@ -146,7 +146,17 @@
     bind = $mod, Print, exec, grim - | wl-copy
 
     # Screen lock binding
-    bind = $mod, L, exec, swaylock-effects -f --screenshots --clock --indicator --indicator-radius 100 --indicator-thickness 7 --effect-blur 7x5 --effect-vignette 0.5:0.5 --ring-color bb00cc --key-hl-color 880033 --line-color 00000000 --inside-color 00000088 --separator-color 00000000
+    bind = $mod, L, exec, swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator
+
+    # Power management shortcuts
+    bind = $mod SHIFT, L, exec, loginctl lock-session
+    bind = $mod SHIFT, Q, exec, hyprctl dispatch exit
+    bind = $mod SHIFT, S, exec, systemctl suspend
+    bind = $mod SHIFT, P, exec, /etc/xdg/rofi/scripts/power-menu.sh
+
+    # Direct power shortcuts (with confirmation)
+    bind = $mod CTRL SHIFT, R, exec, systemctl reboot
+    bind = $mod CTRL SHIFT, S, exec, systemctl poweroff
 
     # Mouse binds
     bindm = $mod, mouse:272, movewindow
@@ -157,9 +167,41 @@
 
     # Autostart applications
     exec-once = sleep 2 && waybar
-    exec-once = nm-applet --indicator
-    exec-once = blueman-applet
+    # Removed nm-applet and blueman-applet - waybar handles these with styled modules
   '';
+
+  # Power menu script for rofi
+  environment.etc."xdg/rofi/scripts/power-menu.sh" = {
+    text = ''
+      #!/usr/bin/env bash
+
+      # Power menu for Hyprland using rofi
+      # Inspired by BA_usr dotfiles
+
+      options="⏻ Shutdown\n Reboot\n Suspend\n Lock\n Logout"
+
+      chosen=$(echo -e "$options" | rofi -dmenu -i -p "Power Menu" -config /etc/xdg/rofi/config.rasi -theme-str "window { width: 300px; height: 200px; }")
+
+      case $chosen in
+          "⏻ Shutdown")
+              systemctl poweroff
+              ;;
+          " Reboot")
+              systemctl reboot
+              ;;
+          " Suspend")
+              systemctl suspend
+              ;;
+          " Lock")
+              swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator
+              ;;
+          " Logout")
+              hyprctl dispatch exit
+              ;;
+      esac
+    '';
+    mode = "0755";  # Make it executable
+  };
 
   # Kitty terminal configuration
   environment.etc."xdg/kitty/kitty.conf".text = ''
@@ -267,7 +309,7 @@
     grim
     slurp
     swayidle
-    swaylock-effects
+    swaylock
     swaybg
 
     libnotify

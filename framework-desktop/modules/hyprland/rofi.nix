@@ -3,7 +3,7 @@
 
 {
   # Rofi configuration
-  environment.etc."rofi/config.rasi".text = ''
+  environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
         modi: "run,drun,window";
         lines: 5;
@@ -21,11 +21,11 @@
         sidebar-mode: true;
     }
 
-    @theme "~/.config/rofi/themes/style.rasi"
+    @theme "/etc/xdg/rofi/themes/style.rasi"
   '';
 
   # Rofi theme configuration (Tokyo Night inspired)
-  environment.etc."rofi/themes/style.rasi".text = ''
+  environment.etc."xdg/rofi/themes/style.rasi".text = ''
     * {
         bg-col:  #1a1b26;
         bg-col-light: #24283b;
