@@ -36,7 +36,7 @@
     enable = true;
 
     # FORCE Qt5 SDDM package (astronaut theme expects sddm-greeter, not sddm-greeter-qt6)
-    package = pkgs.sddm;
+    package = pkgs.libsForQt5.sddm;
 
     wayland.enable = false;
     theme = "sddm-astronaut-theme";
