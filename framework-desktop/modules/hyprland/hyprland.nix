@@ -12,11 +12,11 @@
   # Display manager for Hyprland
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = false;  # Temporarily disable Wayland to test theme
-    theme = "sddm-astronaut-theme";
+    wayland.enable = true;
+    theme = "breeze";  # Use a known-working theme first
     settings = {
       Theme = {
-        Current = "sddm-astronaut-theme";
+        Current = "breeze";
         CursorTheme = "breeze_cursors";
         Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
       };
