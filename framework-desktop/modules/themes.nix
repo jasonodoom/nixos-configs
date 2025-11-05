@@ -123,11 +123,14 @@ in {
           CursorTheme = "breeze_cursors";
           Font = "JetBrains Mono,12,-1,0,50,0,0,0,0,0";
         };
-        # Hide usernames for security
+        # Hide usernames for security - force override
         Users = {
-          HideUsers = "*";
-          HideShells = "/bin/false,/usr/bin/nologin";
+          HideUsers = "jason,*";  # Explicitly hide your username and all others
+          HideShells = "/bin/false,/usr/bin/nologin,/run/current-system/sw/bin/nologin";
           RememberLastUser = false;
+          RememberLastSession = false;
+          MaximumUid = 65000;
+          MinimumUid = 1000;
         };
       };
     };
@@ -142,9 +145,12 @@ in {
         Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
 
         [Users]
-        HideUsers=*
-        HideShells=/bin/false,/usr/bin/nologin
+        HideUsers=jason,*
+        HideShells=/bin/false,/usr/bin/nologin,/run/current-system/sw/bin/nologin
         RememberLastUser=false
+        RememberLastSession=false
+        MaximumUid=65000
+        MinimumUid=1000
       '';
     };
 

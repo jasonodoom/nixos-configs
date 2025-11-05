@@ -15,7 +15,9 @@
 
     "custom/os" = {
       format = " ";
-      tooltip = false;
+      tooltip-format = "Click to open applications";
+      on-click = "rofi -show drun -config /etc/xdg/rofi/config.rasi";
+      tooltip = true;
     };
 
     "custom/separator" = {
@@ -85,12 +87,16 @@
 
     network = {
       format-wifi = "󰤨 {signalStrength}%";
-      format-ethernet = "󰈀 Connected";
-      tooltip-format = "{ifname} via {gwaddr}";
-      format-linked = "󰈀 {ifname} (No IP)";
-      format-disconnected = "󰤮 Disconnected";
-      format-alt = "{ifname}: {ipaddr}/{cidr}";
+      format-ethernet = "󰈀 {essid}";
+      tooltip-format-wifi = "WiFi: {essid}\nSignal: {signalStrength}%\nIP: {ipaddr}";
+      tooltip-format-ethernet = "Ethernet: {ifname}\nIP: {ipaddr}/{cidr}";
+      tooltip-format-disconnected = "Disconnected";
+      format-linked = "󰈀 No IP";
+      format-disconnected = "󰤮 Off";
+      format-alt = "{ipaddr}";
       interval = 2;
+      on-click = "nm-connection-editor";
+      max-length = 50;
     };
 
     pulseaudio = {

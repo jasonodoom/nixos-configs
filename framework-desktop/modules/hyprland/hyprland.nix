@@ -152,7 +152,8 @@
     bind = $mod SHIFT, L, exec, loginctl lock-session
     bind = $mod SHIFT, Q, exec, hyprctl dispatch exit
     bind = $mod SHIFT, S, exec, systemctl suspend
-    bind = $mod SHIFT, P, exec, /etc/xdg/rofi/scripts/power-menu.sh
+    bind = $mod, Escape, exec, wlogout -p layer-shell
+    bind = $mod SHIFT, P, exec, wlogout -p layer-shell
 
     # Direct power shortcuts (with confirmation)
     bind = $mod CTRL SHIFT, R, exec, systemctl reboot
@@ -165,43 +166,145 @@
     # Wallpaper - use swaybg as fallback to avoid startup issues
     exec-once = swaybg -c "#1e1e2e"
 
-    # Autostart applications
-    exec-once = sleep 2 && waybar
+    # Autostart applications - using explicit paths and better error handling
+    exec-once = sleep 3 && waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
+    # Alternative waybar startup method if first fails
+    exec-once = sleep 5 && pkill waybar; waybar -c /etc/xdg/waybar/config -s /etc/xdg/waybar/style.css
     # Removed nm-applet and blueman-applet - waybar handles these with styled modules
   '';
 
-  # Power menu script for rofi
-  environment.etc."xdg/rofi/scripts/power-menu.sh" = {
-    text = ''
-      #!/usr/bin/env bash
+  # Wlogout configuration (beautiful graphical power menu)
+  environment.etc."xdg/wlogout/layout".text = ''
+    {
+        "label" : "lock",
+        "action" : "swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator",
+        "text" : "Lock",
+        "keybind" : "l"
+    }
+    {
+        "label" : "hibernate",
+        "action" : "systemctl hibernate",
+        "text" : "Hibernate",
+        "keybind" : "h"
+    }
+    {
+        "label" : "logout",
+        "action" : "hyprctl dispatch exit",
+        "text" : "Logout",
+        "keybind" : "e"
+    }
+    {
+        "label" : "shutdown",
+        "action" : "systemctl poweroff",
+        "text" : "Shutdown",
+        "keybind" : "s"
+    }
+    {
+        "label" : "suspend",
+        "action" : "systemctl suspend",
+        "text" : "Suspend",
+        "keybind" : "u"
+    }
+    {
+        "label" : "reboot",
+        "action" : "systemctl reboot",
+        "text" : "Reboot",
+        "keybind" : "r"
+    }
+  '';
 
-      # Power menu for Hyprland using rofi
-      # Inspired by BA_usr dotfiles
+  # Wlogout styling (Tokyo Night theme)
+  environment.etc."xdg/wlogout/style.css".text = ''
+    * {
+      background-image: none;
+      box-shadow: none;
+    }
 
-      options="⏻ Shutdown\n Reboot\n Suspend\n Lock\n Logout"
+    window {
+      background-color: rgba(26, 27, 38, 0.9);
+    }
 
-      chosen=$(echo -e "$options" | rofi -dmenu -i -p "Power Menu" -config /etc/xdg/rofi/config.rasi -theme-str "window { width: 300px; height: 200px; }")
+    button {
+      color: #c0caf5;
+      background-color: rgba(36, 40, 59, 0.8);
+      border-style: solid;
+      border-width: 2px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 25%;
+      border-radius: 10px;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
 
-      case $chosen in
-          "⏻ Shutdown")
-              systemctl poweroff
-              ;;
-          " Reboot")
-              systemctl reboot
-              ;;
-          " Suspend")
-              systemctl suspend
-              ;;
-          " Lock")
-              swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator
-              ;;
-          " Logout")
-              hyprctl dispatch exit
-              ;;
-      esac
-    '';
-    mode = "0755";  # Make it executable
-  };
+    button:focus, button:active, button:hover {
+      background-color: rgba(122, 162, 247, 0.2);
+      outline-style: none;
+      border-color: #7aa2f7;
+      color: #7aa2f7;
+      box-shadow: 0 0 20px rgba(122, 162, 247, 0.3);
+    }
+
+    #lock {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/lock.png"));
+      border-color: #f7768e;
+    }
+
+    #logout {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/logout.png"));
+      border-color: #e0af68;
+    }
+
+    #suspend {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/suspend.png"));
+      border-color: #9ece6a;
+    }
+
+    #hibernate {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/hibernate.png"));
+      border-color: #7dcfff;
+    }
+
+    #shutdown {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/shutdown.png"));
+      border-color: #bb9af7;
+    }
+
+    #reboot {
+      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/reboot.png"));
+      border-color: #7aa2f7;
+    }
+
+    #lock:hover {
+      border-color: #f7768e;
+      background-color: rgba(247, 118, 142, 0.1);
+    }
+
+    #logout:hover {
+      border-color: #e0af68;
+      background-color: rgba(224, 175, 104, 0.1);
+    }
+
+    #suspend:hover {
+      border-color: #9ece6a;
+      background-color: rgba(158, 206, 106, 0.1);
+    }
+
+    #hibernate:hover {
+      border-color: #7dcfff;
+      background-color: rgba(125, 207, 255, 0.1);
+    }
+
+    #shutdown:hover {
+      border-color: #bb9af7;
+      background-color: rgba(187, 154, 247, 0.1);
+    }
+
+    #reboot:hover {
+      border-color: #7aa2f7;
+      background-color: rgba(122, 162, 247, 0.1);
+    }
+  '';
 
   # Kitty terminal configuration
   environment.etc."xdg/kitty/kitty.conf".text = ''
@@ -311,6 +414,7 @@
     swayidle
     swaylock
     swaybg
+    wlogout
 
     libnotify
     dunst
