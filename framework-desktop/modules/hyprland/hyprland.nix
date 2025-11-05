@@ -326,13 +326,22 @@
       src = fetchFromGitHub {
         owner = "Keyitdev";
         repo = "sddm-astronaut-theme";
-        rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-        sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
+        rev = "c9a8ab46aea6f1bab39f1a9d8cd3178f6e89b745";
+        sha256 = "sha256-6rUfsLlX3oSPS3b5br5xUjKSi7ypNp3jvMUyaWfeMZ4=";
       };
       installPhase = ''
         mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
         cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
 
+        # Configure metadata.desktop to use post-apocalyptic hacker theme
+        echo "ConfigFile=Themes/post-apocalyptic_hacker.conf" >> \
+          $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
+
+        # Debug: Show what we have
+        echo "=== Theme configs available ==="
+        ls -la $out/share/sddm/themes/sddm-astronaut-theme/Themes/ || echo "Themes directory not found"
+        echo "=== metadata.desktop content ==="
+        cat $out/share/sddm/themes/sddm-astronaut-theme/metadata.desktop
       '';
     })
   ];
