@@ -79,11 +79,12 @@
     # Overlays for custom packages
     overlays.default = import ./overlays/default.nix { inherit inputs; };
 
+    # NixOS configurations
     nixosConfigurations = {
       # Framework Desktop configuration
       perdurabo = mkSystem "x86_64-linux";
     };
-  } // flake-utils.lib.eachDefaultSystem (system:
+  } // (flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = import nixpkgs {
         inherit system;
@@ -185,5 +186,5 @@
           '';
         };
       };
-    });
+    }));
 }
