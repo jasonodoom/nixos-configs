@@ -116,11 +116,8 @@ let
           cp -r plasma/desktoptheme/* $out/share/plasma/desktoptheme/
           cp -r plasma/look-and-feel/* $out/share/plasma/look-and-feel/
 
-          # Install plasmoids but exclude incompatible ones
-          if [ -d "plasma/plasmoids" ]; then
-            mkdir -p $out/share/plasma/plasmoids
-            find plasma/plasmoids -maxdepth 1 -type d ! -name "*betterinlineclock*" ! -name "plasmoids" -exec cp -r {} $out/share/plasma/plasmoids/ \;
-          fi
+          # Skip plasmoids installation - many are incompatible with Plasma 6
+          # Plasmoids cause KPackageStructure format errors and crashes
 
           # Install wallpapers
           cp -r wallpapers/* $out/share/wallpapers/
@@ -224,6 +221,10 @@ let
         # Hunspell dictionary for virtual keyboard
         pkgs.hunspell
         pkgs.hunspellDicts.en_US
+
+        # X11 support packages for KWin
+        pkgs.libxcb
+        pkgs.xcbutilcursor
 
         # Plasma Panel Colorizer - brings Latte Dock features to default panel
         pkgs.plasma-panel-colorizer

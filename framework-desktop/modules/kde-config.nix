@@ -15,76 +15,33 @@
     kdePackages.kscreen       # Display management
     kdePackages.systemsettings # System settings
 
+    # Essential Plasma components
     kdePackages.kactivitymanagerd
+    kdePackages.plasma-desktop
+    kdePackages.plasma-workspace
+    kdePackages.kwin
+    kdePackages.plasma-activities
+    kdePackages.krunner
 
     # Additional theming tools
     kdePackages.plasma-browser-integration
     kdePackages.kdeconnect-kde
   ];
 
-  # Configure default KDE theme settings
-  environment.etc."xdg/kdeglobals".text = ''
-    [General]
-    ColorScheme=MacSonomaDark
+  # Minimal KDE configuration - configure themes manually to avoid conflict
 
-    [Icons]
-    Theme=MacSonoma
+  # Add script to reset Plasma configuration if needed
+  environment.systemPackages = pkgs.lib.mkAfter [
+    (pkgs.writeShellScriptBin "reset-plasma" ''
+      echo "Resetting Plasma configuration..."
+      rm -rf ~/.config/plasma*
+      rm -rf ~/.config/kde*
+      rm -rf ~/.local/share/kactivitymanagerd
+      rm -rf ~/.cache/plasma*
+      echo "Plasma configuration reset. Please log out and log back in."
+    '')
+  ];
 
-    [KDE]
-    LookAndFeelPackage=com.github.vinceliuice.MacSonoma-Dark
-
-    [WM]
-    activeBackground=59,61,64
-    activeBlend=255,255,255
-    activeForeground=252,252,252
-  '';
-
-  # Plasma desktop configuration for macOS-style layout
-  environment.etc."xdg/plasma-org.kde.plasma.desktop-appletsrc".text = ''
-    [ActionPlugins][0]
-    LeftButton;NoModifier=org.kde.contextmenu
-    MidButton;NoModifier=org.kde.paste
-    RightButton;NoModifier=org.kde.contextmenu
-
-    [ActionPlugins][1]
-    RightButton;NoModifier=org.kde.contextmenu
-
-    [Containments][1]
-    activityId=
-    formfactor=0
-    immutability=1
-    lastScreen=0
-    location=0
-    plugin=org.kde.plasma.folder
-    wallpaperplugin=org.kde.image
-
-    [Containments][1][Wallpaper][org.kde.image][General]
-    Image=file:///run/current-system/sw/share/wallpapers/MacSonoma/contents/images/3840x2160.png
-    SlidePaths=/home/jason/.local/share/wallpapers,/usr/share/wallpapers
-
-    [Containments][2]
-    activityId=
-    formfactor=2
-    immutability=1
-    lastScreen=0
-    location=3
-    plugin=org.kde.panel
-    wallpaperplugin=org.kde.image
-
-    [Containments][2][Applets][3]
-    immutability=1
-    plugin=org.kde.plasma.kickoff
-
-    [Containments][2][Applets][3][Configuration]
-    PreloadWeight=100
-    popupHeight=514
-    popupWidth=651
-
-    [Containments][2][Applets][3][Configuration][General]
-    icon=nix-snowflake
-    favoriteApps=preferred://filemanager,firefox.desktop,org.kde.konsole.desktop
-
-    [Containments][2][General]
-    AppletOrder=3
-  '';
+  # Ensure proper session configuration
+  services.displayManager.defaultSession = "plasma";
 }
