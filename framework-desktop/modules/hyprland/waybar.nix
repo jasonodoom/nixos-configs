@@ -196,7 +196,6 @@
         rgba(248, 248, 248, 0.15) 50%,
         rgba(255, 255, 255, 0.18) 75%,
         rgba(242, 242, 247, 0.12) 100%);
-      backdrop-filter: blur(40px) saturate(180%) brightness(110%);
       -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(110%);
       border: 1px solid rgba(0, 122, 255, 0.15);
       border-radius: 24px;
