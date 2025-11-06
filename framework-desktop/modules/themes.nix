@@ -124,6 +124,9 @@ let
             cp -r sddm/* $out/share/sddm/themes/
           fi
 
+          # Copy custom background image
+          cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/MacSonoma-6.0/Background.jpg
+
           # Create NixOS-branded logo file
           cat > $out/nixos-logo.svg << 'EOF'
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -176,6 +179,11 @@ let
         pkgs.qt6Packages.qtsvg
         pkgs.qt6Packages.qtquick3d
         pkgs.qt6Packages.qtmultimedia
+        pkgs.qt6Packages.qtvirtualkeyboard
+
+        # Hunspell dictionary for virtual keyboard
+        pkgs.hunspell
+        pkgs.hunspellDicts.en_US
       ];
     };
   };
