@@ -223,8 +223,8 @@ let
         pkgs.hunspellDicts.en_US
 
         # X11 support packages for KWin
-        pkgs.libxcb
-        pkgs.xcbutilcursor
+        pkgs.xorg.libxcb
+        pkgs.xorg.xcbutilcursor
 
         # Plasma Panel Colorizer - brings Latte Dock features to default panel
         pkgs.plasma-panel-colorizer
@@ -266,13 +266,13 @@ in {
                 then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma theme
                 else null); # Use default for other themes
 
-      wayland.enable = false;
+      wayland.enable = true;  # Enable Wayland support for SDDM
       theme = selectedTheme.name;
 
       # Settings based on working configuration
       settings = {
         General = {
-          DisplayServer = "x11";
+          # Don't force display server - let session choose
         };
         Theme = {
           Current = selectedTheme.name;
