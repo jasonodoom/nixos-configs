@@ -164,6 +164,7 @@ let
             {} \;
 
           # Create a custom launcher icon configuration
+          mkdir -p $out/share/applications
           cat > $out/share/applications/nix-launcher.desktop << 'EOF'
           [Desktop Entry]
           Type=Application

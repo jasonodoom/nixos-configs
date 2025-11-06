@@ -233,7 +233,6 @@
 
     #custom-logo:hover {
       background: rgba(0, 122, 255, 0.2);
-      transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
     }
 
@@ -289,7 +288,6 @@
 
     #clock:hover {
       background: rgba(255, 255, 255, 0.25);
-      transform: translateY(-1px);
     }
 
     /* System modules */
@@ -312,7 +310,6 @@
     #network:hover,
     #pulseaudio:hover {
       background: rgba(255, 255, 255, 0.2);
-      transform: translateY(-1px);
     }
 
     /* CPU states */
@@ -367,7 +364,6 @@
     #custom-power:hover {
       background: rgba(255, 69, 58, 0.2);
       color: rgba(255, 69, 58, 1.0);
-      transform: translateY(-1px);
     }
 
     /* Animation effects */
