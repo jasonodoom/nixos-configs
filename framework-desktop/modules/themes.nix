@@ -155,20 +155,25 @@ let
         pkgs.libsForQt5.breeze-qt5
         pkgs.kdePackages.breeze-icons
 
-        # KDE/Plasma components required by MacSonoma theme
-        pkgs.libsForQt5.plasma-framework
+        # Full KDE Plasma desktop environment for QML modules
+        pkgs.kdePackages.plasma-desktop
+        pkgs.kdePackages.plasma-workspace
         pkgs.kdePackages.plasma5support
         pkgs.kdePackages.kirigami
-        pkgs.kdePackages.plasma-workspace
         pkgs.kdePackages.breeze
         pkgs.kdePackages.kconfig
         pkgs.kdePackages.kconfigwidgets
         pkgs.kdePackages.kservice
+        pkgs.kdePackages.kdeclarative
+        pkgs.kdePackages.kquickcharts
+        pkgs.libsForQt5.plasma-framework
 
         # Qt modules for SDDM theme compatibility
         pkgs.qt6Packages.qt5compat
         pkgs.qt6Packages.qtdeclarative
         pkgs.qt6Packages.qtsvg
+        pkgs.qt6Packages.qtquick3d
+        pkgs.qt6Packages.qtmultimedia
       ];
     };
   };
