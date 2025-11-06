@@ -115,8 +115,8 @@
         dim_special = 0.8
         dim_around = 0.4
 
-        # Screen shader effects
-        screen_shader = ~/.config/hypr/shaders/crt.frag
+        # Screen shader effects (disabled - no shader file present)
+        # screen_shader = ~/.config/hypr/shaders/crt.frag
     }
 
     # Animations - Fluid Motion Design
