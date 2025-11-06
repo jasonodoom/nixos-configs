@@ -166,6 +166,9 @@ let
         pkgs.kdePackages.kservice
         pkgs.kdePackages.kdeclarative
         pkgs.kdePackages.kquickcharts
+        pkgs.kdePackages.libplasma
+        pkgs.kdePackages.plasma-activities
+        pkgs.kdePackages.kglobalaccel
         pkgs.libsForQt5.plasma-framework
 
         # Qt modules for SDDM theme compatibility
@@ -198,15 +201,20 @@ in {
     ] ++ selectedTheme.extraPackages;
 
     # Configure SDDM with working Qt5 setup
-    services.displayManager.sddm = {
+    services = {
+      # Enable KDE Plasma 6 services for MacSonoma theme QML modules
+      desktopManager.plasma6.enable = lib.mkIf (cfg == "macsonoma") true;
+      upower.enable = lib.mkForce true;  # Resolve conflict between Hyprland and Plasma6
+
+      displayManager.sddm = {
       enable = true;
 
       # Use Qt6 SDDM for MacSonoma, Qt5 for astronaut themes
-      package = if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
+      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
                 then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
                 else if (cfg == "macsonoma")
                 then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma
-                else null; # Use default for other themes
+                else null); # Use default for other themes
 
       wayland.enable = false;
       theme = selectedTheme.name;
@@ -232,6 +240,7 @@ in {
           MinimumUid = 1000;
         };
       };
+    };
     };
 
     # Custom theme configuration for astronaut themes
