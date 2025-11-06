@@ -116,10 +116,10 @@ let
           cp -r plasma/desktoptheme/* $out/share/plasma/desktoptheme/
           cp -r plasma/look-and-feel/* $out/share/plasma/look-and-feel/
 
-          # Install plasmoids
+          # Install plasmoids but exclude incompatible ones
           if [ -d "plasma/plasmoids" ]; then
             mkdir -p $out/share/plasma/plasmoids
-            cp -r plasma/plasmoids/* $out/share/plasma/plasmoids/
+            find plasma/plasmoids -maxdepth 1 -type d ! -name "*betterinlineclock*" ! -name "plasmoids" -exec cp -r {} $out/share/plasma/plasmoids/ \;
           fi
 
           # Install wallpapers
