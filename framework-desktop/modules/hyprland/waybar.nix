@@ -2,11 +2,22 @@
 { config, pkgs, lib, ... }:
 
 {
-  # Enable waybar through NixOS
-  programs.waybar.enable = true;
+  # Install waybar but don't enable globally (will be started by Hyprland only)
+  # programs.waybar.enable = true;
 
   # Install required dependencies for waybar modules
   environment.systemPackages = with pkgs; [
+    # Waybar itself (for Hyprland only)
+    waybar
+
+    # Waybar dependencies
+    rofi          # Application launcher (for custom/logo on-click)
+    wlogout       # Logout menu (for custom/power)
+
+    # Icon themes for tray icons
+    adwaita-icon-theme
+    hicolor-icon-theme
+
     # Network and system utilities
     networkmanager
     networkmanagerapplet
@@ -24,7 +35,7 @@
   environment.etc."xdg/waybar/config".text = builtins.toJSON {
     layer = "top";
     position = "top";
-    height = 42;
+    height = 50;
     spacing = 8;
     margin-top = 8;
     margin-left = 16;
