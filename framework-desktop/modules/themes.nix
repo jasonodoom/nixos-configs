@@ -186,9 +186,11 @@ in {
     services.displayManager.sddm = {
       enable = true;
 
-      # Force Qt5 SDDM for astronaut theme compatibility
+      # Use Qt6 SDDM for MacSonoma, Qt5 for astronaut themes
       package = if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
                 then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
+                else if (cfg == "macsonoma")
+                then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma
                 else null; # Use default for other themes
 
       wayland.enable = false;
