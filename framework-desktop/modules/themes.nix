@@ -127,19 +127,52 @@ let
           # Copy custom background image
           cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/MacSonoma-6.0/Background.jpg
 
-          # Create NixOS-branded logo file
-          cat > $out/nixos-logo.svg << 'EOF'
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <text x="12" y="16" text-anchor="middle" font-family="Arial" font-size="20">❄️</text>
+          # Create NixOS snowflake icons in multiple formats and sizes
+          mkdir -p $out/share/icons/MacSonoma/apps/scalable
+          mkdir -p $out/share/icons/MacSonoma/apps/48
+          mkdir -p $out/share/icons/MacSonoma/apps/64
+          mkdir -p $out/share/pixmaps
+
+          # Create SVG NixOS snowflake icon
+          cat > $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg << 'EOF'
+          <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="nixGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#nixGradient)" stroke="#2C5282" stroke-width="2"/>
+            <text x="32" y="42" text-anchor="middle" font-family="SF Pro Display, -apple-system, sans-serif"
+                  font-size="24" font-weight="300" fill="white">❄️</text>
           </svg>
           EOF
 
-          # Replace Apple logos in theme files with NixOS snowflake
-          find $out -type f \( -name "*.svg" -o -name "*.qml" -o -name "*.js" \) -exec sed -i \
-            -e 's|apple\.svg|nixos-logo.svg|g' \
+          # Copy to other required locations
+          cp $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg $out/share/pixmaps/
+          cp $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg $out/nixos-logo.svg
+
+          # Replace Apple logos and references throughout the theme
+          find $out -type f \( -name "*.svg" -o -name "*.qml" -o -name "*.js" -o -name "*.desktop" -o -name "*.conf" \) -exec sed -i \
+            -e 's|apple\.svg|nix-snowflake.svg|g' \
+            -e 's|apple-logo|nix-snowflake|g' \
             -e 's|Apple|NixOS|g' \
+            -e 's|macOS|NixOS|g' \
             -e 's|🍎|❄️|g' \
+            -e 's|Finder|Dolphin|g' \
+            -e 's|com\.apple\.|org.nixos.|g' \
             {} \;
+
+          # Create a custom launcher icon configuration
+          cat > $out/share/applications/nix-launcher.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=NixOS
+          Comment=NixOS System
+          Icon=nix-snowflake
+          Exec=systemsettings
+          Categories=System;Settings;
+          EOF
         '';
       };
 
@@ -209,8 +242,7 @@ in {
 
     # Configure SDDM with appropriate Qt version per theme
     services = {
-      # Enable KDE Plasma 6 services for MacSonoma theme QML modules (theme designed for Plasma 6)
-      desktopManager.plasma6.enable = lib.mkIf (cfg == "macsonoma") true;
+      # KDE Plasma 6 desktop is now configured in kde-config.nix
       upower.enable = lib.mkForce true;  # Resolve conflict between Hyprland and Plasma6
 
       displayManager.sddm = {

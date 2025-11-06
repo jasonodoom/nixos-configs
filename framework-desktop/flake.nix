@@ -70,6 +70,7 @@
         ./modules/security.nix
         ./modules/system.nix
         ./modules/themes.nix  # Working astronaut theme with Qt5 fix
+        ./modules/kde-config.nix  # KDE Plasma MacSonoma configuration
         ./modules/ba-usr-theme.nix
         ./modules/unfree.nix
         ./modules/user-config.nix
