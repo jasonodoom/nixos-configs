@@ -200,18 +200,20 @@ in {
       selectedTheme.package
     ] ++ selectedTheme.extraPackages;
 
-    # Configure SDDM with working Qt5 setup
+    # Configure SDDM with appropriate Qt version per theme
     services = {
-      # Enable KDE Plasma 5 services for MacSonoma theme QML modules (theme designed for Plasma 5)
-      xserver.desktopManager.plasma5.enable = lib.mkIf (cfg == "macsonoma") true;
+      # Enable KDE Plasma 6 services for MacSonoma theme QML modules (theme designed for Plasma 6)
+      desktopManager.plasma6.enable = lib.mkIf (cfg == "macsonoma") true;
       upower.enable = lib.mkForce true;  # Resolve conflict between Hyprland and Plasma6
 
       displayManager.sddm = {
       enable = true;
 
-      # Use Qt5 SDDM for MacSonoma theme (designed for Plasma 5)
-      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker" || cfg == "macsonoma")
-                then pkgs.libsForQt5.sddm  # Qt5 SDDM for themes requiring Plasma 5
+      # Use Qt6 SDDM for MacSonoma theme (designed for Plasma 6), Qt5 for astronaut themes
+      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
+                then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
+                else if (cfg == "macsonoma")
+                then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma theme
                 else null); # Use default for other themes
 
       wayland.enable = false;
