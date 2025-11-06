@@ -15,8 +15,7 @@
     kdePackages.kscreen       # Display management
     kdePackages.systemsettings # System settings
 
-    # Latte Dock for macOS-style dock
-    latte-dock
+    kdePackages.kactivitymanagerd
 
     # Additional theming tools
     kdePackages.plasma-browser-integration
