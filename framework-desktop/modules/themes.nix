@@ -116,6 +116,12 @@ let
           cp -r plasma/desktoptheme/* $out/share/plasma/desktoptheme/
           cp -r plasma/look-and-feel/* $out/share/plasma/look-and-feel/
 
+          # Install plasmoids
+          if [ -d "plasma/plasmoids" ]; then
+            mkdir -p $out/share/plasma/plasmoids
+            cp -r plasma/plasmoids/* $out/share/plasma/plasmoids/
+          fi
+
           # Install wallpapers
           cp -r wallpapers/* $out/share/wallpapers/
 
@@ -218,6 +224,9 @@ let
         # Hunspell dictionary for virtual keyboard
         pkgs.hunspell
         pkgs.hunspellDicts.en_US
+
+        # Plasma Panel Colorizer - brings Latte Dock features to default panel
+        pkgs.plasma-panel-colorizer
       ];
     };
   };
