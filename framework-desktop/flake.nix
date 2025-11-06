@@ -64,7 +64,7 @@
         ./modules/graphics.nix
         ./modules/hyprland/hyprland.nix
         ./modules/hyprland/dunst.nix
-        ./modules/hyprland/nwg-panel.nix
+        ./modules/hyprland/waybar.nix
         ./modules/hyprland/rofi.nix
         ./modules/networking.nix
         ./modules/security.nix

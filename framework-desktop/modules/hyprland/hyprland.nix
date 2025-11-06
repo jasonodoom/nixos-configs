@@ -34,9 +34,22 @@
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
-    # Monitor configuration - auto-detect displays
-    # Let Hyprland automatically detect and configure displays
+    # Monitor configuration - auto-detect displays with workspace binding
+    # Auto-detect and configure displays (desktop with multiple possible outputs)
     monitor=,preferred,auto,1
+
+    # Common desktop output patterns - Hyprland will use what's available
+    # Primary display (usually the main one detected)
+    workspace = 1, defaultName:main, default:true
+    workspace = 2, defaultName:web
+    workspace = 3, defaultName:dev
+    workspace = 4, defaultName:media
+    workspace = 5, defaultName:chat
+    workspace = 6, defaultName:work
+    workspace = 7, defaultName:games
+    workspace = 8, defaultName:vm
+    workspace = 9, defaultName:misc
+    workspace = 10, defaultName:temp
 
     # Disable update news dialog and logo
     misc {
@@ -51,58 +64,140 @@
         sensitivity = 0
     }
 
-    # General settings
+    # General settings - Ultimate Modern Design
     general {
-        gaps_in = 5
-        gaps_out = 20
-        border_size = 2
-        col.active_border = rgba(bb9af7ee) rgba(7aa2f7ee) 45deg
-        col.inactive_border = rgba(32344aaa)
+        gaps_in = 8
+        gaps_out = 24
+        border_size = 3
+        # Dynamic gradient borders with glow effect
+        col.active_border = rgba(7aa2f7ff) rgba(bb9af7ff) rgba(74c7ecff) rgba(89b4faff) 45deg
+        col.inactive_border = rgba(1a1b2600)  # Invisible for clean look
         layout = dwindle
+        resize_on_border = true
+        extend_border_grab_area = 15
+        hover_icon_on_border = true
     }
 
-    # Decorations
+    # Decorations - Advanced Glassmorphism
     decoration {
-        rounding = 10
+        rounding = 16
+
+        # Advanced blur with multiple layers
         blur {
             enabled = true
-            size = 3
-            passes = 1
+            size = 8
+            passes = 3
             new_optimizations = true
             xray = true
+            ignore_opacity = true
+            noise = 0.0117
+            contrast = 1.1
+            brightness = 1.2
+            vibrancy = 0.21
+            vibrancy_darkness = 0.0
+            special = true
         }
+
+        # Dynamic shadows with glow
         shadow {
             enabled = true
-            range = 4
+            range = 30
             render_power = 3
-            color = rgba(1a1a1aee)
-            color_inactive = rgba(1a1a1a77)
+            color = rgba(7aa2f740)
+            color_inactive = rgba(1a1b2620)
+            offset = 0 8
+            scale = 1.0
         }
+
+        # Window dimming for focus
+        dim_inactive = true
+        dim_strength = 0.1
+        dim_special = 0.8
+        dim_around = 0.4
+
+        # Screen shader effects
+        screen_shader = ~/.config/hypr/shaders/crt.frag
     }
 
-    # Animations
+    # Animations - Fluid Motion Design
     animations {
         enabled = true
-        bezier = myBezier, 0.05, 0.9, 0.1, 1.05
-        animation = windows, 1, 7, myBezier
-        animation = windowsOut, 1, 7, default, popin 80%
-        animation = border, 1, 10, default
-        animation = borderangle, 1, 8, default
-        animation = fade, 1, 7, default
-        animation = workspaces, 1, 6, default
+
+        # Advanced bezier curves for different feels
+        bezier = wind, 0.05, 0.9, 0.1, 1.05
+        bezier = winIn, 0.1, 1.1, 0.1, 1.1
+        bezier = winOut, 0.3, -0.3, 0, 1
+        bezier = liner, 1, 1, 1, 1
+        bezier = bounce, 0.68, -0.55, 0.265, 1.55
+        bezier = smooth, 0.25, 0.1, 0.25, 1
+        bezier = elastic, 0.68, -0.6, 0.32, 1.6
+
+        # Window animations with dramatic effects
+        animation = windows, 1, 6, wind, slide
+        animation = windowsIn, 1, 6, winIn, slide
+        animation = windowsOut, 1, 5, winOut, slide
+        animation = windowsMove, 1, 5, wind, slide
+
+        # Border animations with glow pulse
+        animation = border, 1, 10, smooth
+        animation = borderangle, 1, 30, liner, loop
+
+        # Fade animations for transparency effects
+        animation = fade, 1, 10, smooth
+        animation = fadeIn, 1, 10, smooth
+        animation = fadeOut, 1, 5, smooth
+
+        # Workspace animations with 3D effects
+        animation = workspaces, 1, 6, wind, slide
+        animation = specialWorkspace, 1, 6, elastic, slidevert
+
+        # Focus animations
+        animation = layers, 1, 5, smooth, popin 80%
     }
 
-    # Dwindle layout
+    # Dwindle layout - Enhanced tiling
     dwindle {
         pseudotile = true
         preserve_split = true
+        smart_split = true
+        smart_resizing = true
+        force_split = 0
+        special_scale_factor = 0.8
+        split_width_multiplier = 1.0
+        no_gaps_when_only = 1
+        use_active_for_splits = true
     }
 
-    # Window rules
+    # Window rules - Advanced styling and behavior
     windowrulev2 = float,class:^(pavucontrol)$
     windowrulev2 = float,class:^(blueman-manager)$
     windowrulev2 = float,class:^(nm-applet)$
     windowrulev2 = float,class:^(firefox),title:^(Picture-in-Picture)$
+
+    # Transparency rules for different app types
+    windowrulev2 = opacity 0.95 0.85,class:^(kitty)$
+    windowrulev2 = opacity 0.98 0.90,class:^(code)$
+    windowrulev2 = opacity 1.0 0.95,class:^(firefox)$
+    windowrulev2 = opacity 0.92 0.82,class:^(thunar)$
+
+    # Special floating windows with enhanced effects
+    windowrulev2 = float,class:^(pwvucontrol)$
+    windowrulev2 = size 800 600,class:^(pwvucontrol)$
+    windowrulev2 = center,class:^(pwvucontrol)$
+    windowrulev2 = opacity 0.95,class:^(pwvucontrol)$
+
+    # Picture-in-picture with special styling
+    windowrulev2 = float,title:^(Picture-in-Picture)$
+    windowrulev2 = pin,title:^(Picture-in-Picture)$
+    windowrulev2 = move 75% 75%,title:^(Picture-in-Picture)$
+    windowrulev2 = size 400 225,title:^(Picture-in-Picture)$
+    windowrulev2 = opacity 0.95,title:^(Picture-in-Picture)$
+
+    # Workspace-specific rules
+    windowrulev2 = workspace 2,class:^(firefox)$
+    windowrulev2 = workspace 3,class:^(code)$
+    windowrulev2 = workspace 4,class:^(discord)$
+    windowrulev2 = workspace 4,class:^(spotify)$
 
     # Keybindings
     $mod = SUPER
@@ -113,24 +208,24 @@
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
-    bind = $mod, R, exec, nwg-drawer
-    bind = $mod, D, exec, nwg-drawer
-    bind = $mod SHIFT, R, exec, rofi -show drun  # Fallback launcher
+    bind = $mod, R, exec, rofi -show drun
+    bind = $mod, D, exec, rofi -show drun
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
-    # Additional app launcher shortcut (Space for quick access - Launchpad style)
-    bind = $mod, space, exec, nwg-drawer
+    # Additional app launcher shortcut (Space for quick access)
+    bind = $mod, space, exec, rofi -show drun
 
     # Emergency fallback shortcuts
     bind = $mod ALT, T, exec, kitty
     bind = $mod ALT, R, exec, rofi -show drun
 
-    # nwg-shell controls
-    bind = $mod SHIFT, B, exec, nwg-panel
-    bind = $mod CTRL, B, exec, pkill nwg-panel
-    bind = $mod SHIFT, D, exec, nwg-dock-hyprland
-    bind = $mod CTRL, D, exec, pkill nwg-dock-hyprland
+    # Emoji picker
+    bind = $mod, period, exec, rofi -show emoji
+
+    # Waybar controls
+    bind = $mod SHIFT, B, exec, waybar
+    bind = $mod CTRL, B, exec, pkill waybar
 
     # Hyprland reload
     bind = $mod CTRL, R, exec, hyprctl reload
@@ -165,6 +260,28 @@
     bind = $mod SHIFT, 9, movetoworkspace, 9
     bind = $mod SHIFT, 0, movetoworkspace, 10
 
+    # Advanced window management with animation triggers
+    bind = $mod ALT, left, movewindow, l
+    bind = $mod ALT, right, movewindow, r
+    bind = $mod ALT, up, movewindow, u
+    bind = $mod ALT, down, movewindow, d
+
+    # Resize windows with smooth animations
+    bind = $mod CTRL, left, resizeactive, -40 0
+    bind = $mod CTRL, right, resizeactive, 40 0
+    bind = $mod CTRL, up, resizeactive, 0 -40
+    bind = $mod CTRL, down, resizeactive, 0 40
+
+    # Special workspace (scratchpad) with dramatic entrance
+    bind = $mod, grave, togglespecialworkspace, magic
+    bind = $mod SHIFT, grave, movetoworkspace, special:magic
+
+    # Center floating windows
+    bind = $mod, C, centerwindow
+
+    # Pin windows (always on top with glow effect)
+    bind = $mod SHIFT, P, pin
+
     # Scroll through workspaces
     bind = $mod, mouse_down, workspace, e+1
     bind = $mod, mouse_up, workspace, e-1
@@ -173,8 +290,8 @@
     bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
     bind = $mod, Print, exec, grim - | wl-copy
 
-    # Screen lock binding
-    bind = $mod, L, exec, swaylock
+    # Screen lock binding - ultimate modern Hyprland lock
+    bind = $mod, L, exec, hyprlock
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session
@@ -191,25 +308,36 @@
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
 
-    # Wallpaper - use swaybg as fallback to avoid startup issues
-    exec-once = swaybg -c "#1e1e2e"
+    # Dynamic wallpaper system with time-based changes
+    exec-once = ~/.config/hypr/scripts/dynamic-wallpaper.sh
 
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
     exec-once = pkill waybar || true
 
-    # nwg-shell autostart with debugging
-    exec-once = sleep 2 && nwg-panel > /tmp/nwg-panel.log 2>&1
-    exec-once = sleep 3 && nwg-dock-hyprland > /tmp/nwg-dock.log 2>&1
-    # nwg-drawer launches on demand via shortcuts and dock
+    # Ambient effects and background services
+    exec-once = sleep 1 && ~/.config/hypr/scripts/ambient-effects.sh
+    exec-once = sleep 2 && ~/.config/hypr/scripts/smart-gaps.sh
+
+    # Waybar autostart
+    exec-once = sleep 2 && waybar > /tmp/waybar.log 2>&1
+
+    # Particle system for desktop ambience
+    exec-once = sleep 4 && ~/.config/hypr/scripts/particle-system.sh
+
+    # Smart notification system
+    exec-once = sleep 1 && dunst &
+
+    # Hypridle for advanced idle management
+    exec-once = hypridle
   '';
 
   # Wlogout configuration (beautiful graphical power menu)
   environment.etc."xdg/wlogout/layout".text = ''
     {
         "label" : "lock",
-        "action" : "swaylock -f -c 1a1b26 --inside-color 7aa2f7aa --ring-color bb9af7aa --key-hl-color 9ece6aaa --line-color 00000000 --separator-color 00000000 --text-color c0caf5 --clock --indicator",
+        "action" : "hyprlock",
         "text" : "Lock",
         "keybind" : "l"
     }
@@ -243,6 +371,349 @@
         "text" : "Reboot",
         "keybind" : "r"
     }
+  '';
+
+  # Hyprlock configuration (ultimate modern lock screen)
+  environment.etc."hypr/hyprlock.conf".text = ''
+    # Ultimate Modern Hyprlock Configuration
+
+    # General settings
+    general {
+        disable_loading_bar = true
+        grace = 2
+        hide_cursor = true
+        no_fade_in = false
+        no_fade_out = false
+        ignore_empty_input = false
+    }
+
+    # Dynamic background with blur
+    background {
+        monitor =
+        path = /tmp/hyprlock-wallpaper.png
+        blur_passes = 3
+        blur_size = 8
+        noise = 0.0117
+        contrast = 0.8916
+        brightness = 0.8172
+        vibrancy = 0.1696
+        vibrancy_darkness = 0.0
+    }
+
+    # Input field styling
+    input-field {
+        monitor =
+        size = 350, 60
+        outline_thickness = 2
+        dots_size = 0.26
+        dots_spacing = 0.64
+        dots_center = true
+        dots_rounding = -1
+        outer_color = rgba(0, 122, 255, 0.8)
+        inner_color = rgba(255, 255, 255, 0.9)
+        font_color = rgba(28, 28, 30, 1.0)
+        fade_on_empty = true
+        fade_timeout = 1000
+        placeholder_text = <span foreground="##1C1C1EAA">Enter Password...</span>
+        font_family = Inter
+        font_size = 16
+
+        position = 0, -120
+        halign = center
+        valign = center
+
+        shadow_passes = 2
+        shadow_size = 3.5
+        shadow_color = rgba(0, 0, 0, 0.3)
+        shadow_boost = 1.2
+
+        rounding = 16
+        fail_color = rgba(255, 69, 58, 1.0)
+        fail_text = <span foreground="##FF453AFF">Authentication Failed</span>
+        fail_timeout = 2000
+        fail_transitions = 300
+
+        capslock_color = rgba(255, 204, 0, 1.0)
+        numlock_color = rgba(52, 199, 89, 1.0)
+        bothlock_color = rgba(175, 82, 222, 1.0)
+        invert_numlock = false
+        swap_font_color = false
+    }
+
+    # Clock with modern styling
+    label {
+        monitor =
+        text = cmd[update:1000] echo "$(date +"%-I:%M")"
+        color = rgba(28, 28, 30, 1.0)
+        font_size = 120
+        font_family = Inter Bold
+        shadow_passes = 3
+        shadow_size = 4
+        shadow_color = rgba(0, 0, 0, 0.6)
+        shadow_boost = 1.5
+
+        position = 0, 150
+        halign = center
+        valign = center
+    }
+
+    # Date label
+    label {
+        monitor =
+        text = cmd[update:1000] echo "$(date +"Today is %A, %B %d")"
+        color = rgba(72, 72, 74, 0.8)
+        font_size = 24
+        font_family = Inter Medium
+
+        position = 0, 50
+        halign = center
+        valign = center
+
+        shadow_passes = 2
+        shadow_size = 2
+        shadow_color = rgba(0, 0, 0, 0.4)
+    }
+
+    # Username label
+    label {
+        monitor =
+        text = Hi, $USER
+        color = rgba(28, 28, 30, 0.9)
+        font_size = 28
+        font_family = Inter SemiBold
+
+        position = 0, -200
+        halign = center
+        valign = center
+
+        shadow_passes = 2
+        shadow_size = 2
+        shadow_color = rgba(0, 0, 0, 0.4)
+    }
+
+    # System info
+    label {
+        monitor =
+        text = cmd[update:5000] echo "$(uname -n)"
+        color = rgba(0, 122, 255, 0.7)
+        font_size = 16
+        font_family = Inter Regular
+
+        position = 30, 30
+        halign = left
+        valign = bottom
+    }
+
+    # Desktop indicator
+    label {
+        monitor =
+        text = 🖥️ Desktop System
+        color = rgba(52, 199, 89, 0.7)
+        font_size = 16
+        font_family = Inter Regular
+
+        position = -30, 30
+        halign = right
+        valign = bottom
+    }
+  '';
+
+  # Hypridle configuration (advanced idle management)
+  environment.etc."hypr/hypridle.conf".text = ''
+    # Ultimate Hypridle Configuration
+
+    general {
+        lock_cmd = pidof hyprlock || hyprlock
+        before_sleep_cmd = loginctl lock-session
+        after_sleep_cmd = hyprctl dispatch dpms on
+        ignore_dbus_inhibit = false
+    }
+
+    # Lock screen after 5 minutes
+    listener {
+        timeout = 300
+        on-timeout = loginctl lock-session
+    }
+
+    # Turn off screen after 10 minutes
+    listener {
+        timeout = 600
+        on-timeout = hyprctl dispatch dpms off
+        on-resume = hyprctl dispatch dpms on
+    }
+
+    # Suspend after 30 minutes
+    listener {
+        timeout = 1800
+        on-timeout = systemctl suspend
+    }
+  '';
+
+  # Dynamic wallpaper script
+  environment.etc."hypr/scripts/dynamic-wallpaper.sh".text = ''
+    #!/bin/bash
+    # Dynamic wallpaper that changes based on time and system activity
+
+    WALLPAPER_DIR="$HOME/.config/hypr/wallpapers"
+    mkdir -p "$WALLPAPER_DIR"
+
+    get_time_based_gradient() {
+        hour=$(date +%H)
+        if [ $hour -ge 6 ] && [ $hour -lt 12 ]; then
+            echo "linear-gradient(45deg, #ffeaa7, #fab1a0)" # Morning
+        elif [ $hour -ge 12 ] && [ $hour -lt 18 ]; then
+            echo "linear-gradient(45deg, #74b9ff, #0984e3)" # Afternoon
+        elif [ $hour -ge 18 ] && [ $hour -lt 22 ]; then
+            echo "linear-gradient(45deg, #fd79a8, #fdcb6e)" # Evening
+        else
+            echo "linear-gradient(45deg, #6c5ce7, #a29bfe)" # Night
+        fi
+    }
+
+    create_gradient_wallpaper() {
+        gradient=$(get_time_based_gradient)
+        magick -size 1920x1080 gradient:"$gradient" "$WALLPAPER_DIR/current.png"
+        swaybg -i "$WALLPAPER_DIR/current.png" &
+    }
+
+    # Create initial wallpaper
+    create_gradient_wallpaper
+
+    # Update every 30 minutes
+    while true; do
+        sleep 1800
+        create_gradient_wallpaper
+    done
+  '';
+
+  # Ambient effects script
+  environment.etc."hypr/scripts/ambient-effects.sh".text = ''
+    #!/bin/bash
+    # Ambient desktop effects that respond to system state
+
+    animate_workspace_switch() {
+        # Trigger special effects during workspace transitions
+        hyprctl notify 1 2000 "rgb(7aa2f7)" "Workspace switched with style"
+    }
+
+    monitor_focus_changes() {
+        hyprctl --batch "keyword decoration:dim_inactive true; keyword decoration:dim_strength 0.1"
+    }
+
+    # Monitor for events and trigger effects
+    socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
+        case "$line" in
+            workspace*) animate_workspace_switch ;;
+            activewindow*) monitor_focus_changes ;;
+        esac
+    done &
+  '';
+
+  # Smart gaps script
+  environment.etc."hypr/scripts/smart-gaps.sh".text = ''
+    #!/bin/bash
+    # Intelligent gap management based on window count and layout
+
+    adjust_gaps() {
+        window_count=$(hyprctl clients -j | jq length)
+
+        if [ "$window_count" -eq 1 ]; then
+            hyprctl keyword general:gaps_out 0
+            hyprctl keyword general:gaps_in 0
+        elif [ "$window_count" -eq 2 ]; then
+            hyprctl keyword general:gaps_out 12
+            hyprctl keyword general:gaps_in 6
+        else
+            hyprctl keyword general:gaps_out 24
+            hyprctl keyword general:gaps_in 8
+        fi
+    }
+
+    # Monitor window changes
+    socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
+        case "$line" in
+            openwindow*|closewindow*) adjust_gaps ;;
+        esac
+    done &
+  '';
+
+  # Particle system script
+  environment.etc."hypr/scripts/particle-system.sh".text = ''
+    #!/bin/bash
+    # Subtle particle effects for desktop ambience
+
+    create_floating_particles() {
+        for i in {1..5}; do
+            hyprctl keyword decoration:drop_shadow true
+            sleep 0.1
+            hyprctl keyword decoration:shadow:range $((20 + i * 5))
+            sleep 2
+        done
+    }
+
+    # Trigger particle effects periodically
+    while true; do
+        sleep 30
+        create_floating_particles
+    done &
+  '';
+
+  environment.etc."swaylock/config".text = ''
+    # Appearance
+    color=1a1b26
+    font=JetBrains Mono
+    font-size=24
+
+    # Effects
+    effect-blur=20x3
+    effect-vignette=0.2:0.5
+    fade-in=0.2
+    grace=2
+
+    # Ring
+    ring-color=32344a
+    ring-clear-color=f7768e
+    ring-caps-lock-color=e0af68
+    ring-ver-color=7aa2f7
+    ring-wrong-color=f7768e
+
+    # Key highlight
+    key-hl-color=bb9af7
+
+    # Line (separator)
+    line-color=00000000
+    line-clear-color=00000000
+    line-caps-lock-color=00000000
+    line-ver-color=00000000
+    line-wrong-color=00000000
+
+    # Inside
+    inside-color=1a1b2688
+    inside-clear-color=f7768e88
+    inside-caps-lock-color=e0af6888
+    inside-ver-color=7aa2f788
+    inside-wrong-color=f7768e88
+
+    # Text
+    text-color=c0caf5
+    text-clear-color=1a1b26
+    text-caps-lock-color=1a1b26
+    text-ver-color=1a1b26
+    text-wrong-color=1a1b26
+
+    # Layout
+    indicator
+    indicator-radius=100
+    indicator-thickness=10
+
+    # Clock
+    clock
+    timestr=%H:%M
+    datestr=%A, %B %d
+
+    # Positioning
+    indicator-x-position=960
+    indicator-y-position=540
   '';
 
   # Wlogout styling (Tokyo Night theme)
@@ -442,7 +913,8 @@
     grim
     slurp
     swayidle
-    swaylock
+    hyprlock       # Ultimate modern Hyprland-native lock screen
+    hypridle       # Idle management for Hyprland
     swaybg
     wlogout
 
@@ -452,12 +924,16 @@
     pamixer
     xdg-user-dirs
     libcanberra
+    imagemagick  # For dynamic wallpaper generation
+    socat        # For Hyprland event monitoring
 
     # Applications
     xfce.thunar        # File manager
     kitty              # Terminal
-    rofi-wayland       # Fallback launcher (nwg-drawer is primary)
+    rofi-wayland       # Application launcher
+    rofi-emoji-wayland # Emoji picker
     flameshot          # Screenshot tool
+    waybar             # Modern status bar
 
     # SDDM themes and icons (kept for theme compatibility)
     libsForQt5.breeze-qt5

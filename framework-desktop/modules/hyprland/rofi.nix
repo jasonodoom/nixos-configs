@@ -2,37 +2,41 @@
 { config, pkgs, ... }:
 
 {
-  # Simple rofi configuration that works with NixOS
+  # Modern rofi configuration with glassmorphism
   environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
-        modi: "drun,run,window";
-        lines: 12;
-        columns: 3;
-        width: 70;
-        font: "Fira Code 16";
+        modi: "drun,run,window,emoji";
+        lines: 8;
+        columns: 4;
+        width: 60;
+        font: "Inter 14";
         show-icons: true;
         terminal: "kitty";
         drun-display-format: "{icon} {name}";
         location: 0;
         disable-history: false;
         hide-scrollbar: true;
-        display-drun: "   Apps ";
-        display-run: "   Run ";
-        display-window: " 🪟  Window";
+        display-drun: "󰀻 Apps";
+        display-run: "󰅬 Run";
+        display-window: "󰖯 Windows";
+        display-emoji: "󰞅 Emoji";
         sidebar-mode: true;
+        hover-select: true;
+        me-select-entry: "";
+        me-accept-entry: "MousePrimary";
     }
 
     * {
-        bg-col:  #1a1b26;
-        bg-col-light: #24283b;
-        border-col: #7aa2f7;
-        selected-col: #7aa2f7;
+        bg-col: rgba(26, 27, 38, 0.85);
+        bg-col-light: rgba(36, 40, 59, 0.9);
+        border-col: rgba(122, 162, 247, 0.6);
+        selected-col: rgba(122, 162, 247, 0.9);
         blue: #7aa2f7;
         fg-col: #c0caf5;
         fg-col2: #9ece6a;
-        grey: #565f89;
-        width: 1000;
-        font: "Fira Code 16";
+        grey: rgba(86, 95, 137, 0.8);
+        width: 800;
+        font: "Inter 14";
     }
 
     element-text, element-icon, mode-switcher {
@@ -41,10 +45,13 @@
     }
 
     window {
-        height: 700px;
-        border: 3px;
+        height: 600px;
+        border: 2px;
         border-color: @border-col;
         background-color: @bg-col;
+        border-radius: 24px;
+        backdrop-filter: blur(20px);
+        transparency: "real";
     }
 
     mainbox {
@@ -115,8 +122,9 @@
     }
   '';
 
-  # Ensure rofi package is available
+  # Ensure rofi packages are available
   environment.systemPackages = with pkgs; [
     rofi-wayland
+    rofi-emoji-wayland
   ];
 }

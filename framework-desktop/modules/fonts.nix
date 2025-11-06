@@ -12,6 +12,9 @@
     open-sans
     roboto
 
+    # Modern UI fonts
+    inter  # Modern sans-serif for ultimate theme
+
     # Development fonts
     fira-code
     fira-code-symbols
@@ -34,7 +37,7 @@
     enable = true;
     defaultFonts = {
       serif = [ "Noto Serif" ];
-      sansSerif = [ "Noto Sans" ];
+      sansSerif = [ "Inter" "Noto Sans" ];
       monospace = [ "JetBrains Mono Nerd Font" "Fira Code" ];
       emoji = [ "Twemoji" "Noto Color Emoji" ];
     };
