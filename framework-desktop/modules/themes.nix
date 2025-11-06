@@ -150,10 +150,9 @@ let
         pkgs.gtk3
         pkgs.gtk4
 
-        # Icon and cursor themes (WhiteSur recommended)
-        pkgs.libsForQt5.breeze-icons
-        pkgs.libsForQt5.breeze-qt5
+        # Icon and cursor themes
         pkgs.kdePackages.breeze-icons
+        pkgs.kdePackages.breeze
 
         # Full KDE Plasma desktop environment for QML modules
         pkgs.kdePackages.plasma-desktop
@@ -169,7 +168,7 @@ let
         pkgs.kdePackages.libplasma
         pkgs.kdePackages.plasma-activities
         pkgs.kdePackages.kglobalaccel
-        pkgs.libsForQt5.plasma-framework
+        # Qt6 plasma framework is provided by libplasma above
 
         # Qt modules for SDDM theme compatibility
         pkgs.qt6Packages.qt5compat
