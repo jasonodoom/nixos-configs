@@ -82,17 +82,16 @@ let
 
     # MacSonoma-kde theme (complete macOS Sonoma desktop theming)
     macsonoma = {
-      name = "MacSonoma";
+      name = "MacSonoma-6.0";
       package = pkgs.stdenv.mkDerivation {
         name = "macsonoma-kde-theme";
         src = pkgs.fetchFromGitHub {
           owner = "vinceliuice";
           repo = "MacSonoma-kde";
           rev = "main";
-          sha256 = "sha256-1s495lnv60i4w1ccwhn11q7wn7lqhb3b128v85ldlcpfvxv9qryj";
+          sha256 = "sha256-0mecdt/uMtpoQRuJsMaCmB7LDw7BQs5Y4CQCsy0tieg=";
         };
 
-        nativeBuildInputs = [ pkgs.substituteAll ];
 
         installPhase = ''
           mkdir -p $out/share/themes
@@ -154,11 +153,11 @@ let
         # Icon and cursor themes (WhiteSur recommended)
         pkgs.libsForQt5.breeze-icons
         pkgs.libsForQt5.breeze-qt5
-        pkgs.breeze-icons
+        pkgs.kdePackages.breeze-icons
 
         # Additional KDE theming support
         pkgs.libsForQt5.plasma-framework
-        pkgs.kdePackages.plasma-framework
+        pkgs.kdePackages.plasma5support
       ];
     };
   };
