@@ -31,39 +31,37 @@
     jq         # JSON processing for waybar
   ];
 
-  # Waybar configuration
+  # Waybar configuration - ZaneyOS ddubs style
   environment.etc."xdg/waybar/config".text = builtins.toJSON {
     layer = "top";
     position = "top";
-    height = 50;
-    spacing = 8;
-    margin-top = 8;
-    margin-left = 16;
-    margin-right = 16;
 
     modules-left = [
       "custom/logo"
-      "hyprland/workspaces"
       "hyprland/window"
+      "wireplumber"
+      "cpu"
+      "memory"
+      "idle_inhibitor"
     ];
 
     modules-center = [
-      "clock"
+      "hyprland/workspaces"
     ];
 
     modules-right = [
-      "tray"
-      "pulseaudio"
-      "network"
-      "cpu"
-      "memory"
+      "custom/keybindings"
+      "mpris"
       "custom/power"
+      "tray"
+      "clock"
     ];
 
     # Module configurations
     "custom/logo" = {
-      format = "❄️";
+      format = "";
       tooltip = false;
+      font-size = 22;
       on-click = "rofi -show drun";
       on-click-right = "wlogout --layer-shell";
     };
@@ -71,56 +69,47 @@
     "hyprland/workspaces" = {
       format = "{name}";
       format-icons = {
-        "1" = "󰎤";
-        "2" = "󰎧";
-        "3" = "󰎪";
-        "4" = "󰎭";
-        "5" = "󰎱";
-        "6" = "󰎳";
-        "7" = "󰎶";
-        "8" = "󰎹";
-        "9" = "󰎼";
-        "10" = "󰽥";
-        default = "󰧞";
-        urgent = "󱈸";
+        default = " ";
+        active = " ";
+        urgent = " ";
       };
-      on-click = "activate";
-      show-special = false;
-      sort-by-number = true;
-      active-only = false;
+      on-scroll-up = "hyprctl dispatch workspace e+1";
+      on-scroll-down = "hyprctl dispatch workspace e-1";
     };
 
     "hyprland/window" = {
-      format = "{}";
-      max-length = 50;
-      separate-outputs = true;
+      max-length = 22;
+      separate-outputs = false;
       rewrite = {
-        "^$" = "Desktop";
+        "" = " 🙈 No Windows? ";
       };
     };
 
+    "custom/keybindings" = {
+      tooltip = false;
+      format = "󱕴";
+      on-click = "rofi -show keys";
+    };
+
     clock = {
-      format = "{:%H:%M}";
+      format = "{:%I:%M %p}";
       format-alt = "{:%A, %B %d, %Y}";
       tooltip-format = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
       actions = {
+        on-click = "tz_up";
         on-click-right = "mode";
-        on-click-forward = "tz_up";
-        on-click-backward = "tz_down";
-        on-scroll-up = "shift_up";
-        on-scroll-down = "shift_down";
       };
       calendar = {
-        mode = "year";
+        mode = "month";
         mode-mon-col = 3;
         weeks-pos = "right";
         on-scroll = 1;
         format = {
-          months = "<span color='#1C1C1E'><b>{}</b></span>";
-          days = "<span color='#48484A'><b>{}</b></span>";
-          weeks = "<span color='#007AFF'><b>W{}</b></span>";
-          weekdays = "<span color='#34C759'><b>{}</b></span>";
-          today = "<span color='#FF3B30'><b><u>{}</u></b></span>";
+          months = "<span color='#7aa2f7'><b>{}</b></span>";
+          days = "<span color='#c0caf5'><b>{}</b></span>";
+          weeks = "<span color='#bb9af7'><b>W{}</b></span>";
+          weekdays = "<span color='#9ece6a'><b>{}</b></span>";
+          today = "<span color='#f7768e'><b><u>{}</u></b></span>";
         };
       };
     };
@@ -131,7 +120,33 @@
       show-passive-items = true;
     };
 
-    pulseaudio = {
+    idle_inhibitor = {
+      format = "{icon}";
+      format-icons = {
+        activated = "󰅶";
+        deactivated = "󰾪";
+      };
+      tooltip-format-activated = "Idle inhibitor active";
+      tooltip-format-deactivated = "Idle inhibitor inactive";
+    };
+
+    mpris = {
+      format = "{player_icon} {dynamic}";
+      format-paused = "{status_icon} {dynamic}";
+      player-icons = {
+        default = "🎵";
+        mpv = "🎵";
+        spotify = "";
+      };
+      status-icons = {
+        paused = "⏸";
+        playing = "▶";
+      };
+      ignored-players = ["firefox"];
+      max-length = 40;
+    };
+
+    wireplumber = {
       format = "{icon} {volume}%";
       format-muted = "󰝟 Muted";
       format-icons = {
@@ -143,20 +158,26 @@
         car = "󰄋";
         default = ["󰕿" "󰖀" "󰕾"];
       };
-      scroll-step = 5;
-      on-click = "pwvucontrol";
-      on-click-right = "pavucontrol";
-      tooltip-format = "{desc}";
+      scroll-step = 2;
+      on-click = "playerctl play-pause";
+      on-click-right = "pwvucontrol";
+      on-click-middle = "pavucontrol";
+      tooltip-format = "{desc} • Click to play/pause";
+      max-volume = 150;
     };
 
     network = {
-      format-wifi = "󰤨 {signalStrength}%";
-      format-ethernet = "󰈀 Connected";
-      format-disconnected = "󰤭 Disconnected";
-      tooltip-format = "{ifname}: {ipaddr}";
+      format-wifi = " {essid}";
+      format-ethernet = "󰈀 {ipaddr}";
+      format-linked = "󰈀 {ifname} (No IP)";
+      format-disconnected = "󰌙 Disconnected";
+      format-alt = "{ifname}: {ipaddr}/{cidr}";
+      tooltip-format = "{ifname} via {gwaddr}";
       tooltip-format-wifi = "{essid} ({signalStrength}%): {ipaddr}";
+      tooltip-format-ethernet = "{ifname}: {ipaddr}";
+      tooltip-format-disconnected = "Disconnected";
       on-click = "nm-connection-editor";
-      max-length = 20;
+      max-length = 30;
     };
 
     cpu = {
@@ -186,214 +207,113 @@
     };
   };
 
-  # Ultimate Modern CSS Styling - macOS Sonoma
+  # ZaneyOS ddubs Style - Modern rounded rectangles
+  # https://gitlab.com/Zaney/zaneyos/
   environment.etc."xdg/waybar/style.css".text = ''
-    /* Ultimate Modern Glassmorphism Waybar Theme - macOS Sonoma */
     * {
       border: none;
-      border-radius: 0;
-      font-family: "Inter", "SF Pro Display", "JetBrains Mono Nerd Font", sans-serif;
-      font-weight: 500;
-      font-size: 14px;
-      min-height: 0;
-      margin: 0;
-      padding: 0;
+      border-radius: 0px;
+      font-family: "JetBrains Mono Nerd Font", sans-serif;
+      font-size: 18px;
+      min-height: 0px;
     }
 
     window#waybar {
-      background: linear-gradient(135deg,
-        rgba(242, 242, 247, 0.12) 0%,
-        rgba(255, 255, 255, 0.18) 25%,
-        rgba(248, 248, 248, 0.15) 50%,
-        rgba(255, 255, 255, 0.18) 75%,
-        rgba(242, 242, 247, 0.12) 100%);
-      -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(110%);
-      border: 1px solid rgba(0, 122, 255, 0.15);
-      border-radius: 24px;
-      color: rgba(28, 28, 30, 0.9);
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.15),
-        0 2px 16px rgba(0, 122, 255, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-      transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      background: rgba(0, 0, 0, 0);
     }
 
-    window#waybar.hidden {
-      opacity: 0.2;
-    }
-
-    /* Floating island effect */
-    .modules-left,
-    .modules-center,
-    .modules-right {
-      background: transparent;
-      margin: 4px;
-    }
-
-    /* Custom logo/launcher */
-    #custom-logo {
-      font-size: 18px;
-      color: rgba(0, 122, 255, 1.0);
-      background: rgba(0, 122, 255, 0.1);
-      border-radius: 12px;
-      padding: 6px 12px;
-      margin: 4px;
-      transition: all 0.3s ease;
-    }
-
-    #custom-logo:hover {
-      background: rgba(0, 122, 255, 0.2);
-      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-    }
-
-    /* Workspaces */
     #workspaces {
-      background: rgba(255, 255, 255, 0.1);
+      color: #1a1b26;
+      background: #32344a;
+      margin: 4px 4px;
+      padding: 5px 5px;
       border-radius: 16px;
-      padding: 2px 8px;
-      margin: 4px;
     }
 
     #workspaces button {
-      padding: 4px 8px;
-      margin: 2px;
-      border-radius: 8px;
-      color: rgba(72, 72, 74, 0.8);
-      background: transparent;
-      transition: all 0.3s ease;
+      font-weight: bold;
+      padding: 0px 5px;
+      margin: 0px 3px;
+      border-radius: 16px;
+      color: #1a1b26;
+      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      opacity: 0.5;
+      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
     }
 
     #workspaces button.active {
-      background: rgba(0, 122, 255, 0.8);
-      color: rgba(255, 255, 255, 1.0);
-      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.4);
+      font-weight: bold;
+      padding: 0px 5px;
+      margin: 0px 3px;
+      border-radius: 16px;
+      color: #1a1b26;
+      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+      opacity: 1.0;
+      min-width: 40px;
     }
 
     #workspaces button:hover {
-      background: rgba(0, 122, 255, 0.3);
-      color: rgba(28, 28, 30, 1.0);
+      font-weight: bold;
+      border-radius: 16px;
+      color: #1a1b26;
+      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      opacity: 0.8;
+      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
     }
 
-    /* Window title */
-    #window {
-      color: rgba(28, 28, 30, 0.8);
-      font-weight: 600;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.08);
+    tooltip {
+      background: #1a1b26;
+      border: 1px solid #f7768e;
       border-radius: 12px;
-      margin: 4px;
     }
 
-    /* Clock */
+    tooltip label {
+      color: #f7768e;
+    }
+
+    #window, #wireplumber, #cpu, #memory, #idle_inhibitor {
+      font-weight: bold;
+      margin: 4px 0px;
+      margin-left: 7px;
+      padding: 0px 18px;
+      background: #1a1b26;
+      color: #f7768e;
+      border-radius: 8px 8px 8px 8px;
+    }
+
+    #idle_inhibitor {
+      font-size: 28px;
+    }
+
+    #custom-logo {
+      color: #9ece6a;
+      background: #32344a;
+      font-size: 22px;
+      margin: 0px;
+      padding: 0px 5px 0px 5px;
+      border-radius: 16px 16px 16px 16px;
+    }
+
+    #custom-keybindings, #mpris, #tray, #custom-power {
+      font-size: 20px;
+      background: #1a1b26;
+      color: #f7768e;
+      margin: 4px 0px;
+      margin-right: 7px;
+      border-radius: 8px 8px 8px 8px;
+      padding: 0px 18px;
+    }
+
     #clock {
-      font-weight: 600;
-      font-size: 15px;
-      color: rgba(28, 28, 30, 0.9);
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      padding: 6px 16px;
-      margin: 4px;
-      transition: all 0.3s ease;
-    }
-
-    #clock:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    /* System modules */
-    #cpu,
-    #memory,
-    #network,
-    #pulseaudio,
-    #tray,
-    #custom-power {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 6px 12px;
-      margin: 2px;
-      color: rgba(28, 28, 30, 0.8);
-      transition: all 0.3s ease;
-    }
-
-    #cpu:hover,
-    #memory:hover,
-    #network:hover,
-    #pulseaudio:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* CPU states */
-    #cpu.warning {
-      background: rgba(255, 204, 0, 0.2);
-      color: rgba(255, 149, 0, 1.0);
-    }
-
-    #cpu.critical {
-      background: rgba(255, 69, 58, 0.2);
-      color: rgba(255, 69, 58, 1.0);
-    }
-
-    /* Memory states */
-    #memory.warning {
-      background: rgba(255, 204, 0, 0.2);
-      color: rgba(255, 149, 0, 1.0);
-    }
-
-    #memory.critical {
-      background: rgba(255, 69, 58, 0.2);
-      color: rgba(255, 69, 58, 1.0);
-    }
-
-    /* Network states */
-    #network.disconnected {
-      background: rgba(255, 69, 58, 0.2);
-      color: rgba(255, 69, 58, 1.0);
-    }
-
-    /* Audio */
-    #pulseaudio.muted {
-      color: rgba(142, 142, 147, 0.8);
-    }
-
-    /* Tray */
-    #tray > .passive {
-      -gtk-icon-effect: dim;
-    }
-
-    #tray > .needs-attention {
-      -gtk-icon-effect: highlight;
-      background-color: rgba(255, 69, 58, 0.2);
-    }
-
-    /* Power button */
-    #custom-power {
-      color: rgba(255, 69, 58, 0.9);
+      font-weight: bold;
       font-size: 16px;
+      color: #0D0E15;
+      background: linear-gradient(90deg, #9ece6a, #32344a);
+      margin: 0px;
+      padding: 0px 5px 0px 5px;
+      border-radius: 16px 16px 16px 16px;
     }
 
-    #custom-power:hover {
-      background: rgba(255, 69, 58, 0.2);
-      color: rgba(255, 69, 58, 1.0);
-    }
-
-    /* Animation effects */
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(0, 122, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); }
-    }
-
-    /* Smooth transitions for all interactive elements */
-    button,
-    #custom-logo,
-    #clock,
-    #cpu,
-    #memory,
-    #network,
-    #pulseaudio,
-    #custom-power {
-      transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    }
   '';
 }

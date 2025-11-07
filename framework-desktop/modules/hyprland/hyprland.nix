@@ -2,6 +2,9 @@
 { config, pkgs, lib, inputs, ... }:
 
 {
+  imports = [
+    ./binds.nix
+  ];
   # Enable Hyprland
   programs.hyprland = {
     enable = true;
@@ -134,6 +137,11 @@
         # screen_shader = ~/.config/hypr/shaders/crt.frag
     }
 
+    # Layer rules for waybar transparency and blur
+    layerrule = blur, waybar
+    layerrule = ignorealpha 0.5, waybar
+    layerrule = ignorealpha 0.5, notifications
+
     # Animations - Fluid Motion Design
     animations {
         enabled = true
@@ -214,132 +222,15 @@
     windowrulev2 = workspace 4,class:^(discord)$
     windowrulev2 = workspace 4,class:^(spotify)$
 
-    # Keybindings
-    $mod = SUPER
 
-    # Program shortcuts
-    bind = $mod, Return, exec, kitty
-    bind = $mod, T, exec, kitty
-    bind = $mod, Q, killactive
-    bind = $mod, M, exit
-    bind = $mod, V, togglefloating
-    bind = $mod, R, exec, rofi -show drun
-    bind = $mod, D, exec, rofi -show drun
-    bind = $mod, P, pseudo
-    bind = $mod, J, togglesplit
-
-    # Additional app launcher shortcut (Space for quick access)
-    bind = $mod, space, exec, rofi -show drun
-
-    # Emergency fallback shortcuts
-    bind = $mod ALT, T, exec, kitty
-    bind = $mod ALT, R, exec, rofi -show drun
-
-    # Emoji picker
-    bind = $mod, period, exec, rofi -show emoji
-
-    # Waybar controls
-    bind = $mod SHIFT, B, exec, waybar
-    bind = $mod CTRL, B, exec, pkill waybar
-
-    # Hyprland reload
-    bind = $mod CTRL, R, exec, hyprctl reload
-
-    # Move focus
-    bind = $mod, left, movefocus, l
-    bind = $mod, right, movefocus, r
-    bind = $mod, up, movefocus, u
-    bind = $mod, down, movefocus, d
-
-    # Switch workspaces
-    bind = $mod, 1, workspace, 1
-    bind = $mod, 2, workspace, 2
-    bind = $mod, 3, workspace, 3
-    bind = $mod, 4, workspace, 4
-    bind = $mod, 5, workspace, 5
-    bind = $mod, 6, workspace, 6
-    bind = $mod, 7, workspace, 7
-    bind = $mod, 8, workspace, 8
-    bind = $mod, 9, workspace, 9
-    bind = $mod, 0, workspace, 10
-
-    # Move windows to workspaces
-    bind = $mod SHIFT, 1, movetoworkspace, 1
-    bind = $mod SHIFT, 2, movetoworkspace, 2
-    bind = $mod SHIFT, 3, movetoworkspace, 3
-    bind = $mod SHIFT, 4, movetoworkspace, 4
-    bind = $mod SHIFT, 5, movetoworkspace, 5
-    bind = $mod SHIFT, 6, movetoworkspace, 6
-    bind = $mod SHIFT, 7, movetoworkspace, 7
-    bind = $mod SHIFT, 8, movetoworkspace, 8
-    bind = $mod SHIFT, 9, movetoworkspace, 9
-    bind = $mod SHIFT, 0, movetoworkspace, 10
-
-    # Advanced window management with animation triggers
-    bind = $mod ALT, left, movewindow, l
-    bind = $mod ALT, right, movewindow, r
-    bind = $mod ALT, up, movewindow, u
-    bind = $mod ALT, down, movewindow, d
-
-    # Resize windows with smooth animations
-    bind = $mod CTRL, left, resizeactive, -40 0
-    bind = $mod CTRL, right, resizeactive, 40 0
-    bind = $mod CTRL, up, resizeactive, 0 -40
-    bind = $mod CTRL, down, resizeactive, 0 40
-
-    # Special workspace (scratchpad) with dramatic entrance
-    bind = $mod, grave, togglespecialworkspace, magic
-    bind = $mod SHIFT, grave, movetoworkspace, special:magic
-
-    # Center floating windows
-    bind = $mod, C, centerwindow
-
-    # Pin windows (always on top with glow effect)
-    bind = $mod SHIFT, P, pin
-
-    # Scroll through workspaces
-    bind = $mod, mouse_down, workspace, e+1
-    bind = $mod, mouse_up, workspace, e-1
-
-    # Screenshots
-    bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
-    bind = $mod, Print, exec, grim - | wl-copy
-
-    # Screen lock binding - ultimate modern Hyprland lock
-    bind = $mod, L, exec, hyprlock
-
-    # Power management shortcuts
-    bind = $mod SHIFT, L, exec, loginctl lock-session
-    bind = $mod SHIFT, Q, exec, hyprctl dispatch exit
-    bind = $mod SHIFT, S, exec, systemctl suspend
-    bind = $mod, Escape, exec, wlogout --layer-shell
-    bind = $mod SHIFT, P, exec, wlogout --layer-shell
-
-    # Direct power shortcuts (with confirmation)
-    bind = $mod CTRL SHIFT, R, exec, systemctl reboot
-    bind = $mod CTRL SHIFT, S, exec, systemctl poweroff
-
-    # Mouse binds
-    bindm = $mod, mouse:272, movewindow
-    bindm = $mod, mouse:273, resizewindow
-
-    # Dynamic wallpaper system with time-based changes
-    exec-once = ~/.config/hypr/scripts/dynamic-wallpaper.sh
 
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
     exec-once = pkill waybar || true
 
-    # Ambient effects and background services
-    exec-once = sleep 1 && ~/.config/hypr/scripts/ambient-effects.sh
-    exec-once = sleep 2 && ~/.config/hypr/scripts/smart-gaps.sh
-
     # Waybar autostart
     exec-once = sleep 2 && waybar > /tmp/waybar.log 2>&1
-
-    # Particle system for desktop ambience
-    exec-once = sleep 4 && ~/.config/hypr/scripts/particle-system.sh
 
     # Smart notification system
     exec-once = sleep 1 && dunst &
@@ -564,114 +455,6 @@
     }
   '';
 
-  # Dynamic wallpaper script
-  environment.etc."hypr/scripts/dynamic-wallpaper.sh".text = ''
-    #!/bin/bash
-    # Dynamic wallpaper that changes based on time and system activity
-
-    WALLPAPER_DIR="$HOME/.config/hypr/wallpapers"
-    mkdir -p "$WALLPAPER_DIR"
-
-    get_time_based_gradient() {
-        hour=$(date +%H)
-        if [ $hour -ge 6 ] && [ $hour -lt 12 ]; then
-            echo "linear-gradient(45deg, #ffeaa7, #fab1a0)" # Morning
-        elif [ $hour -ge 12 ] && [ $hour -lt 18 ]; then
-            echo "linear-gradient(45deg, #74b9ff, #0984e3)" # Afternoon
-        elif [ $hour -ge 18 ] && [ $hour -lt 22 ]; then
-            echo "linear-gradient(45deg, #fd79a8, #fdcb6e)" # Evening
-        else
-            echo "linear-gradient(45deg, #6c5ce7, #a29bfe)" # Night
-        fi
-    }
-
-    create_gradient_wallpaper() {
-        gradient=$(get_time_based_gradient)
-        magick -size 1920x1080 gradient:"$gradient" "$WALLPAPER_DIR/current.png"
-        swaybg -i "$WALLPAPER_DIR/current.png" &
-    }
-
-    # Create initial wallpaper
-    create_gradient_wallpaper
-
-    # Update every 30 minutes
-    while true; do
-        sleep 1800
-        create_gradient_wallpaper
-    done
-  '';
-
-  # Ambient effects script
-  environment.etc."hypr/scripts/ambient-effects.sh".text = ''
-    #!/bin/bash
-    # Ambient desktop effects that respond to system state
-
-    animate_workspace_switch() {
-        # Trigger special effects during workspace transitions
-        hyprctl notify 1 2000 "rgb(7aa2f7)" "Workspace switched with style"
-    }
-
-    monitor_focus_changes() {
-        hyprctl --batch "keyword decoration:dim_inactive true; keyword decoration:dim_strength 0.1"
-    }
-
-    # Monitor for events and trigger effects
-    socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
-        case "$line" in
-            workspace*) animate_workspace_switch ;;
-            activewindow*) monitor_focus_changes ;;
-        esac
-    done &
-  '';
-
-  # Smart gaps script
-  environment.etc."hypr/scripts/smart-gaps.sh".text = ''
-    #!/bin/bash
-    # Intelligent gap management based on window count and layout
-
-    adjust_gaps() {
-        window_count=$(hyprctl clients -j | jq length)
-
-        if [ "$window_count" -eq 1 ]; then
-            hyprctl keyword general:gaps_out 0
-            hyprctl keyword general:gaps_in 0
-        elif [ "$window_count" -eq 2 ]; then
-            hyprctl keyword general:gaps_out 12
-            hyprctl keyword general:gaps_in 6
-        else
-            hyprctl keyword general:gaps_out 24
-            hyprctl keyword general:gaps_in 8
-        fi
-    }
-
-    # Monitor window changes
-    socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
-        case "$line" in
-            openwindow*|closewindow*) adjust_gaps ;;
-        esac
-    done &
-  '';
-
-  # Particle system script
-  environment.etc."hypr/scripts/particle-system.sh".text = ''
-    #!/bin/bash
-    # Subtle particle effects for desktop ambience
-
-    create_floating_particles() {
-        for i in {1..5}; do
-            hyprctl keyword decoration:drop_shadow true
-            sleep 0.1
-            hyprctl keyword decoration:shadow:range $((20 + i * 5))
-            sleep 2
-        done
-    }
-
-    # Trigger particle effects periodically
-    while true; do
-        sleep 30
-        create_floating_particles
-    done &
-  '';
 
   environment.etc."swaylock/config".text = ''
     # Appearance
