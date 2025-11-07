@@ -18,7 +18,7 @@ pkgs.nixosTest {
       ../modules/security.nix
       ../modules/system.nix
       ../modules/themes.nix  # SDDM themes
-      ../modules/unfree.nix
+      # Excluding unfree.nix from VM tests to avoid nixpkgs.config conflicts
       ../modules/user-config.nix
       ../modules/virtualization.nix
     ];
