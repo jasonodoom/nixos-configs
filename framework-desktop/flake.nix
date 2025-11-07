@@ -99,6 +99,12 @@
       };
     in
     {
+      # NixOS VM tests
+      checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+        basic-kde = import ./tests/basic-kde.nix { inherit pkgs; };
+        package-check = import ./tests/package-check.nix { inherit pkgs; };
+      };
+
       # Development shells
       devShells = {
         # Go development environment

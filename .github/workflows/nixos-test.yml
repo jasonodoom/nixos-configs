@@ -1,0 +1,44 @@
+name: NixOS Integration Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-plasma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31.8.2
+        with:
+          enable_kvm: false # GitHub runners don't support KVM
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Run package validation test
+        run: |
+          cd framework-desktop
+          nix build .#checks.x86_64-linux.package-check --show-trace
+
+      - name: Run basic KDE VM test
+        run: |
+          cd framework-desktop
+          nix build .#checks.x86_64-linux.basic-kde --show-trace
+
+      - name: Upload test screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plasma-test-screenshots
+          path: framework-desktop/result/
+          retention-days: 30
+
+      - name: Upload test logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: plasma-test-logs
+          path: framework-desktop/result/log.html
+          retention-days: 7
