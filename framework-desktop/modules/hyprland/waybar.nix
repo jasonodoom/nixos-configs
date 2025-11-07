@@ -62,7 +62,6 @@
     "custom/logo" = {
       format = "";
       tooltip = false;
-      font-size = 22;
       on-click = "rofi -show drun";
       on-click-right = "wlogout --layer-shell";
     };
