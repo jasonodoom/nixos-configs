@@ -18,9 +18,18 @@
     nwg-displays       # Monitor configuration GUI
     wlogout            # Logout menu (for custom/power)
 
-    # Icon themes for tray icons
-    adwaita-icon-theme
-    hicolor-icon-theme
+    # Icon themes for comprehensive application coverage
+    adwaita-icon-theme      # GNOME default icons
+    hicolor-icon-theme      # Fallback icon theme
+    papirus-icon-theme      # Modern colorful icons
+    tela-icon-theme         # Flat modern icons
+    numix-icon-theme        # Popular flat icons
+    breeze-icons           # KDE icons for compatibility
+
+    # GTK themes for modern dark aesthetic
+    arc-theme              # Modern flat theme
+    numix-gtk-theme        # Popular dark theme
+    nordic                 # Dark Nordic theme (matches Tokyo Night)
 
     # Network and system utilities
     networkmanager
@@ -327,5 +336,32 @@
       border-radius: 16px 16px 16px 16px;
     }
 
+  '';
+
+  # GTK theme configuration for modern dark aesthetic
+  environment.etc."gtk-3.0/settings.ini".text = ''
+    [Settings]
+    gtk-theme-name=Nordic-darker
+    gtk-icon-theme-name=Papirus-Dark
+    gtk-cursor-theme-name=breeze_cursors
+    gtk-font-name=Inter 11
+    gtk-application-prefer-dark-theme=true
+    gtk-xft-antialias=1
+    gtk-xft-hinting=1
+    gtk-xft-hintstyle=hintslight
+    gtk-xft-rgba=rgb
+  '';
+
+  environment.etc."gtk-4.0/settings.ini".text = ''
+    [Settings]
+    gtk-theme-name=Nordic-darker
+    gtk-icon-theme-name=Papirus-Dark
+    gtk-cursor-theme-name=breeze_cursors
+    gtk-font-name=Inter 11
+    gtk-application-prefer-dark-theme=true
+    gtk-xft-antialias=1
+    gtk-xft-hinting=1
+    gtk-xft-hintstyle=hintslight
+    gtk-xft-rgba=rgb
   '';
 }
