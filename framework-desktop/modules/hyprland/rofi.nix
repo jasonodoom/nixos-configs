@@ -17,7 +17,7 @@
         modi: "drun,run,window";
         lines: 8;
         columns: 4;
-        width: 60;
+        width: 40;
         font: "Inter 14";
         show-icons: true;
         terminal: "kitty";
@@ -45,7 +45,6 @@
         fg-col: #c0caf5;
         fg-col2: #9ece6a;
         grey: rgba(86, 95, 137, 0.8);
-        width: 40%;
         font: "Inter 14";
     }
 
