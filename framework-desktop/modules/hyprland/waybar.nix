@@ -10,9 +10,12 @@
     # Waybar itself (for Hyprland only)
     waybar
 
-    # Waybar dependencies
-    rofi-wayland  # Application launcher (for custom/logo on-click)
-    wlogout       # Logout menu (for custom/power)
+    # Application launchers and desktop tools
+    rofi-wayland        # Application launcher fallback
+    nwg-drawer         # Modern application drawer (primary)
+    nwg-dock-hyprland  # Dock for Hyprland
+    nwg-displays       # Monitor configuration GUI
+    wlogout            # Logout menu (for custom/power)
 
     # Icon themes for tray icons
     adwaita-icon-theme
@@ -62,19 +65,27 @@
     "custom/logo" = {
       format = "";
       tooltip = false;
-      on-click = "rofi -show drun";
+      on-click = "nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
       on-click-right = "wlogout --layer-shell";
     };
 
     "hyprland/workspaces" = {
-      format = "{name}";
+      format = "{icon}";
       format-icons = {
-        default = " ";
-        active = " ";
-        urgent = " ";
+        default = "󰧞";
+        active = "󰮯";
+        urgent = "󰀧";
       };
       on-scroll-up = "hyprctl dispatch workspace e+1";
       on-scroll-down = "hyprctl dispatch workspace e-1";
+      show-special = false;
+      persistent-workspaces = {
+        "1" = [];
+        "2" = [];
+        "3" = [];
+        "4" = [];
+        "5" = [];
+      };
     };
 
     "hyprland/window" = {
@@ -167,17 +178,17 @@
     };
 
     network = {
-      format-wifi = " {essid}";
-      format-ethernet = "󰈀 {ipaddr}";
-      format-linked = "󰈀 {ifname} (No IP)";
-      format-disconnected = "󰌙 Disconnected";
-      format-alt = "{ifname}: {ipaddr}/{cidr}";
-      tooltip-format = "{ifname} via {gwaddr}";
-      tooltip-format-wifi = "{essid} ({signalStrength}%): {ipaddr}";
-      tooltip-format-ethernet = "{ifname}: {ipaddr}";
-      tooltip-format-disconnected = "Disconnected";
-      on-click = "nm-connection-editor";
-      max-length = 30;
+      format-icons = [
+        "󰤯"
+        "󰤟"
+        "󰤢"
+        "󰤥"
+        "󰤨"
+      ];
+      format-ethernet = " {bandwidthDownOctets}";
+      format-wifi = "{icon} {signalStrength}%";
+      format-disconnected = "󰤮";
+      tooltip = false;
     };
 
     cpu = {
@@ -207,8 +218,9 @@
     };
   };
 
-  # ZaneyOS ddubs Style - Modern rounded rectangles
+  # ZaneyOS ddubs Style - Modern rounded rectangles with dynamic colors
   # https://gitlab.com/Zaney/zaneyos/
+  # Uses a more balanced color scheme instead of heavy red theme
   environment.etc."xdg/waybar/style.css".text = ''
     * {
       border: none;
@@ -223,8 +235,8 @@
     }
 
     #workspaces {
-      color: #1a1b26;
-      background: #32344a;
+      color: #0f0f0f;
+      background: #565f89;
       margin: 4px 4px;
       padding: 5px 5px;
       border-radius: 16px;
@@ -235,8 +247,8 @@
       padding: 0px 5px;
       margin: 0px 3px;
       border-radius: 16px;
-      color: #1a1b26;
-      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      color: #0f0f0f;
+      background: linear-gradient(45deg, #7dcfff, #bb9af7);
       opacity: 0.5;
       transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
     }
@@ -246,8 +258,8 @@
       padding: 0px 5px;
       margin: 0px 3px;
       border-radius: 16px;
-      color: #1a1b26;
-      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      color: #0f0f0f;
+      background: linear-gradient(45deg, #7dcfff, #bb9af7);
       transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
       opacity: 1.0;
       min-width: 40px;
@@ -256,20 +268,20 @@
     #workspaces button:hover {
       font-weight: bold;
       border-radius: 16px;
-      color: #1a1b26;
-      background: linear-gradient(45deg, #f7768e, #7aa2f7);
+      color: #0f0f0f;
+      background: linear-gradient(45deg, #7dcfff, #bb9af7);
       opacity: 0.8;
       transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
     }
 
     tooltip {
       background: #1a1b26;
-      border: 1px solid #f7768e;
+      border: 1px solid #7dcfff;
       border-radius: 12px;
     }
 
     tooltip label {
-      color: #f7768e;
+      color: #7dcfff;
     }
 
     #window, #wireplumber, #cpu, #memory, #idle_inhibitor {
@@ -278,7 +290,7 @@
       margin-left: 7px;
       padding: 0px 18px;
       background: #1a1b26;
-      color: #f7768e;
+      color: #7dcfff;
       border-radius: 8px 8px 8px 8px;
     }
 
@@ -288,7 +300,7 @@
 
     #custom-logo {
       color: #9ece6a;
-      background: #32344a;
+      background: #565f89;
       font-size: 22px;
       margin: 0px;
       padding: 0px 5px 0px 5px;
@@ -298,7 +310,7 @@
     #network, #custom-keybindings, #mpris, #tray, #custom-power {
       font-size: 20px;
       background: #1a1b26;
-      color: #f7768e;
+      color: #7dcfff;
       margin: 4px 0px;
       margin-right: 7px;
       border-radius: 8px 8px 8px 8px;
@@ -309,7 +321,7 @@
       font-weight: bold;
       font-size: 16px;
       color: #0D0E15;
-      background: linear-gradient(90deg, #9ece6a, #32344a);
+      background: linear-gradient(90deg, #9ece6a, #565f89);
       margin: 0px;
       padding: 0px 5px 0px 5px;
       border-radius: 16px 16px 16px 16px;
