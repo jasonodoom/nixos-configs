@@ -14,7 +14,7 @@
   # Modern rofi configuration with glassmorphism
   environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
-        modi: "drun,run,window,emoji";
+        modi: "drun,run,window";
         lines: 8;
         columns: 4;
         width: 60;
@@ -28,7 +28,6 @@
         display-drun: "󰀻 Apps";
         display-run: "󰅬 Run";
         display-window: "󰖯 Windows";
-        display-emoji: "󰞅 Emoji";
         sidebar-mode: true;
         hover-select: true;
         me-select-entry: "";

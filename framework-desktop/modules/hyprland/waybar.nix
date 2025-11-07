@@ -39,10 +39,6 @@
     modules-left = [
       "custom/logo"
       "hyprland/window"
-      "wireplumber"
-      "cpu"
-      "memory"
-      "idle_inhibitor"
     ];
 
     modules-center = [
@@ -50,10 +46,15 @@
     ];
 
     modules-right = [
-      "custom/keybindings"
+      "network"
+      "wireplumber"
+      "cpu"
+      "memory"
+      "idle_inhibitor"
       "mpris"
-      "custom/power"
+      "custom/keybindings"
       "tray"
+      "custom/power"
       "clock"
     ];
 
@@ -295,7 +296,7 @@
       border-radius: 16px 16px 16px 16px;
     }
 
-    #custom-keybindings, #mpris, #tray, #custom-power {
+    #network, #custom-keybindings, #mpris, #tray, #custom-power {
       font-size: 20px;
       background: #1a1b26;
       color: #f7768e;
