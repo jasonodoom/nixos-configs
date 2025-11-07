@@ -50,8 +50,8 @@
     ];
 
     modules-right = [
-      "network"
       "wireplumber"
+      "bluetooth"
       "cpu"
       "memory"
       "idle_inhibitor"
@@ -171,27 +171,25 @@
         default = ["󰕿" "󰖀" "󰕾"];
       };
       scroll-step = 2;
-      on-click = "playerctl play-pause";
-      on-click-right = "pwvucontrol";
-      on-click-middle = "pavucontrol";
-      tooltip-format = "{desc} • Click to play/pause";
+      on-click = "pwvucontrol";
+      on-click-right = "pavucontrol";
+      on-click-middle = "playerctl play-pause";
+      tooltip-format = "{desc} • Right-click: pavucontrol • Middle-click: play/pause";
       max-volume = 150;
     };
 
-    network = {
-      format-icons = [
-        "󰤯"
-        "󰤟"
-        "󰤢"
-        "󰤥"
-        "󰤨"
-      ];
-      format-ethernet = "󰱓 {ifname}";
-      format-wifi = "{icon} {signalStrength}%";
-      format-disconnected = "󰤮";
-      tooltip = false;
-      on-click = "nm-connection-editor";
+    bluetooth = {
+      format = "󰂯 {status}";
+      format-connected = "󰂱 {device_alias}";
+      format-connected-battery = "󰂱 {device_alias} {device_battery_percentage}%";
+      format-disabled = "󰂲 Off";
+      tooltip-format = "{controller_alias}\t{controller_address}\n\n{num_connections} connected";
+      tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}";
+      tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
+      tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
+      on-click = "blueman-manager";
     };
+
 
     cpu = {
       format = "󰻠 {usage}%";
@@ -309,7 +307,7 @@
       border-radius: 16px 16px 16px 16px;
     }
 
-    #network, #custom-keybindings, #mpris, #tray, #custom-power {
+    #bluetooth, #custom-keybindings, #mpris, #tray, #custom-power {
       font-size: 20px;
       background: #1a1b26;
       color: #7dcfff;

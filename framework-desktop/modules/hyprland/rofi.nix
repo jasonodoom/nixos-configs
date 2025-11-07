@@ -58,7 +58,6 @@
         border-color: @border-col;
         background-color: @bg-col;
         border-radius: 24px;
-        backdrop-filter: blur(20px);
         transparency: "real";
     }
 
