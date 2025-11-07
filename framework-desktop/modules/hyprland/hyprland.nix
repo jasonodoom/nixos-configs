@@ -232,6 +232,9 @@
     # Waybar autostart
     exec-once = sleep 2 && waybar > /tmp/waybar.log 2>&1
 
+    # nwg-dock for window management and minimized windows
+    exec-once = sleep 3 && nwg-dock-hyprland -d
+
     # Smart notification system
     exec-once = sleep 1 && dunst &
 
