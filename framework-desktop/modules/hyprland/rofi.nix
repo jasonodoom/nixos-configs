@@ -2,6 +2,15 @@
 { config, pkgs, ... }:
 
 {
+  # Create rofi config symlink for user
+  systemd.user.services.rofi-config = {
+    description = "Rofi config symlink";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config/rofi && ln -sf /etc/xdg/rofi/config.rasi $HOME/.config/rofi/config.rasi'";
+    };
+  };
   # Modern rofi configuration with glassmorphism
   environment.etc."xdg/rofi/config.rasi".text = ''
     configuration {
@@ -25,6 +34,8 @@
         me-select-entry: "";
         me-accept-entry: "MousePrimary";
     }
+
+    /* Theme starts here - placed after configuration block for rofi 1.7+ */
 
     * {
         bg-col: rgba(26, 27, 38, 0.85);

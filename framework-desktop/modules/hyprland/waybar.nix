@@ -11,7 +11,7 @@
     waybar
 
     # Waybar dependencies
-    rofi          # Application launcher (for custom/logo on-click)
+    rofi-wayland  # Application launcher (for custom/logo on-click)
     wlogout       # Logout menu (for custom/power)
 
     # Icon themes for tray icons

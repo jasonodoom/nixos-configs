@@ -9,11 +9,18 @@
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
 
-  # Force Hyprland to use system config
+  # Force Hyprland to use system config and set up XDG directories
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
     NIXOS_OZONE_WL = "1";
     HYPRLAND_NO_RT = "1";  # Disable Hyprland update notifications
+
+    # XDG directories for proper config discovery (use mkDefault to avoid conflicts)
+    XDG_CONFIG_DIRS = lib.mkDefault "/etc/xdg";
+    XDG_DATA_DIRS = lib.mkDefault "/run/current-system/sw/share";
+
+    # Ensure rofi finds its config
+    XDG_CONFIG_HOME = lib.mkDefault "$HOME/.config";
   };
 
   # Create a wrapper that forces the config path
@@ -22,7 +29,7 @@
     wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.coreutils}/bin/ln -sf /etc/hypr/hyprland.conf /home/jason/.config/hypr/hyprland.conf";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config/hypr && ln -sf /etc/hypr/hyprland.conf $HOME/.config/hypr/hyprland.conf'";
     };
   };
 
