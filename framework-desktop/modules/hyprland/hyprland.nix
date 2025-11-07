@@ -197,6 +197,11 @@
     windowrulev2 = float,class:^(nm-applet)$
     windowrulev2 = float,class:^(firefox),title:^(Picture-in-Picture)$
 
+    # Screensaver window rules
+    windowrulev2 = fullscreen,class:^(screensaver)$
+    windowrulev2 = pin,class:^(screensaver)$
+    windowrulev2 = noborder,class:^(screensaver)$
+
     # Transparency rules for different app types
     windowrulev2 = opacity 0.95 0.85,class:^(kitty)$
     windowrulev2 = opacity 0.98 0.90,class:^(code)$
@@ -427,34 +432,32 @@
     }
   '';
 
-  # Hypridle configuration (advanced idle management)
+  # Hypridle configuration (desktop power management)
   environment.etc."hypr/hypridle.conf".text = ''
-    # Ultimate Hypridle Configuration
+    # Desktop Hypridle Configuration - No suspend
 
     general {
         lock_cmd = pidof hyprlock || hyprlock
-        before_sleep_cmd = loginctl lock-session
-        after_sleep_cmd = hyprctl dispatch dpms on
         ignore_dbus_inhibit = false
     }
 
-    # Lock screen after 5 minutes
+    # Lock screen after 1 minute
     listener {
-        timeout = 300
+        timeout = 60
         on-timeout = loginctl lock-session
     }
 
-    # Turn off screen after 10 minutes
+    # Start cmatrix screensaver after 10 minutes (while locked)
     listener {
         timeout = 600
-        on-timeout = hyprctl dispatch dpms off
-        on-resume = hyprctl dispatch dpms on
+        on-timeout = pkill cmatrix; kitty --class=screensaver -e cmatrix -s -C red
     }
 
-    # Suspend after 30 minutes
+    # Turn off monitor after 30 minutes
     listener {
         timeout = 1800
-        on-timeout = systemctl suspend
+        on-timeout = hyprctl dispatch dpms off
+        on-resume = hyprctl dispatch dpms on
     }
   '';
 
@@ -727,6 +730,7 @@
     libcanberra
     imagemagick  # For dynamic wallpaper generation
     socat        # For Hyprland event monitoring
+    cmatrix      # Matrix screensaver
 
     # Applications
     xfce.thunar        # File manager
