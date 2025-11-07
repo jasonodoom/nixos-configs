@@ -80,47 +80,19 @@ let
       extraPackages = [];
     };
 
-    # MacSonoma-kde theme (complete macOS Sonoma desktop theming)
+    # MacSonoma SDDM theme with custom background (no KDE desktop components)
     macsonoma = {
       name = "MacSonoma-6.0";
       package = pkgs.stdenv.mkDerivation {
-        name = "macsonoma-kde-theme";
+        name = "macsonoma-sddm-theme";
         src = pkgs.fetchFromGitHub {
           owner = "vinceliuice";
           repo = "MacSonoma-kde";
           rev = "main";
           sha256 = "sha256-0mecdt/uMtpoQRuJsMaCmB7LDw7BQs5Y4CQCsy0tieg=";
         };
-
-
         installPhase = ''
-          mkdir -p $out/share/themes
-          mkdir -p $out/share/Kvantum
-          mkdir -p $out/share/aurorae/themes
-          mkdir -p $out/share/color-schemes
-          mkdir -p $out/share/plasma/desktoptheme
-          mkdir -p $out/share/plasma/look-and-feel
-          mkdir -p $out/share/wallpapers
           mkdir -p $out/share/sddm/themes
-
-          # Install Kvantum theme
-          cp -r Kvantum/MacSonoma $out/share/Kvantum/
-
-          # Install Aurorae window decorations
-          cp -r aurorae/* $out/share/aurorae/themes/
-
-          # Install color schemes
-          cp -r color-schemes/* $out/share/color-schemes/
-
-          # Install plasma themes
-          cp -r plasma/desktoptheme/* $out/share/plasma/desktoptheme/
-          cp -r plasma/look-and-feel/* $out/share/plasma/look-and-feel/
-
-          # Skip plasmoids installation - many are incompatible with Plasma 6
-          # Plasmoids cause KPackageStructure format errors and crashes
-
-          # Install wallpapers
-          cp -r wallpapers/* $out/share/wallpapers/
 
           # Install SDDM theme if it exists
           if [ -d "sddm" ]; then
@@ -129,105 +101,14 @@ let
 
           # Copy custom background image
           cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/MacSonoma-6.0/Background.jpg
-
-          # Create NixOS snowflake icons in multiple formats and sizes
-          mkdir -p $out/share/icons/MacSonoma/apps/scalable
-          mkdir -p $out/share/icons/MacSonoma/apps/48
-          mkdir -p $out/share/icons/MacSonoma/apps/64
-          mkdir -p $out/share/pixmaps
-
-          # Create SVG NixOS snowflake icon
-          cat > $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg << 'EOF'
-          <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="nixGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
-              </linearGradient>
-            </defs>
-            <circle cx="32" cy="32" r="30" fill="url(#nixGradient)" stroke="#2C5282" stroke-width="2"/>
-            <text x="32" y="42" text-anchor="middle" font-family="SF Pro Display, -apple-system, sans-serif"
-                  font-size="24" font-weight="300" fill="white">❄️</text>
-          </svg>
-          EOF
-
-          # Copy to other required locations
-          cp $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg $out/share/pixmaps/
-          cp $out/share/icons/MacSonoma/apps/scalable/nix-snowflake.svg $out/nixos-logo.svg
-
-          # Replace Apple logos and references throughout the theme
-          find $out -type f \( -name "*.svg" -o -name "*.qml" -o -name "*.js" -o -name "*.desktop" -o -name "*.conf" \) -exec sed -i \
-            -e 's|apple\.svg|nix-snowflake.svg|g' \
-            -e 's|apple-logo|nix-snowflake|g' \
-            -e 's|Apple|NixOS|g' \
-            -e 's|macOS|NixOS|g' \
-            -e 's|🍎|❄️|g' \
-            -e 's|Finder|Dolphin|g' \
-            -e 's|com\.apple\.|org.nixos.|g' \
-            {} \;
-
-          # Create a custom launcher icon configuration
-          mkdir -p $out/share/applications
-          cat > $out/share/applications/nix-launcher.desktop << 'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=NixOS
-          Comment=NixOS System
-          Icon=nix-snowflake
-          Exec=systemsettings
-          Categories=System;Settings;
-          EOF
         '';
       };
 
-      # Required packages for MacSonoma theme
+      # Minimal packages for SDDM theme only (no KDE desktop packages)
       extraPackages = [
-        # Kvantum engine for theme styling
-        pkgs.libsForQt5.qtstyleplugin-kvantum
-        pkgs.qt6Packages.qtstyleplugin-kvantum
-
-        # GTK theme support
-        pkgs.gtk3
-        pkgs.gtk4
-
-        # Icon and cursor themes
-        pkgs.kdePackages.breeze-icons
-        pkgs.kdePackages.breeze
-
-        # Full KDE Plasma desktop environment for QML modules
-        pkgs.kdePackages.plasma-desktop
-        pkgs.kdePackages.plasma-workspace
-        pkgs.kdePackages.plasma5support
-        pkgs.kdePackages.kirigami
-        pkgs.kdePackages.breeze
-        pkgs.kdePackages.kconfig
-        pkgs.kdePackages.kconfigwidgets
-        pkgs.kdePackages.kservice
-        pkgs.kdePackages.kdeclarative
-        pkgs.kdePackages.kquickcharts
-        pkgs.kdePackages.libplasma
-        pkgs.kdePackages.plasma-activities
-        pkgs.kdePackages.kglobalaccel
-        # Qt6 plasma framework is provided by libplasma above
-
-        # Qt modules for SDDM theme compatibility
-        pkgs.qt6Packages.qt5compat
         pkgs.qt6Packages.qtdeclarative
         pkgs.qt6Packages.qtsvg
-        pkgs.qt6Packages.qtquick3d
         pkgs.qt6Packages.qtmultimedia
-        pkgs.qt6Packages.qtvirtualkeyboard
-
-        # Hunspell dictionary for virtual keyboard
-        pkgs.hunspell
-        pkgs.hunspellDicts.en_US
-
-        # X11 support packages for KWin
-        pkgs.xorg.libxcb
-        pkgs.xorg.xcbutilcursor
-
-        # Plasma Panel Colorizer - brings Latte Dock features to default panel
-        pkgs.plasma-panel-colorizer
       ];
     };
   };
@@ -253,18 +134,16 @@ in {
 
     # Configure SDDM with appropriate Qt version per theme
     services = {
-      # KDE Plasma 6 desktop is now configured in kde-config.nix
-      upower.enable = lib.mkForce true;  # Resolve conflict between Hyprland and Plasma6
+      # Enable upower for battery management
+      upower.enable = lib.mkDefault true;
 
       displayManager.sddm = {
       enable = true;
 
-      # Use Qt6 SDDM for MacSonoma theme (designed for Plasma 6), Qt5 for astronaut themes
-      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
-                then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
-                else if (cfg == "macsonoma")
+      # Use Qt6 SDDM for MacSonoma theme, Qt5 for astronaut themes
+      package = lib.mkForce (if (cfg == "macsonoma")
                 then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma theme
-                else null); # Use default for other themes
+                else pkgs.libsForQt5.sddm); # Qt5 SDDM for other themes
 
       wayland.enable = true;  # Enable Wayland support for SDDM
       theme = selectedTheme.name;
