@@ -24,7 +24,7 @@
     papirus-icon-theme      # Modern colorful icons
     tela-icon-theme         # Flat modern icons
     numix-icon-theme        # Popular flat icons
-    breeze-icons           # KDE icons for compatibility
+    kdePackages.breeze-icons  # KDE icons for compatibility
 
     # GTK themes for modern dark aesthetic
     arc-theme              # Modern flat theme
