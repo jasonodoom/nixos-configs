@@ -108,6 +108,9 @@
   # GNOME Keyring
   services.gnome.gnome-keyring.enable = true;
 
+  # Seat management for Wayland (fixes libseat errors)
+  services.seatd.enable = true;
+
   # Security packages
   environment.systemPackages = with pkgs; [
     # YubiKey tools

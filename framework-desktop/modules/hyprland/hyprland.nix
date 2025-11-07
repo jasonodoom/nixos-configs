@@ -44,16 +44,7 @@
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
-    # Monitor configuration - auto-detect displays with workspace binding
-    # Multi-monitor configuration - enable all connected displays
-    # Primary monitor (HDMI-A-1)
-    monitor=HDMI-A-1,1920x1080@60,0x0,1
-    # Secondary monitors (DisplayPort)
-    monitor=DP-10,1920x1080@60,1920x0,1
-    monitor=DP-11,1920x1080@60,3840x0,1
-    monitor=DP-12,1920x1080@60,1920x0,1
-    monitor=DP-13,1920x1080@60,3840x0,1
-    # Fallback for any other connected monitors
+    # Monitor configuration - simplified auto-detection
     monitor=,preferred,auto,1
 
     # Common desktop output patterns - Hyprland will use what's available
@@ -238,7 +229,7 @@
     exec-once = sleep 2 && waybar > /tmp/waybar.log 2>&1
 
     # nwg-dock for window management and minimized windows
-    exec-once = sleep 3 && nwg-dock-hyprland -d
+    exec-once = sleep 3 && nwg-dock-hyprland
 
     # Smart notification system
     exec-once = sleep 1 && dunst &
