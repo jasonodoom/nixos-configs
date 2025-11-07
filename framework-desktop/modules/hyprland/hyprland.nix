@@ -42,7 +42,15 @@
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
     # Monitor configuration - auto-detect displays with workspace binding
-    # Auto-detect and configure displays (desktop with multiple possible outputs)
+    # Multi-monitor configuration - enable all connected displays
+    # Primary monitor (HDMI-A-1)
+    monitor=HDMI-A-1,1920x1080@60,0x0,1
+    # Secondary monitors (DisplayPort)
+    monitor=DP-10,1920x1080@60,1920x0,1
+    monitor=DP-11,1920x1080@60,3840x0,1
+    monitor=DP-12,1920x1080@60,1920x0,1
+    monitor=DP-13,1920x1080@60,3840x0,1
+    # Fallback for any other connected monitors
     monitor=,preferred,auto,1
 
     # Common desktop output patterns - Hyprland will use what's available
