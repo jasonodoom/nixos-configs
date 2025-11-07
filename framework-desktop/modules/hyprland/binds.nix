@@ -27,7 +27,7 @@
     bind = $mod ALT, R, exec, rofi -show drun
 
     # Emoji picker
-    bind = $mod, period, exec, rofi -show emoji
+    bind = $mod, period, exec, rofimoji
 
     # Waybar controls
     bind = $mod SHIFT, B, exec, waybar

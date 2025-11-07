@@ -136,6 +136,6 @@
   # Ensure rofi packages are available
   environment.systemPackages = with pkgs; [
     rofi-wayland
-    rofi-emoji-wayland
+    rofimoji
   ];
 }

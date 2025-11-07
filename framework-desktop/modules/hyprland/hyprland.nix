@@ -729,7 +729,7 @@
     xfce.thunar        # File manager
     kitty              # Terminal
     rofi-wayland       # Application launcher
-    rofi-emoji-wayland # Emoji picker
+    rofimoji           # Emoji picker
     flameshot          # Screenshot tool
     waybar             # Modern status bar
 
