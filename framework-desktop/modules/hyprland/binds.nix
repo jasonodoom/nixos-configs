@@ -15,12 +15,11 @@
     bind = $mod, M, exit
     bind = $mod, V, togglefloating
     bind = $mod, R, exec, rofi -show drun
-    bind = $mod, D, exec, rofi -show drun
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
-    # Additional app launcher shortcut (Space for quick access)
-    bind = $mod, space, exec, rofi -show drun
+    # Primary launcher (nwg-drawer) - Super key alone
+    bindr = SUPER, SUPER_L, exec, nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200
 
     # Emergency fallback shortcuts
     bind = $mod ALT, T, exec, kitty

@@ -12,6 +12,7 @@
 
     # Application launchers and desktop tools
     rofi-wayland        # Application launcher fallback
+    rofimoji           # Emoji picker
     nwg-drawer         # Modern application drawer (primary)
     nwg-dock-hyprland  # Dock for Hyprland
     nwg-displays       # Monitor configuration GUI
@@ -185,10 +186,11 @@
         "󰤥"
         "󰤨"
       ];
-      format-ethernet = " {bandwidthDownOctets}";
+      format-ethernet = "󰱓 {ifname}";
       format-wifi = "{icon} {signalStrength}%";
       format-disconnected = "󰤮";
       tooltip = false;
+      on-click = "nm-connection-editor";
     };
 
     cpu = {

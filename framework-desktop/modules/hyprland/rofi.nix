@@ -45,7 +45,6 @@
         fg-col: #c0caf5;
         fg-col2: #9ece6a;
         grey: rgba(86, 95, 137, 0.8);
-        font: "Inter 14";
     }
 
     element-text, element-icon, mode-switcher {
