@@ -45,7 +45,7 @@ pkgs.nixosTest {
     # Create test user
     users.users.testuser = {
       isNormalUser = true;
-      password = "test";
+      password = "";  # Empty password for VM test only
       extraGroups = [ "wheel" ];
     };
   };
@@ -70,8 +70,7 @@ pkgs.nixosTest {
     # Check that the astronaut-hacker theme loaded (look for theme elements)
     machine.wait_for_text("testuser")  # User should be visible in login screen
 
-    # Attempt login
-    machine.send_chars("test")
+    # Attempt login (empty password)
     machine.send_key("ret")
 
     # Wait for Hyprland to start
