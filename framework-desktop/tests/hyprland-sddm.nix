@@ -16,12 +16,16 @@ pkgs.nixosTest {
       ../modules/hyprland/waybar.nix
       ../modules/networking.nix
       ../modules/security.nix
-      ../modules/system.nix
+      # Excluding system.nix from VM tests to avoid nixpkgs.config conflicts
       ../modules/themes.nix  # SDDM themes
       # Excluding unfree.nix from VM tests to avoid nixpkgs.config conflicts
       ../modules/user-config.nix
       ../modules/virtualization.nix
     ];
+
+    # System essentials (from system.nix but without nixpkgs.config)
+    system.stateVersion = "25.05";
+    services.displayManager.sddm.theme-config = "astronaut-hacker";
 
     # VM-specific configurations
     virtualisation = {
