@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  test-plasma:
+  test-hyprland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -17,16 +17,16 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Run system build validation
+      - name: Run Hyprland and SDDM VM test
         run: |
           cd framework-desktop
-          nix build .#checks.x86_64-linux.system-build --show-trace
+          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace
 
       - name: Upload test screenshots
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: plasma-test-screenshots
+          name: hyprland-sddm-screenshots
           path: framework-desktop/result/
           retention-days: 30
 
@@ -34,6 +34,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: plasma-test-logs
+          name: hyprland-sddm-logs
           path: framework-desktop/result/log.html
           retention-days: 7

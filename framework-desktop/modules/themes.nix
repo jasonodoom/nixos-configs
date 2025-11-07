@@ -10,34 +10,6 @@
 let
   # Available theme configurations
   themes = {
-    # Working astronaut theme with Qt5 compatibility
-    astronaut-hacker = {
-      name = "sddm-astronaut-theme";
-      # Manual theme installation (like working commit eb5f242)
-      package = pkgs.stdenv.mkDerivation {
-        name = "sddm-astronaut-theme";
-        src = pkgs.fetchFromGitHub {
-          owner = "Keyitdev";
-          repo = "sddm-astronaut-theme";
-          rev = "468a100460d5feaa701c2215c737b55789cba0fc";
-          sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
-        };
-        installPhase = ''
-          mkdir -p $out/share/sddm/themes/sddm-astronaut-theme
-          cp -R * $out/share/sddm/themes/sddm-astronaut-theme/
-        '';
-      };
-      # Qt5 packages only (to avoid Qt dependency conflicts)
-      extraPackages = [
-        pkgs.qt5.qtgraphicaleffects
-        pkgs.qt5.qtquickcontrols2
-        pkgs.qt5.qtsvg
-        pkgs.qt5.qtmultimedia
-        # Cursor theme packages to fix "Could not setup default cursor"
-        pkgs.libsForQt5.breeze-qt5
-        pkgs.libsForQt5.breeze-icons
-      ];
-    };
 
     # Default astronaut theme (same as hacker for now)
     astronaut-default = {
@@ -80,48 +52,48 @@ let
       extraPackages = [];
     };
 
-    # MacSonoma SDDM theme with custom background (no KDE desktop components)
-    macsonoma = {
-      name = "MacSonoma-6.0";
+    # Astronaut Hacker theme with custom background
+    astronaut-hacker = {
+      name = "astronaut-hacker";
       package = pkgs.stdenv.mkDerivation {
-        name = "macsonoma-sddm-theme";
+        name = "astronaut-hacker-theme";
         src = pkgs.fetchFromGitHub {
-          owner = "vinceliuice";
-          repo = "MacSonoma-kde";
-          rev = "main";
-          sha256 = "sha256-0mecdt/uMtpoQRuJsMaCmB7LDw7BQs5Y4CQCsy0tieg=";
+          owner = "Keyitdev";
+          repo = "sddm-astronaut-theme";
+          rev = "468a100460d5feaa701c2215c737b55789cba0fc";
+          sha256 = "sha256-L+5xoyjX3/nqjWtMRlHR/QfAXtnICyGzxesSZexZQMA=";
         };
+        nativeBuildInputs = [ pkgs.gnused ];
         installPhase = ''
-          mkdir -p $out/share/sddm/themes
+          mkdir -p $out/share/sddm/themes/astronaut-hacker
+          cp -R * $out/share/sddm/themes/astronaut-hacker/
 
-          # Install SDDM theme if it exists
-          if [ -d "sddm" ]; then
-            cp -r sddm/* $out/share/sddm/themes/
-          fi
+          # Copy custom background image to Backgrounds directory
+          mkdir -p $out/share/sddm/themes/astronaut-hacker/Backgrounds
+          cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/astronaut-hacker/Backgrounds/custom-background.png
 
-          # Copy custom background image
-          cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/MacSonoma-6.0/Background.jpg
+          # Update theme.conf to use custom background
+          sed -i 's|Background=.*|Background=Backgrounds/custom-background.png|g' $out/share/sddm/themes/astronaut-hacker/theme.conf
         '';
       };
-
-      # Minimal packages for SDDM theme only (no KDE desktop packages)
       extraPackages = [
-        pkgs.qt6Packages.qtdeclarative
-        pkgs.qt6Packages.qtsvg
-        pkgs.qt6Packages.qtmultimedia
+        pkgs.qt5.qtgraphicaleffects
+        pkgs.qt5.qtquickcontrols2
+        pkgs.qt5.qtsvg
+        pkgs.qt5.qtmultimedia
       ];
     };
   };
 
   # Configuration option for selecting theme
-  cfg = config.services.displayManager.sddm.theme-config or "macsonoma";
-  selectedTheme = themes.${cfg} or themes.macsonoma;
+  cfg = config.services.displayManager.sddm.theme-config or "astronaut-hacker";
+  selectedTheme = themes.${cfg} or themes.astronaut-hacker;
 
 in {
   # Option to select theme
   options.services.displayManager.sddm.theme-config = lib.mkOption {
     type = lib.types.enum (builtins.attrNames themes);
-    default = "macsonoma";
+    default = "astronaut-hacker";
     description = "SDDM theme to use";
     example = "astronaut-hacker";
   };
@@ -140,10 +112,10 @@ in {
       displayManager.sddm = {
       enable = true;
 
-      # Use Qt6 SDDM for MacSonoma theme, Qt5 for astronaut themes
-      package = lib.mkForce (if (cfg == "macsonoma")
-                then pkgs.kdePackages.sddm  # Qt6 SDDM for MacSonoma theme
-                else pkgs.libsForQt5.sddm); # Qt5 SDDM for other themes
+      # Use Qt5 SDDM for astronaut themes
+      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
+                then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
+                else pkgs.libsForQt5.sddm); # Default to Qt5 SDDM
 
       wayland.enable = true;  # Enable Wayland support for SDDM
       theme = selectedTheme.name;

@@ -97,13 +97,9 @@
       };
     in
     {
-      # Basic system validation
+      # VM tests for Hyprland and SDDM
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-        # Simple package check to ensure system builds
-        system-build = pkgs.runCommand "system-build-check" {} ''
-          echo "System configuration builds successfully"
-          echo "success" > $out
-        '';
+        hyprland-sddm = import ./tests/hyprland-sddm.nix { inherit pkgs; };
       };
 
       # Development shells
