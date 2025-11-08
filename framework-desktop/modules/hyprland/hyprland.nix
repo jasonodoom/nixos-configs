@@ -277,7 +277,7 @@
     }
     {
         "label" : "logout",
-        "action" : "loginctl terminate-session",
+        "action" : "hyprctl dispatch exit",
         "text" : "Logout",
         "keybind" : "e"
     }

@@ -157,12 +157,12 @@
 
     "custom/notifications" = {
       format = "󰂚";
-      tooltip = "Notifications";
-      on-click = "dunstctl history-pop || notify-send 'No notifications'";
-      on-click-right = "dunstctl set-paused toggle";
-      on-click-middle = "dunstctl close-all";
+      tooltip = "Notifications • Click to open history";
+      on-click = "dunstctl action || dunstctl history-pop || notify-send 'Notification Center' 'No notifications in history'";
+      on-click-right = "dunstctl set-paused toggle && notify-send 'Notifications' \"$(dunstctl is-paused | grep -q 'true' && echo 'Paused' || echo 'Resumed')\"";
+      on-click-middle = "dunstctl close-all && notify-send 'Notifications' 'All notifications cleared'";
       exec = "dunstctl is-paused | grep -q 'false' && echo '󰂚' || echo '󰂛'";
-      interval = 2;
+      interval = 5;
     };
 
     "custom/screenshare" = {
