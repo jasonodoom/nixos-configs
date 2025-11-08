@@ -73,16 +73,16 @@
         "*" = [1 2 3 4 5 6 7 8 9];
       };
       format-icons = {
-        "1" = "";
-        "2" = "";
-        "3" = "";
-        "4" = "";
-        "5" = "";
-        "6" = "󰉋";
-        "7" = "";
-        "8" = "";
-        "9" = "";
-        "default" = "";
+        "1" = "<span>  </span>";
+        "2" = "<span> 󰅩 </span>";
+        "3" = "<span>  </span>";
+        "4" = "<span>  </span>";
+        "5" = "<span> 󰉋 </span>";
+        "6" = "<span>  </span>";
+        "7" = "<span>  </span>";
+        "8" = "<span>  </span>";
+        "9" = "<span>  </span>";
+        "default" = "<span>  </span>";
       };
     };
 
@@ -220,15 +220,19 @@
 
     wireplumber = {
       format = "{icon} {volume}%";
-      format-muted = "󰝟 Muted";
+      format-muted = "<span color='#8a8a8d'>󰝟</span> Muted";
       format-icons = {
-        headphone = "󰋋";
-        hands-free = "󱡏";
-        headset = "󰋎";
-        phone = "󰏲";
-        portable = "󰦧";
-        car = "󰄋";
-        default = ["󰕿" "󰖀" "󰕾"];
+        headphone = "<span color='#8a8a8d'>󰋋</span>";
+        hands-free = "<span color='#8a8a8d'>󱡏</span>";
+        headset = "<span color='#8a8a8d'>󰋎</span>";
+        phone = "<span color='#8a8a8d'>󰏲</span>";
+        portable = "<span color='#8a8a8d'>󰦧</span>";
+        car = "<span color='#8a8a8d'>󰄋</span>";
+        default = [
+          "<span color='#8a8a8d'>󰕿</span>"
+          "<span color='#8a8a8d'>󰖀</span>"
+          "<span color='#8a8a8d'>󰕾</span>"
+        ];
       };
       scroll-step = 2;
       on-click = "pavucontrol";
@@ -250,13 +254,29 @@
     };
 
     network = {
-      format-ethernet = "󰱓 {ifname}";
-      format-wifi = "{icon} {signalStrength}%";
-      format-disconnected = "󰤮";
+      format-ethernet = "<span color='#8a8a8d'>󰱓</span> {ifname}";
+      format-wifi = "<span color='#8a8a8d'>{icon}</span> {signalStrength}%";
+      format-disconnected = "<span color='#8a8a8d'>󰤮</span>";
       format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
       tooltip = false;
       on-click = "nm-connection-editor";
       interval = 5;
+    };
+
+    battery = {
+      format = "<span color='#8a8a8d'>{icon}</span> {capacity}%";
+      format-charging = "<span color='#8a8a8d'>󱐋</span> {capacity}%";
+      format-plugged = "<span color='#8a8a8d'>󰚥</span> {capacity}%";
+      format-critical = "<span color='#f38ba8'>󰂎</span> {capacity}%";
+      format-icons = [
+        "󰂎"
+        "󰁼"
+        "󰁿"
+        "󰂁"
+        "󰁹"
+      ];
+      tooltip = false;
+      on-click = "gnome-power-statistics";
     };
 
     cpu = {

@@ -24,6 +24,8 @@
 
     # Nerd Fonts for proper icon rendering
     nerd-fonts.jetbrains-mono
+    nerd-fonts.caskaydia-mono
+    nerd-fonts.victor-mono
     nerd-fonts.fira-code
     nerd-fonts.droid-sans-mono
     nerd-fonts.noto
@@ -35,6 +37,7 @@
     twemoji-color-font # Twitter emoji font
     font-awesome
     material-design-icons
+    material-symbols   # Additional Google icons
 
     # Legacy fonts
     dina-font
