@@ -22,7 +22,9 @@ jobs:
         run: |
           cd framework-desktop
           # Capture both stdout and derivation path for logs
+          set +e  # Don't exit on error so we can capture logs
           nix build .#checks.x86_64-linux.hyprland-sddm --show-trace 2>&1 | tee vm-test-output.log
+          TEST_EXIT_CODE=$?
 
           # Extract derivation path if build fails
           DERIVATION_PATH=$(grep -o '/nix/store/[^-]*-vm-test-run[^/]*\.drv' vm-test-output.log | head -1) || true
@@ -30,7 +32,18 @@ jobs:
             echo "Getting full logs from derivation: $DERIVATION_PATH"
             nix log "$DERIVATION_PATH" > vm-full.log 2>&1 || echo "Could not get derivation logs" > vm-full.log
           fi
-        continue-on-error: true
+
+          # Output the result for artifacts but preserve exit code
+          if [ $TEST_EXIT_CODE -eq 0 ]; then
+            echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
+            echo "VM test passed"
+          else
+            echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
+            echo "VM test failed with exit code $TEST_EXIT_CODE"
+          fi
+
+          # Exit with the original test result
+          exit $TEST_EXIT_CODE
 
       - name: Upload test screenshots
         uses: actions/upload-artifact@v4
@@ -50,3 +63,18 @@ jobs:
             framework-desktop/vm-test-output.log
             framework-desktop/vm-full.log
           retention-days: 7
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## VM Test Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.vm-test.outputs.TEST_RESULT }}" = "success" ]; then
+            echo "**VM test passed successfully**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**VM test failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the uploaded artifacts for detailed logs:" >> $GITHUB_STEP_SUMMARY
+            echo "- VM test output logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Full derivation logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Screenshots (if available)" >> $GITHUB_STEP_SUMMARY
+          fi
