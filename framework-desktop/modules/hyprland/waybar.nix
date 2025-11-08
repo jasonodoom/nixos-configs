@@ -56,6 +56,7 @@
 
     modules-left = [
       "hyprland/window"
+      "wlr/taskbar"
     ];
 
     modules-center = [
@@ -104,6 +105,21 @@
       separate-outputs = false;
       rewrite = {
         "" = " 🙈 No Windows? ";
+      };
+    };
+
+    "wlr/taskbar" = {
+      format = "{icon}";
+      icon-size = 16;
+      icon-theme = "Papirus-Dark";
+      tooltip-format = "{title}";
+      on-click = "activate";
+      on-click-middle = "close";
+      ignore-list = [
+        "Alacritty"
+      ];
+      app_ids-mapping = {
+        "firefoxdeveloperedition" = "firefox-developer-edition";
       };
     };
 
@@ -387,6 +403,39 @@
       margin: 4px 7px 4px 0px;
       border-radius: 8px 8px 8px 8px;
       padding: 0px 18px;
+    }
+
+    #taskbar {
+      background: #1a1b26;
+      margin: 4px 4px;
+      padding: 0px 5px;
+      border-radius: 10px;
+    }
+
+    #taskbar button {
+      background: transparent;
+      color: #c0caf5;
+      border: none;
+      border-radius: 8px;
+      margin: 0px 3px;
+      padding: 5px 8px;
+      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+    }
+
+    #taskbar button:hover {
+      background: rgba(125,207,255,0.15);
+      box-shadow: 0 2px 8px rgba(125,207,255,0.25);
+    }
+
+    #taskbar button.active {
+      background: linear-gradient(45deg, #7dcfff, #bb9af7);
+      color: #0f0f0f;
+      font-weight: bold;
+    }
+
+    #taskbar button.minimized {
+      opacity: 0.6;
+      color: #565f89;
     }
 
     #custom-notifications {
