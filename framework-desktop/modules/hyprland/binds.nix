@@ -136,5 +136,16 @@
     bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
     bind = $mod, E, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'   # Exit to SDDM
     bind = $mod SHIFT, E, movetoworkspace, special:minimized   # Minimize to special workspace
+
+    # hy3 plugin keybindings
+    bind = $mod, s, hy3:makegroup, h           # Split horizontally
+    bind = $mod, v, hy3:makegroup, v           # Split vertically
+    bind = $mod, a, hy3:changefocus, raise     # Focus parent container
+    bind = $mod, d, hy3:changefocus, lower     # Focus child container
+    bind = $mod, e, hy3:expand, expand         # Expand focused container
+    bind = $mod, w, hy3:expand, shrink         # Shrink focused container
+    bind = $mod SHIFT, s, hy3:changegroup, h  # Change container to horizontal
+    bind = $mod SHIFT, v, hy3:changegroup, v  # Change container to vertical
+    bind = $mod SHIFT, a, hy3:changegroup, opposite  # Toggle container orientation
   '';
 }

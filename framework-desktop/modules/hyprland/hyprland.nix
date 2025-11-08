@@ -1,6 +1,20 @@
 # Hyprland configuration
 { config, pkgs, lib, inputs, ... }:
 
+with lib; let
+  hyprPluginPkgs = inputs.hyprland-plugins.packages.${pkgs.system};
+  hy3Pkg = inputs.hy3.packages.${pkgs.system};
+
+  hypr-plugin-dir = pkgs.symlinkJoin {
+    name = "hyprland-plugins";
+    paths = with hyprPluginPkgs; [
+      hyprexpo
+      # Add more plugins here as needed
+    ] ++ [
+      hy3Pkg.hy3  # hy3 tiling manager
+    ];
+  };
+in
 {
   imports = [
     ./binds.nix
@@ -18,6 +32,7 @@
     WLR_NO_HARDWARE_CURSORS = "1";
     NIXOS_OZONE_WL = "1";
     HYPRLAND_NO_RT = "1";  # Disable Hyprland update notifications
+    HYPR_PLUGIN_DIR = "${hypr-plugin-dir}";
 
     # XDG directories for proper config discovery (use mkDefault to avoid conflicts)
     XDG_CONFIG_DIRS = lib.mkDefault "/etc/xdg";
@@ -97,10 +112,29 @@
         # Dynamic gradient borders with glow effect
         col.active_border = rgba(7aa2f7ff) rgba(bb9af7ff) rgba(74c7ecff) rgba(89b4faff) 45deg
         col.inactive_border = rgba(1a1b2600)  # Invisible for clean look
-        layout = dwindle
+        layout = hy3
         resize_on_border = true
         extend_border_grab_area = 15
         hover_icon_on_border = true
+    }
+
+    # hy3 plugin configuration
+    plugin {
+        hy3 {
+            # no gaps when only one window in a workspace
+            no_gaps_when_only = 1
+            # node_collapse_policy = 1
+            # group_inset = 10
+            # tab_first_window = false
+
+            # you can disable gaps and borders for autotiled windows
+            autotile {
+                col.group_border = rgba(7aa2f7ff)
+                col.group_border_active = rgba(bb9af7ff)
+                groupbar_priority = 3
+                groupbar_text_color = rgba(ffffffff)
+            }
+        }
     }
 
     # Decorations - GNOME-style Modern Aesthetic
@@ -211,6 +245,10 @@
     # Clipboard history management
     exec-once = wl-paste --type text --watch cliphist store
     exec-once = wl-paste --type image --watch cliphist store
+
+    # Load Hyprland plugins
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprexpo.so"
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhy3.so"
   '';
 
 
