@@ -86,12 +86,12 @@ let
   };
 
   # Configuration option for selecting theme
-  cfg = config.services.displayManager.sddm.theme-config or "astronaut-hacker";
+  cfg = config.services.displayManager.sddm.theme-selection or "astronaut-hacker";
   selectedTheme = themes.${cfg} or themes.astronaut-hacker;
 
 in {
   # Option to select theme
-  options.services.displayManager.sddm.theme-config = lib.mkOption {
+  options.services.displayManager.sddm.theme-selection = lib.mkOption {
     type = lib.types.enum (builtins.attrNames themes);
     default = "astronaut-hacker";
     description = "SDDM theme to use";

@@ -12,7 +12,7 @@ pkgs.nixosTest {
       ../modules/audio.nix
       ../modules/fonts.nix    # Required for proper icon rendering
       ../modules/graphics.nix
-      ../modules/hyprland/hyprland.nix
+      ../modules/hyprland/binds.nix    # Just bindings, not plugins
       ../modules/hyprland/rofi.nix
       ../modules/hyprland/waybar.nix
       ../modules/networking.nix
@@ -27,8 +27,8 @@ pkgs.nixosTest {
 
     # System essentials (from system.nix but without nixpkgs.config)
     system.stateVersion = "25.05";
-    # Use default breeze theme for VM test to avoid QML issues
-    services.displayManager.sddm.theme-config = lib.mkForce "breeze";
+    # Use simple theme for VM test to avoid QML issues
+    services.displayManager.sddm.theme-selection = lib.mkForce "astronaut-default";
 
     # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
