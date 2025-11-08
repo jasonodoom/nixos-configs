@@ -327,6 +327,59 @@
       border-width: 0px;
     }
 
+    /* Workspace button styling */
+    #workspaces button {
+      padding: 6px 10px;
+      margin: 0 2px;
+      background-color: transparent;
+      color: #8a8a8d;
+      border: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      min-width: 20px;
+    }
+
+    #workspaces button:hover {
+      background-color: rgba(138, 138, 141, 0.1);
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* Active workspace with glow effect */
+    #workspaces button.active {
+      background-color: rgba(122, 162, 247, 0.2);
+      color: #7aa2f7;
+      box-shadow: 0 0 12px rgba(122, 162, 247, 0.6), inset 0 0 8px rgba(122, 162, 247, 0.2);
+      border: 1px solid rgba(122, 162, 247, 0.4);
+      animation: workspace-glow 2s ease-in-out infinite alternate;
+    }
+
+    /* Pulse animation for active workspace */
+    @keyframes workspace-glow {
+      from {
+        box-shadow: 0 0 12px rgba(122, 162, 247, 0.6), inset 0 0 8px rgba(122, 162, 247, 0.2);
+      }
+      to {
+        box-shadow: 0 0 20px rgba(122, 162, 247, 0.8), inset 0 0 12px rgba(122, 162, 247, 0.3);
+      }
+    }
+
+    #workspaces button.focused {
+      background-color: rgba(122, 162, 247, 0.15);
+      color: #c0caf5;
+    }
+
+    #workspaces button.urgent {
+      background-color: rgba(247, 118, 142, 0.2);
+      color: #f7768e;
+      animation: workspace-urgent 1s ease-in-out infinite;
+    }
+
+    @keyframes workspace-urgent {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
     #taskbar {
       background-color: #0e0e0e;
       margin-top: 6px;
