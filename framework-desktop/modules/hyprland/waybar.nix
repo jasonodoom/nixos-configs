@@ -156,7 +156,7 @@
     };
 
     "custom/notifications" = {
-      format = "";
+      format = "󰂚";
       tooltip = false;
       on-click = "dunstctl history-pop";
       on-click-right = "dunstctl set-paused toggle";

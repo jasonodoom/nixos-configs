@@ -254,7 +254,7 @@
     exec-once = sleep 1 && dunst &
 
     # Eww widgets
-    exec-once = sleep 4 && eww --config /etc/xdg/eww daemon && sleep 2 && eww --config /etc/xdg/eww open app_launcher && eww --config /etc/xdg/eww open system_stats && eww --config /etc/xdg/eww open media_player
+    exec-once = sleep 4 && eww --config /etc/xdg/eww daemon && sleep 2 && eww --config /etc/xdg/eww open sysinfo
 
     # Hypridle for advanced idle management
     exec-once = hypridle &
