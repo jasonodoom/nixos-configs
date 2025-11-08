@@ -71,18 +71,7 @@
     windowrulev2 = immediate, class:^(ghostty)$
     windowrulev2 = stayfocused, class:^(rofi)$
 
-    # Common desktop output patterns - Hyprland will use what's available
-    # Primary display (usually the main one detected)
-    workspace = 1, defaultName:main, default:true
-    workspace = 2, defaultName:web
-    workspace = 3, defaultName:dev
-    workspace = 4, defaultName:media
-    workspace = 5, defaultName:chat
-    workspace = 6, defaultName:work
-    workspace = 7, defaultName:games
-    workspace = 8, defaultName:vm
-    workspace = 9, defaultName:misc
-    workspace = 10, defaultName:temp
+    # Workspace configuration omitted - Hyprland creates them dynamically
 
     # Disable update news dialog and logo
     misc {
@@ -102,8 +91,8 @@
         gaps_in = 8
         gaps_out = 24
         border_size = 3
-        # Dynamic gradient borders with glow effect
-        col.active_border = rgba(7aa2f7ff) rgba(bb9af7ff) rgba(74c7ecff) rgba(89b4faff) 45deg
+        # Single color border - gradient syntax not supported in v0.51.1
+        col.active_border = rgba(7aa2f7ff)
         col.inactive_border = rgba(1a1b2600)  # Invisible for clean look
         layout = dwindle  # Default layout (plugins can override)
         resize_on_border = true
