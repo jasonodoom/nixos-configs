@@ -4,7 +4,6 @@
 with lib; let
   hyprPluginPkgs = inputs.hyprland-plugins.packages.${pkgs.system};
   hy3Pkg = inputs.hy3.packages.${pkgs.system};
-  hyprspacePkg = inputs.hyprspace.packages.${pkgs.system};
   hyprDarkWindowPkg = inputs.hypr-darkwindow.packages.${pkgs.system};
 
   hypr-plugin-dir = pkgs.symlinkJoin {
@@ -15,7 +14,7 @@ with lib; let
       hyprbars
     ] ++ [
       hy3Pkg.hy3
-      hyprspacePkg.Hyprspace
+      pkgs.hyprlandPlugins.hyprspace
       hyprDarkWindowPkg.Hypr-DarkWindow
     ];
   };
