@@ -46,6 +46,12 @@
 
   # Hyprland system configuration
   environment.etc."hypr/hyprland.conf".text = ''
+    # Debug configuration - enable detailed logging to see config errors
+    debug {
+      disable_logs = false
+      enable_stdout_logs = true
+    }
+
     # Monitor configuration - simplified auto-detection
     monitor=,preferred,auto,1
 
