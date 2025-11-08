@@ -2,11 +2,14 @@
 { config, pkgs, lib, ... }:
 
 {
+  imports = [
+    ./eww.nix
+  ];
+
   # Install waybar but don't enable globally (will be started by Hyprland only)
   # programs.waybar.enable = true;
 
-  # Copy Nix logo for waybar drawer icon
-  environment.etc."xdg/waybar/nix-logo.png".source = ./icons/nix-logo.png;
+# Removed nix logo - replaced with eww
 
 
   # Install required dependencies for waybar modules
@@ -14,14 +17,9 @@
     # Waybar itself (for Hyprland only)
     waybar
 
-    # Application launchers and desktop tools
-    rofi-wayland        # Application launcher fallback
-    rofimoji           # Emoji picker
+    # Waybar-specific tools (rofi/eww/wlogout installed by other modules)
     clipse             # Modern clipboard manager
-    wl-clipboard       # Wayland clipboard utilities
-    nwg-drawer         # Modern application drawer (primary)
     nwg-displays       # Monitor configuration GUI
-    wlogout            # Logout menu (for custom/power)
 
     # Icon themes for comprehensive application coverage
     adwaita-icon-theme      # GNOME default icons
@@ -57,7 +55,6 @@
     position = "top";
 
     modules-left = [
-      "custom/drawer"
       "hyprland/window"
     ];
 
@@ -82,12 +79,7 @@
       "custom/power"
     ];
 
-    # Module configurations
-    "custom/drawer" = {
-      format = "❄️";
-      tooltip = false;
-      on-click = "pgrep nwg-drawer && pkill nwg-drawer || nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
-    };
+    # Module configurations removed drawer - using eww instead
 
     "hyprland/workspaces" = {
       format = "{icon}";
@@ -148,7 +140,7 @@
     tray = {
       icon-size = 18;
       spacing = 12;
-      show-passive-items = true;
+      show-passive-items = false;
     };
 
     idle_inhibitor = {
@@ -276,7 +268,7 @@
     };
 
     "custom/power" = {
-      format = "";
+      format = "󰐥";
       tooltip = false;
       on-click = "wlogout --layer-shell --layout /etc/xdg/wlogout/layout --css /etc/xdg/wlogout/style.css";
       on-click-right = "hyprlock";

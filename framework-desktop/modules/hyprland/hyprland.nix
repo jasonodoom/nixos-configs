@@ -796,9 +796,8 @@
     swaybg
     wlogout
 
-    # System utilities
+    # System utilities (dunst installed by dunst.nix module)
     libnotify
-    dunst
     pamixer
     xdg-user-dirs
     libcanberra
@@ -807,12 +806,10 @@
     socat        # For Hyprland event monitoring
     cmatrix      # Matrix screensaver
 
-    # Applications
+    # Applications (rofi installed by rofi.nix module)
     xfce.thunar        # File manager
     ghostty            # Modern GPU-accelerated terminal
     kitty
-    rofi-wayland       # Application launcher
-    rofimoji           # Emoji picker
     flameshot          # Screenshot tool
     waybar             # Modern status bar
 
