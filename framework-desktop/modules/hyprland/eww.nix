@@ -268,16 +268,5 @@
     }
   '';
 
-  # Eww startup service - starts on login
-  systemd.user.services.eww = {
-    description = "Eww Widget System";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    serviceConfig = {
-      ExecStart = "${pkgs.eww}/bin/eww daemon --no-daemonize";
-      ExecStartPost = "${pkgs.bash}/bin/bash -c 'sleep 3 && ${pkgs.eww}/bin/eww open app_launcher && ${pkgs.eww}/bin/eww open system_stats && ${pkgs.eww}/bin/eww open media_player'";
-      Restart = "on-failure";
-      RestartSec = "5s";
-    };
-  };
+  # Eww startup handled by Hyprland exec-once for better timing
 }

@@ -253,6 +253,9 @@
     # Smart notification system
     exec-once = sleep 1 && dunst &
 
+    # Eww widgets
+    exec-once = sleep 4 && eww daemon && sleep 2 && eww open app_launcher && eww open system_stats && eww open media_player
+
     # Hypridle for advanced idle management
     exec-once = hypridle &
   '';
@@ -274,7 +277,7 @@
     }
     {
         "label" : "logout",
-        "action" : "hyprctl dispatch exit",
+        "action" : "loginctl terminate-session ''",
         "text" : "Logout",
         "keybind" : "e"
     }
@@ -339,8 +342,8 @@
         font_color = rgba(28, 28, 30, 1.0)
         fade_on_empty = true
         fade_timeout = 1000
-        placeholder_text = <span foreground="##1C1C1EAA">Enter Password...</span>
-        font_family = Inter
+        placeholder_text = "Enter Password"
+        font_family = "Inter"
         font_size = 16
 
         position = 0, -120
@@ -354,7 +357,7 @@
 
         rounding = 16
         fail_color = rgba(255, 69, 58, 1.0)
-        fail_text = <span foreground="##FF453AFF">Authentication Failed</span>
+        fail_text = "Authentication Failed"
         fail_timeout = 2000
         fail_transitions = 300
 
@@ -368,10 +371,10 @@
     # Clock with modern styling
     label {
         monitor =
-        text = cmd[update:1000] echo "$(date +"%-I:%M")"
+        text = cmd[update:1000] echo $(date +%H:%M)
         color = rgba(28, 28, 30, 1.0)
         font_size = 120
-        font_family = Inter Bold
+        font_family = "Inter Bold"
         shadow_passes = 3
         shadow_size = 4
         shadow_color = rgba(0, 0, 0, 0.6)
@@ -385,10 +388,10 @@
     # Date label
     label {
         monitor =
-        text = cmd[update:1000] echo "$(date +"Today is %A, %B %d")"
+        text = cmd[update:1000] echo $(date)
         color = rgba(72, 72, 74, 0.8)
         font_size = 24
-        font_family = Inter Medium
+        font_family = "Inter Medium"
 
         position = 0, 50
         halign = center
@@ -405,7 +408,7 @@
         text = Hi, $USER
         color = rgba(28, 28, 30, 0.9)
         font_size = 28
-        font_family = Inter SemiBold
+        font_family = "Inter SemiBold"
 
         position = 0, -200
         halign = center
@@ -419,10 +422,10 @@
     # System info
     label {
         monitor =
-        text = cmd[update:5000] echo "$(uname -n)"
+        text = cmd[update:5000] echo perdurabo
         color = rgba(0, 122, 255, 0.7)
         font_size = 16
-        font_family = Inter Regular
+        font_family = "Inter Regular"
 
         position = 30, 30
         halign = left
@@ -435,7 +438,7 @@
         text = 🖥️ Desktop System
         color = rgba(52, 199, 89, 0.7)
         font_size = 16
-        font_family = Inter Regular
+        font_family = "Inter Regular"
 
         position = -30, 30
         halign = right
@@ -454,22 +457,22 @@
         ignore_dbus_inhibit = false
     }
 
-    # Dim screen after 5 minutes (warning before lock)
+    # Lock screen after 1 minute
     listener {
-        timeout = 300
-        on-timeout = brightnessctl -s set 10%
-        on-resume = brightnessctl -r
-    }
-
-    # Lock screen after 10 minutes
-    listener {
-        timeout = 600
+        timeout = 60
         on-timeout = loginctl lock-session
     }
 
-    # Turn off monitor after 15 minutes
+    # Screensaver after 5 minutes
     listener {
-        timeout = 900
+        timeout = 300
+        on-timeout = cmatrix -ab -C blue
+        on-resume = pkill cmatrix
+    }
+
+    # Turn off monitor after 30 minutes
+    listener {
+        timeout = 1800
         on-timeout = hyprctl dispatch dpms off
         on-resume = hyprctl dispatch dpms on
     }
@@ -567,32 +570,32 @@
     }
 
     #lock {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/lock.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/lock.png"));
       border-color: #f7768e;
     }
 
     #logout {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/logout.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/logout.png"));
       border-color: #e0af68;
     }
 
     #suspend {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/suspend.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/suspend.png"));
       border-color: #9ece6a;
     }
 
     #hibernate {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/hibernate.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/hibernate.png"));
       border-color: #7dcfff;
     }
 
     #shutdown {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/shutdown.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/shutdown.png"));
       border-color: #bb9af7;
     }
 
     #reboot {
-      background-image: image(url("${pkgs.wlogout}/share/wlogout/icons/reboot.png"));
+      background-image: image(url("/run/current-system/sw/share/wlogout/icons/reboot.png"));
       border-color: #7aa2f7;
     }
 

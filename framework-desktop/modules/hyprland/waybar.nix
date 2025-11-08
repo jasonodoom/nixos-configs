@@ -66,7 +66,6 @@
       "wireplumber"
       "bluetooth"
       "network"
-      "tray"
       "cpu"
       "memory"
       "idle_inhibitor"
@@ -76,7 +75,6 @@
       "privacy"
       "custom/keybindings"
       "clock"
-      "custom/power"
     ];
 
     # Module configurations removed drawer - using eww instead
@@ -137,11 +135,7 @@
       };
     };
 
-    tray = {
-      icon-size = 18;
-      spacing = 12;
-      show-passive-items = false;
-    };
+# Tray removed - using individual themed modules instead
 
     idle_inhibitor = {
       format = "{icon}";
@@ -267,12 +261,7 @@
       };
     };
 
-    "custom/power" = {
-      format = "󰐥";
-      tooltip = false;
-      on-click = "wlogout --layer-shell --layout /etc/xdg/wlogout/layout --css /etc/xdg/wlogout/style.css";
-      on-click-right = "hyprlock";
-    };
+# Power button removed - using wlogout via keybindings instead
   };
 
   # ZaneyOS ddubs Style - Modern rounded rectangles with dynamic colors
