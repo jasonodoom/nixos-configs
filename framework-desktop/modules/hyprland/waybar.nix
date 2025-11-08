@@ -72,17 +72,17 @@
         "*" = [1 2 3 4 5 6 7 8 9 10];
       };
       format-icons = {
-        "1" = "";
-        "2" = "";
-        "3" = "";
-        "4" = "";
-        "5" = "";
-        "6" = "";
-        "7" = "";
-        "8" = "";
-        "9" = "";
-        "10" = "";
-        "default" = "";
+        "1" = "1";
+        "2" = "2";
+        "3" = "3";
+        "4" = "4";
+        "5" = "5";
+        "6" = "6";
+        "7" = "7";
+        "8" = "8";
+        "9" = "9";
+        "10" = "10";
+        "default" = "◆";
       };
     };
 
@@ -92,21 +92,21 @@
     };
 
     "custom/lock" = {
-      format = "<span>  </span>";
+      format = "🔒";
       on-click = "hyprlock";
       tooltip = true;
       tooltip-format = "Lock: Super + L";
     };
 
     "custom/reboot" = {
-      format = "<span>  </span>";
+      format = "🔄";
       on-click = "systemctl reboot";
       tooltip = true;
       tooltip-format = "Reboot";
     };
 
     "custom/power" = {
-      format = "<span>  </span>";
+      format = "⏹️";
       on-click = "systemctl poweroff";
       tooltip = true;
       tooltip-format = "Shutdown";
@@ -304,7 +304,7 @@
   # Matte Black Theme CSS
   environment.etc."xdg/waybar/style.css".text = ''
     * {
-      font-family: "JetBrains Mono Nerd Font", "CaskaydiaMono Nerd Font";
+      font-family: "Noto Sans", "Inter", "JetBrains Mono Nerd Font", "CaskaydiaMono Nerd Font";
       font-weight: normal;
       font-size: 14px;
     }
@@ -400,6 +400,18 @@
     #custom-temperature.critical,
     #wireplumber.muted {
       color: #f38ba8;
+    }
+
+    /* Make emoji icons visible on dark background */
+    #custom-lock,
+    #custom-reboot,
+    #custom-power {
+      color: #ffffff;
+      background-color: rgba(138, 138, 141, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 2px 4px;
+      margin: 2px;
     }
 
   '';

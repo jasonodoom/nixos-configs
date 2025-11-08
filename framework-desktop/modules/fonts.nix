@@ -34,6 +34,8 @@
     nerd-fonts.symbols-only
 
     # Icon and emoji fonts
+    noto-fonts-monochrome-emoji # Monochrome emoji for waybar
+    noto-fonts-color-emoji      # Color emoji for general use
     twemoji-color-font # Twitter emoji font
     font-awesome
     material-design-icons
@@ -51,7 +53,7 @@
       serif = [ "Noto Serif" ];
       sansSerif = [ "Inter" "Noto Sans" ];
       monospace = [ "JetBrains Mono Nerd Font" "CaskaydiaMono Nerd Font" "Fira Code" ];
-      emoji = [ "Twemoji" "Noto Color Emoji" ];
+      emoji = [ "Noto Color Emoji" "Noto Emoji" "Twemoji" ];
     };
   };
 
