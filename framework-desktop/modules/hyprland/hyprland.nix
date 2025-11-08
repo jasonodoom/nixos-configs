@@ -438,28 +438,37 @@
 
   # Hypridle configuration (desktop power management)
   environment.etc."hypr/hypridle.conf".text = ''
-    # Desktop Hypridle Configuration - No suspend
+    # Desktop Hypridle Configuration - Secure idle management
 
     general {
         lock_cmd = pidof hyprlock || hyprlock
+        before_sleep_cmd = loginctl lock-session
+        after_sleep_cmd = hyprctl dispatch dpms on
         ignore_dbus_inhibit = false
     }
 
-    # Lock screen after 1 minute
+    # Lock screen after 1 minute (60 seconds)
     listener {
         timeout = 60
         on-timeout = loginctl lock-session
     }
 
-    # Start cmatrix screensaver after 10 minutes (while locked)
+    # Dim screen after 45 seconds (warning before lock)
     listener {
-        timeout = 600
+        timeout = 45
+        on-timeout = brightnessctl -s set 10%
+        on-resume = brightnessctl -r
+    }
+
+    # Start screensaver after 5 minutes of being locked
+    listener {
+        timeout = 300
         on-timeout = pkill cmatrix; kitty --class=screensaver -e cmatrix -s -C red
     }
 
-    # Turn off monitor after 30 minutes
+    # Turn off monitor after 10 minutes
     listener {
-        timeout = 1800
+        timeout = 600
         on-timeout = hyprctl dispatch dpms off
         on-resume = hyprctl dispatch dpms on
     }
@@ -735,6 +744,7 @@
     pamixer
     xdg-user-dirs
     libcanberra
+    brightnessctl       # Screen brightness control for idle dimming
     imagemagick  # For dynamic wallpaper generation
     socat        # For Hyprland event monitoring
     cmatrix      # Matrix screensaver

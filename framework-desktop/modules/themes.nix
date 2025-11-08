@@ -102,7 +102,19 @@ in {
     # Install theme package if needed
     environment.systemPackages = lib.optionals (selectedTheme.package != null) [
       selectedTheme.package
-    ] ++ selectedTheme.extraPackages;
+    ] ++ selectedTheme.extraPackages ++ [
+      # Icon themes for comprehensive coverage
+      pkgs.tela-icon-theme         # Flat modern icons
+      pkgs.numix-icon-theme        # Popular flat icons
+      pkgs.kdePackages.breeze-icons  # KDE icons for compatibility
+      pkgs.gnome-themes-extra      # Additional GNOME icons
+
+      # GTK themes for modern dark aesthetic
+      pkgs.arc-theme              # Modern flat theme
+      pkgs.numix-gtk-theme        # Beautiful flat dark theme (primary)
+      pkgs.adwaita-icon-theme     # Default fallback icons
+      pkgs.gnome-themes-extra     # Additional theme support
+    ];
 
     # Configure SDDM with appropriate Qt version per theme
     services = {
@@ -144,24 +156,76 @@ in {
     };
     };
 
-    # Custom theme configuration for astronaut themes
-    environment.etc = lib.mkIf (cfg == "astronaut-default" || cfg == "astronaut-hacker") {
-      "sddm.conf.d/theme.conf".text = ''
-        [Theme]
-        Current=sddm-astronaut-theme
-        ThemeDir=/run/current-system/sw/share/sddm/themes
-        CursorTheme=breeze_cursors
-        Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
+    # Theme configuration files
+    environment.etc = lib.mkMerge [
+      # GTK theme configuration for consistent dark theme
+      {
+        "gtk-3.0/settings.ini".text = ''
+          [Settings]
+          gtk-theme-name=Numix-DarkBlue
+          gtk-icon-theme-name=Tela-dark
+          gtk-cursor-theme-name=breeze_cursors
+          gtk-cursor-theme-size=24
+          gtk-font-name=JetBrains Mono 11
+          gtk-application-prefer-dark-theme=true
+          gtk-button-images=true
+          gtk-menu-images=true
+          gtk-enable-event-sounds=false
+          gtk-enable-input-feedback-sounds=false
+          gtk-xft-antialias=1
+          gtk-xft-hinting=1
+          gtk-xft-hintstyle=hintslight
+          gtk-xft-rgba=rgb
+        '';
 
-        [Users]
-        HideUsers=jason,*
-        HideShells=/bin/false,/usr/bin/nologin,/run/current-system/sw/bin/nologin
-        RememberLastUser=false
-        RememberLastSession=false
-        MaximumUid=65000
-        MinimumUid=1000
+        "gtk-4.0/settings.ini".text = ''
+          [Settings]
+          gtk-theme-name=Numix-DarkBlue
+          gtk-icon-theme-name=Tela-dark
+          gtk-cursor-theme-name=breeze_cursors
+          gtk-cursor-theme-size=24
+          gtk-font-name=JetBrains Mono 11
+          gtk-application-prefer-dark-theme=true
+          gtk-enable-event-sounds=false
+          gtk-enable-input-feedback-sounds=false
+          gtk-xft-antialias=1
+          gtk-xft-hinting=1
+          gtk-xft-hintstyle=hintslight
+          gtk-xft-rgba=rgb
+        '';
+      }
+      # Custom theme configuration for astronaut themes
+      (lib.mkIf (cfg == "astronaut-default" || cfg == "astronaut-hacker") {
+        "sddm.conf.d/theme.conf".text = ''
+          [Theme]
+          Current=sddm-astronaut-theme
+          ThemeDir=/run/current-system/sw/share/sddm/themes
+          CursorTheme=breeze_cursors
+          Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
 
-      '';
+          [Users]
+          HideUsers=jason,*
+          HideShells=/bin/false,/usr/bin/nologin,/run/current-system/sw/bin/nologin
+          RememberLastUser=false
+          RememberLastSession=false
+          MaximumUid=65000
+          MinimumUid=1000
+
+        '';
+      })
+    ];
+
+    # Ensure GTK themes are applied for all users
+    programs.dconf.enable = true;
+
+    # Create user GTK configuration directory and symlinks
+    systemd.user.services.gtk-config = {
+      description = "Setup GTK configuration";
+      wantedBy = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config/gtk-3.0 $HOME/.config/gtk-4.0 && ln -sf /etc/gtk-3.0/settings.ini $HOME/.config/gtk-3.0/settings.ini && ln -sf /etc/gtk-4.0/settings.ini $HOME/.config/gtk-4.0/settings.ini'";
+      };
     };
 
     # Ensure X11 and input drivers are properly configured

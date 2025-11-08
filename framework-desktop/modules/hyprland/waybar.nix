@@ -149,8 +149,9 @@
         activated = "󰅶";
         deactivated = "󰾪";
       };
-      tooltip-format-activated = "Idle inhibitor active";
-      tooltip-format-deactivated = "Idle inhibitor inactive";
+      tooltip-format-activated = "Idle inhibited - Screen will NOT lock or turn off";
+      tooltip-format-deactivated = "Idle enabled - Screen will lock after 1min";
+      on-click = "notify-send 'Idle Management' 'Toggled idle inhibitor. Status will update in waybar.'";
     };
 
     mpris = {
