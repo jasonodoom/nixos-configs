@@ -16,6 +16,7 @@ pkgs.nixosTest {
       ../modules/hyprland/waybar.nix
       ../modules/networking.nix
       ../modules/security.nix
+      ../modules/shell.nix
       # Excluding system.nix from VM tests to avoid nixpkgs.config conflicts
       ../modules/themes.nix  # SDDM themes
       # Excluding unfree.nix from VM tests to avoid nixpkgs.config conflicts

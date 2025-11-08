@@ -47,6 +47,38 @@
     enableSSHSupport = true;
   };
 
+  # GPG configuration file
+  environment.etc."skel/.gnupg/gpg.conf".text = ''
+    auto-key-locate keyserver
+    keyserver-options no-honor-keyserver-url
+    personal-cipher-preferences AES256 AES192 AES CAST5
+    personal-digest-preferences SHA512 SHA384 SHA256 SHA224
+    default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed
+    cert-digest-algo SHA512
+    s2k-cipher-algo AES256
+    s2k-digest-algo SHA512
+    charset utf-8
+    fixed-list-mode
+    no-comments
+    no-emit-version
+    keyid-format 0xlong
+    list-options show-uid-validity
+    verify-options show-uid-validity
+    with-fingerprint
+    use-agent
+    require-cross-certification
+  '';
+
+  # Ensure GPG config is copied to user's home directory
+  systemd.user.services.gpg-config = {
+    description = "Setup GPG configuration";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.gnupg && cp /etc/skel/.gnupg/gpg.conf $HOME/.gnupg/gpg.conf && chmod 600 $HOME/.gnupg/gpg.conf'";
+    };
+  };
+
   # Smartcard support
   services.pcscd.enable = true;
 
