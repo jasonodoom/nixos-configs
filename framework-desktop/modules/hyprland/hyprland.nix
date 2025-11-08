@@ -112,11 +112,6 @@
             new_optimizations = true
         }
 
-        # Simple shadows
-        drop_shadow = true
-        shadow_range = 4
-        shadow_render_power = 3
-        col.shadow = rgba(1a1a1aee)
     }
 
 
@@ -142,7 +137,6 @@
         force_split = 0
         special_scale_factor = 0.8
         split_width_multiplier = 1.0
-        no_gaps_when_only = 1
         use_active_for_splits = true
     }
 
