@@ -32,9 +32,9 @@ pkgs.nixosTest {
     services.tailscale.enable = lib.mkForce false;
     virtualisation.docker.enable = lib.mkForce false;
     virtualisation.libvirtd.enable = lib.mkForce false;
-    services.networkmanager.enable = lib.mkForce false;
 
-    # Simple networking for VM test
+    # Simple networking for VM test - override networking module
+    networking.networkmanager.enable = lib.mkForce false;
     networking.useDHCP = lib.mkForce true;
     networking.wireless.enable = lib.mkForce false;
 

@@ -43,10 +43,17 @@ jobs:
             echo "Build failed with exit code $BUILD_EXIT_CODE"
           fi
 
-          # Check for test failure patterns in logs
-          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed" vm-test-output.log vm-full.log; then
+          # Check for test failure patterns in logs - include evaluation errors
+          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" vm-test-output.log vm-full.log 2>/dev/null || \
+             grep -q "error:" vm-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Detected test failure patterns in logs"
+          fi
+
+          # Additional check - if we see specific error patterns that indicate failure
+          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" vm-test-output.log 2>/dev/null; then
+            TEST_FAILED=true
+            echo "Detected NixOS evaluation error in logs"
           fi
 
           # Report results
