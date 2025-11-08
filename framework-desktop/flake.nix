@@ -25,16 +25,13 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    # Hyprland plugins
+    # Hyprland
     hyprland.url = "github:hyprwm/Hyprland";
-    hych = {
-      url = "github:DreamMaoMao/hych";
-    };
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, hyprland, hych, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, hyprland, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       inherit system;

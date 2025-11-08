@@ -122,12 +122,13 @@
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
 
-    # hych plugin bindings for window minimization
-    bind = ALT, m, hych:minimize                    # Minimize window (Alt+M)
-    bind = ALT SHIFT, m, hych:restore_minimize      # Manual restore window
-    bind = ALT, w, hych:toggle_restore_window       # Toggle special workspace
+    # Window management using Hyprland's special workspace
+    bind = ALT, m, movetoworkspace, special:minimized    # Minimize window (Alt+M)
+    bind = ALT SHIFT, m, exec, rofi -show window -window-format '{c} {t}'  # Search/restore windows
+    bind = ALT, w, togglespecialworkspace, minimized      # Toggle minimized workspace
 
-    # Update Super+E to use hych minimize instead
-    bind = $mod, E, hych:minimize                   # Minimize to dock (Super+E)
+    # Window search and management
+    bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
+    bind = $mod, E, movetoworkspace, special:minimized   # Minimize to special workspace
   '';
 }

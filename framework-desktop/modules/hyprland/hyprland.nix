@@ -48,8 +48,20 @@
     # Monitor configuration - simplified auto-detection
     monitor=,preferred,auto,1
 
-    # Load hych plugin for window minimization
-    plugin = ${inputs.hych.packages.${pkgs.stdenv.hostPlatform.system}.hych}/lib/libhych.so
+    # Special workspace for "minimized" windows
+    workspace = special:minimized, on-created-empty:kitty
+
+    # Improved window management rules
+    windowrulev2 = float, class:^(pavucontrol)$
+    windowrulev2 = float, class:^(blueman-manager)$
+    windowrulev2 = float, class:^(nm-connection-editor)$
+    windowrulev2 = float, class:^(wlogout)$
+    windowrulev2 = center, class:^(pavucontrol|blueman-manager|nm-connection-editor)$
+    windowrulev2 = size 800 600, class:^(pavucontrol|blueman-manager|nm-connection-editor)$
+
+    # Better focus handling for multiple windows
+    windowrulev2 = immediate, class:^(kitty)$
+    windowrulev2 = stayfocused, class:^(rofi)$
 
     # Common desktop output patterns - Hyprland will use what's available
     # Primary display (usually the main one detected)
@@ -734,9 +746,6 @@
     hypridle       # Idle management for Hyprland
     swaybg
     wlogout
-
-    # hych plugin for window minimization
-    (inputs.hych.packages.${pkgs.stdenv.hostPlatform.system}.hych)
 
     # System utilities
     libnotify
