@@ -12,8 +12,7 @@
     bind = $mod, Return, exec, ghostty
     bind = $mod, T, exec, ghostty
     bind = $mod, Q, killactive
-    bind = $mod, M, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'
-    bind = $mod, E, movetoworkspace, special:minimized
+    bind = $mod, grave, movetoworkspace, special:minimized
     bind = $mod, F, togglefloating
     bind = $mod, R, exec, rofi -show drun
     bind = $mod, P, pseudo
@@ -35,6 +34,9 @@
     # Rofi extensions
     bind = $mod, C, exec, rofi -show calc
     bind = $mod SHIFT, T, exec, rofi -show top
+
+    # File manager
+    bind = $mod, E, exec, nautilus
 
     # Waybar controls
     bind = $mod SHIFT, B, exec, waybar
@@ -134,7 +136,7 @@
 
     # Window search and management
     bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
-    bind = $mod, E, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'   # Exit to SDDM
+    bind = $mod SHIFT, Q, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'   # Exit to SDDM
     bind = $mod SHIFT, E, movetoworkspace, special:minimized   # Minimize to special workspace
   '';
 }

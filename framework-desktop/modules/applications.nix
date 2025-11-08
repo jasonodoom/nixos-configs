@@ -47,6 +47,7 @@
     prusa-slicer
 
     # File Management
+    nautilus
     gparted
     parted
     udiskie
