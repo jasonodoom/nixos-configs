@@ -50,7 +50,7 @@
     defaultFonts = {
       serif = [ "Noto Serif" ];
       sansSerif = [ "Inter" "Noto Sans" ];
-      monospace = [ "CaskaydiaMono Nerd Font" "JetBrains Mono Nerd Font" "Fira Code" ];
+      monospace = [ "JetBrains Mono Nerd Font" "CaskaydiaMono Nerd Font" "Fira Code" ];
       emoji = [ "Twemoji" "Noto Color Emoji" ];
     };
   };

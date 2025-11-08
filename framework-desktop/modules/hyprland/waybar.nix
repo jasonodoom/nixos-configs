@@ -304,7 +304,7 @@
   # Matte Black Theme CSS
   environment.etc."xdg/waybar/style.css".text = ''
     * {
-      font-family: "CaskaydiaMono Nerd Font", "JetBrains Mono Nerd Font";
+      font-family: "JetBrains Mono Nerd Font", "CaskaydiaMono Nerd Font";
       font-weight: normal;
       font-size: 14px;
     }
