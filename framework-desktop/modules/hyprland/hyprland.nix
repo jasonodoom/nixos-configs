@@ -103,45 +103,45 @@
         hover_icon_on_border = true
     }
 
-    # Decorations - Advanced Glassmorphism
+    # Decorations - GNOME-style Modern Aesthetic
     decoration {
-        rounding = 16
+        rounding = 20
 
-        # Advanced blur with multiple layers
+        # Enhanced blur for GNOME-like transparency
         blur {
             enabled = true
-            size = 8
-            passes = 3
+            size = 12
+            passes = 4
             new_optimizations = true
             xray = true
-            ignore_opacity = true
-            noise = 0.0117
-            contrast = 1.1
-            brightness = 1.2
-            vibrancy = 0.21
-            vibrancy_darkness = 0.0
+            ignore_opacity = false
+            noise = 0.02
+            contrast = 1.3
+            brightness = 1.1
+            vibrancy = 0.3
+            vibrancy_darkness = 0.1
             special = true
         }
 
-        # Dynamic shadows with glow
+        # Subtle shadows like GNOME
         shadow {
             enabled = true
-            range = 30
-            render_power = 3
-            color = rgba(7aa2f740)
-            color_inactive = rgba(1a1b2620)
-            offset = 0 8
-            scale = 1.0
+            range = 40
+            render_power = 4
+            color = rgba(0000004d)
+            color_inactive = rgba(0000002a)
+            offset = 0 15
+            scale = 0.97
         }
 
-        # Window dimming for focus
+        # Gentle window dimming
         dim_inactive = true
-        dim_strength = 0.1
-        dim_special = 0.8
-        dim_around = 0.4
+        dim_strength = 0.05
+        dim_special = 0.6
+        dim_around = 0.3
 
-        # Screen shader effects (disabled - no shader file present)
-        # screen_shader = ~/.config/hypr/shaders/crt.frag
+        # Optional: Add drop shadow for floating windows
+        drop_shadow = true
     }
 
     # Layer rules for waybar transparency and blur

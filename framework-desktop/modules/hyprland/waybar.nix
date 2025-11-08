@@ -71,9 +71,9 @@
       "idle_inhibitor"
       "mpris"
       "custom/clipboard"
-      "custom/notifications"
       "custom/screenshare"
       "custom/microphone"
+      "custom/notifications"
       "custom/keybindings"
       "clock"
     ];
@@ -157,10 +157,12 @@
 
     "custom/notifications" = {
       format = "󰂚";
-      tooltip = false;
-      on-click = "dunstctl history-pop";
+      tooltip = "Notifications";
+      on-click = "dunstctl history-pop || notify-send 'No notifications'";
       on-click-right = "dunstctl set-paused toggle";
       on-click-middle = "dunstctl close-all";
+      exec = "dunstctl is-paused | grep -q 'false' && echo '󰂚' || echo '󰂛'";
+      interval = 2;
     };
 
     "custom/screenshare" = {
@@ -383,6 +385,15 @@
       background: #1a1b26;
       color: #7dcfff;
       margin: 4px 7px 4px 0px;
+      border-radius: 8px 8px 8px 8px;
+      padding: 0px 18px;
+    }
+
+    #custom-notifications {
+      font-size: 20px;
+      background: #1a1b26;
+      color: #7dcfff;
+      margin: 4px 12px 4px 0px;
       border-radius: 8px 8px 8px 8px;
       padding: 0px 18px;
     }
