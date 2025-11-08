@@ -337,9 +337,6 @@
       border-width: 0px;
     }
 
-    #taskbar:empty {
-      display: none;
-    }
 
     #taskbar button {
       background-color: transparent;
