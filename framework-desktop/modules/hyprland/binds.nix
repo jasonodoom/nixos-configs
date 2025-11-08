@@ -9,8 +9,8 @@
     $mod = SUPER
 
     # Program shortcuts
-    bind = $mod, Return, exec, kitty
-    bind = $mod, T, exec, kitty
+    bind = $mod, Return, exec, ghostty
+    bind = $mod, T, exec, ghostty
     bind = $mod, Q, killactive
     bind = $mod, M, exit
     bind = $mod, E, movetoworkspace, special:minimized
@@ -23,7 +23,7 @@
     bindr = SUPER, SUPER_L, exec, nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200
 
     # Emergency fallback shortcuts
-    bind = $mod ALT, T, exec, kitty
+    bind = $mod ALT, T, exec, ghostty
     bind = $mod ALT, R, exec, rofi -show drun
 
     # Emoji picker

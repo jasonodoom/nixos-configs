@@ -236,6 +236,9 @@
 
 
 
+    # Ensure display is on at startup
+    exec-once = hyprctl dispatch dpms on
+
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
@@ -451,22 +454,22 @@
         ignore_dbus_inhibit = false
     }
 
-    # Lock screen after 1 minute (60 seconds)
+    # Dim screen after 5 minutes (warning before lock)
     listener {
-        timeout = 60
-        on-timeout = loginctl lock-session
-    }
-
-    # Dim screen after 45 seconds (warning before lock)
-    listener {
-        timeout = 45
+        timeout = 300
         on-timeout = brightnessctl -s set 10%
         on-resume = brightnessctl -r
     }
 
-    # Turn off monitor after 5 minutes
+    # Lock screen after 10 minutes
     listener {
-        timeout = 300
+        timeout = 600
+        on-timeout = loginctl lock-session
+    }
+
+    # Turn off monitor after 15 minutes
+    listener {
+        timeout = 900
         on-timeout = hyprctl dispatch dpms off
         on-resume = hyprctl dispatch dpms on
     }

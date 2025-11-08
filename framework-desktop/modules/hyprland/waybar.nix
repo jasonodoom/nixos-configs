@@ -228,10 +228,9 @@
         default = ["󰕿" "󰖀" "󰕾"];
       };
       scroll-step = 2;
-      on-click = "playerctl play-pause";
-      on-click-right = "pavucontrol";
-      on-click-middle = "pwvucontrol";
-      tooltip-format = "{desc} • Click: play/pause • Right-click: pavucontrol • Middle-click: pwvucontrol";
+      on-click = "pavucontrol";
+      on-click-right = "pwvucontrol";
+      tooltip-format = "{desc} • Click: pavucontrol • Right-click: pwvucontrol";
       max-volume = 150;
     };
 
@@ -254,6 +253,7 @@
       format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
       tooltip = false;
       on-click = "nm-connection-editor";
+      interval = 5;
     };
 
     cpu = {
