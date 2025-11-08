@@ -19,8 +19,8 @@
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
 
-    # Primary launcher (nwg-drawer) - Super key alone
-    bindr = SUPER, SUPER_L, exec, nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200
+    # Primary launcher (rofi) - Super key alone
+    bindr = SUPER, SUPER_L, exec, rofi -show drun
 
     # Emergency fallback shortcuts
     bind = $mod ALT, T, exec, kitty

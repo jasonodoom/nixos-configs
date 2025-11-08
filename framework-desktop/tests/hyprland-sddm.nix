@@ -27,6 +27,45 @@ pkgs.nixosTest {
     system.stateVersion = "25.05";
     services.displayManager.sddm.theme-config = "astronaut-hacker";
 
+    # Disable hych plugin for VM tests as plugins don't work well in VMs
+    environment.etc."hypr/hyprland.conf".text = lib.mkForce ''
+      # Monitor configuration for VM
+      monitor=,preferred,auto,1
+
+      # Basic Hyprland configuration without plugins for VM testing
+      general {
+        gaps_in = 5
+        gaps_out = 10
+        border_size = 2
+        col.active_border = rgba(7aa2f7ff)
+        col.inactive_border = rgba(414868ff)
+        layout = dwindle
+      }
+
+      decoration {
+        rounding = 8
+        drop_shadow = false
+      }
+
+      animations {
+        enabled = true
+        animation = windows,1,4,default
+        animation = workspaces,1,4,default
+      }
+
+      input {
+        kb_layout = us
+        follow_mouse = 1
+      }
+
+      # Basic workspace configuration
+      workspace = 1, defaultName:main, default:true
+      workspace = 2, defaultName:web
+
+      # Basic autostart for VM
+      exec-once = waybar
+    '';
+
     # VM-specific configurations
     virtualisation = {
       memorySize = 2048;

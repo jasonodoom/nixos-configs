@@ -25,6 +25,9 @@
     tela-icon-theme         # Flat modern icons
     numix-icon-theme        # Popular flat icons
     kdePackages.breeze-icons  # KDE icons for compatibility
+    gnome.gnome-themes-extra  # Additional GNOME icons
+    elementary-icon-theme     # Elementary OS icons
+    qogir-icon-theme         # Modern icon theme
 
     # GTK themes for modern dark aesthetic
     arc-theme              # Modern flat theme
@@ -76,7 +79,7 @@
     "custom/logo" = {
       format = "";
       tooltip = false;
-      on-click = "nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
+      on-click = "rofi -show drun";
       on-click-right = "wlogout --layer-shell";
     };
 
@@ -181,10 +184,10 @@
         default = ["󰕿" "󰖀" "󰕾"];
       };
       scroll-step = 2;
-      on-click = "pwvucontrol";
-      on-click-right = "pavucontrol";
-      on-click-middle = "playerctl play-pause";
-      tooltip-format = "{desc} • Right-click: pavucontrol • Middle-click: play/pause";
+      on-click = "playerctl play-pause";
+      on-click-right = "bash -c 'if pgrep pavucontrol; then pkill pavucontrol; else pavucontrol; fi'";
+      on-click-middle = "bash -c 'if pgrep pwvucontrol; then pkill pwvucontrol; else pwvucontrol; fi'";
+      tooltip-format = "{desc} • Click: play/pause • Right-click: pavucontrol • Middle-click: pwvucontrol";
       max-volume = 150;
     };
 
@@ -197,7 +200,7 @@
       tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}";
       tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
       tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
-      on-click = "blueman-manager";
+      on-click = "bash -c 'if pgrep blueman-manager; then pkill blueman-manager; else blueman-manager; fi'";
     };
 
     network = {
@@ -206,7 +209,7 @@
       format-disconnected = "󰤮";
       format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
       tooltip = false;
-      on-click = "nm-connection-editor";
+      on-click = "bash -c 'if pgrep nm-connection-editor; then pkill nm-connection-editor; else nm-connection-editor; fi'";
     };
 
     cpu = {
@@ -231,7 +234,7 @@
     "custom/power" = {
       format = "󰤆";
       tooltip = false;
-      on-click = "wlogout --layer-shell";
+      on-click = "wlogout --layer-shell --layout /etc/xdg/wlogout/layout --css /etc/xdg/wlogout/style.css";
       on-click-right = "hyprlock";
     };
   };
@@ -302,10 +305,18 @@
       color: #7dcfff;
     }
 
-    #window, #network, #wireplumber, #cpu, #memory, #idle_inhibitor {
+    #window, #wireplumber, #cpu, #memory {
       font-weight: bold;
-      margin: 4px 0px;
-      margin-left: 7px;
+      margin: 4px 7px 4px 0px;
+      padding: 0px 18px;
+      background: #1a1b26;
+      color: #7dcfff;
+      border-radius: 8px 8px 8px 8px;
+    }
+
+    #network {
+      font-weight: bold;
+      margin: 4px 0px 4px 7px;
       padding: 0px 18px;
       background: #1a1b26;
       color: #7dcfff;
@@ -313,6 +324,12 @@
     }
 
     #idle_inhibitor {
+      font-weight: bold;
+      margin: 4px 7px 4px 0px;
+      padding: 0px 18px;
+      background: #1a1b26;
+      color: #7dcfff;
+      border-radius: 8px 8px 8px 8px;
       font-size: 28px;
     }
 
@@ -325,12 +342,20 @@
       border-radius: 16px 16px 16px 16px;
     }
 
-    #bluetooth, #custom-keybindings, #mpris, #tray, #custom-power {
+    #bluetooth {
       font-size: 20px;
       background: #1a1b26;
       color: #7dcfff;
-      margin: 4px 0px;
-      margin-right: 7px;
+      margin: 4px 7px 4px 0px;
+      border-radius: 8px 8px 8px 8px;
+      padding: 0px 18px;
+    }
+
+    #custom-keybindings, #mpris, #tray, #custom-power {
+      font-size: 20px;
+      background: #1a1b26;
+      color: #7dcfff;
+      margin: 4px 7px 4px 0px;
       border-radius: 8px 8px 8px 8px;
       padding: 0px 18px;
     }
@@ -373,4 +398,17 @@
     gtk-xft-hintstyle=hintslight
     gtk-xft-rgba=rgb
   '';
+
+  # Ensure GTK themes are applied for all users
+  programs.dconf.enable = true;
+
+  # Create user GTK configuration directory and symlinks
+  systemd.user.services.gtk-config = {
+    description = "Setup GTK configuration";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config/gtk-3.0 $HOME/.config/gtk-4.0 && ln -sf /etc/gtk-3.0/settings.ini $HOME/.config/gtk-3.0/settings.ini && ln -sf /etc/gtk-4.0/settings.ini $HOME/.config/gtk-4.0/settings.ini'";
+    };
+  };
 }
