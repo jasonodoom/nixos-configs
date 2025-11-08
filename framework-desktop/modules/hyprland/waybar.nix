@@ -51,9 +51,7 @@
     position = "top";
 
     modules-left = [
-      "custom/logo"
       "hyprland/window"
-      "network"
     ];
 
     modules-center = [
@@ -63,6 +61,7 @@
     modules-right = [
       "wireplumber"
       "bluetooth"
+      "network"
       "cpu"
       "memory"
       "idle_inhibitor"
@@ -74,13 +73,6 @@
     ];
 
     # Module configurations
-    "custom/logo" = {
-      format = "";
-      tooltip = false;
-      on-click = "rofi -show drun";
-      on-click-right = "wlogout --layer-shell";
-    };
-
     "hyprland/workspaces" = {
       format = "{icon}";
       format-icons = {
@@ -184,8 +176,8 @@
       };
       scroll-step = 2;
       on-click = "playerctl play-pause";
-      on-click-right = "bash -c 'if pgrep pavucontrol; then pkill pavucontrol; else pavucontrol; fi'";
-      on-click-middle = "bash -c 'if pgrep pwvucontrol; then pkill pwvucontrol; else pwvucontrol; fi'";
+      on-click-right = "pgrep pavucontrol && pkill pavucontrol || pavucontrol";
+      on-click-middle = "pgrep pwvucontrol && pkill pwvucontrol || pwvucontrol";
       tooltip-format = "{desc} • Click: play/pause • Right-click: pavucontrol • Middle-click: pwvucontrol";
       max-volume = 150;
     };
@@ -199,7 +191,7 @@
       tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}";
       tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
       tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
-      on-click = "bash -c 'if pgrep blueman-manager; then pkill blueman-manager; else blueman-manager; fi'";
+      on-click = "pgrep blueman-manager && pkill blueman-manager || blueman-manager";
     };
 
     network = {
@@ -208,7 +200,7 @@
       format-disconnected = "󰤮";
       format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
       tooltip = false;
-      on-click = "bash -c 'if pgrep nm-connection-editor; then pkill nm-connection-editor; else nm-connection-editor; fi'";
+      on-click = "pgrep nm-connection-editor && pkill nm-connection-editor || nm-connection-editor";
     };
 
     cpu = {
