@@ -268,5 +268,5 @@
     }
   '';
 
-  # Eww startup handled by Hyprland exec-once for better timing
+  # Eww startup handled by Hyprland exec-once with --config flag for proper NixOS configuration
 }
