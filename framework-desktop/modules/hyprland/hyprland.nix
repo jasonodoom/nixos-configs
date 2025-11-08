@@ -277,7 +277,7 @@
     }
     {
         "label" : "logout",
-        "action" : "pkill -TERM -u $USER",
+        "action" : "bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session \"\"'",
         "text" : "Logout",
         "keybind" : "e"
     }
