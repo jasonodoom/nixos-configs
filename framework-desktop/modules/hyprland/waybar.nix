@@ -164,21 +164,17 @@
     };
 
     "custom/screenshare" = {
-      format = "󰍹";
-      tooltip = "Screen sharing status";
-      exec = "if pgrep -f 'screen.*share\\|record' >/dev/null; then echo 'sharing'; else echo 'idle'; fi";
-      return-type = "json";
-      format-alt = "󰍹";
+      format = "{}";
+      exec = "if pgrep -f 'screen.*share\\|record\\|obs' >/dev/null; then echo '📺'; else echo ''; fi";
       interval = 3;
+      tooltip = "Screen sharing active";
     };
 
     "custom/microphone" = {
-      format = "󰍬";
-      tooltip = "Microphone status";
-      exec = "if pactl list sources | grep -A 10 'Name.*input' | grep -q 'State: RUNNING'; then echo 'active'; else echo 'muted'; fi";
-      return-type = "json";
-      format-alt = "󰍬";
+      format = "{}";
+      exec = "if pactl list sources | grep -A 10 'Name.*input' | grep -q 'State: RUNNING'; then echo '🎤'; else echo ''; fi";
       interval = 2;
+      tooltip = "Microphone in use";
     };
 
     mpris = {
