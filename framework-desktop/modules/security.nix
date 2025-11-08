@@ -30,6 +30,16 @@
     KERNEL=="ttyACM*", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="04[789B]?", MODE:="0666"
   '';
 
+  # SSH configuration
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+      PubkeyAuthentication = true;
+    };
+  };
+
   # GPG configuration
   programs.ssh.startAgent = false;
   programs.gnupg.agent = {

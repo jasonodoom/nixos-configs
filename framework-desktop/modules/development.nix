@@ -5,15 +5,13 @@
   # Development programs
   programs = {
     adb.enable = false;
-    direnv.enable = true;
+    # direnv configuration now in shell.nix
   };
 
   # Development packages
   environment.systemPackages = with pkgs; [
-    # Version control
-    git
+    # Version control (git configuration now in git.nix)
     git-interactive-rebase-tool
-    gh
 
     # Editors
     vim

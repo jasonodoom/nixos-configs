@@ -72,6 +72,7 @@
         ./modules/hyprland/rofi.nix
         ./modules/networking.nix
         ./modules/security.nix
+        ./modules/shell.nix
         ./modules/system.nix
         ./modules/themes.nix  # SDDM themes
         ./modules/unfree.nix
