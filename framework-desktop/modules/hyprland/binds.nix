@@ -12,7 +12,7 @@
     bind = $mod, Return, exec, ghostty
     bind = $mod, T, exec, ghostty
     bind = $mod, Q, killactive
-    bind = $mod, M, exec, loginctl terminate-session $XDG_SESSION_ID
+    bind = $mod, M, exec, pkill -TERM -u $USER
     bind = $mod, E, movetoworkspace, special:minimized
     bind = $mod, V, togglefloating
     bind = $mod, R, exec, rofi -show drun
@@ -111,7 +111,7 @@
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session
-    bind = $mod SHIFT, Q, exec, loginctl terminate-session $XDG_SESSION_ID
+    bind = $mod SHIFT, Q, exec, pkill -TERM -u $USER
     bind = $mod SHIFT, S, exec, systemctl suspend
     bind = $mod, Escape, exec, wlogout --layer-shell
     bind = $mod SHIFT, P, exec, wlogout --layer-shell
@@ -131,7 +131,7 @@
 
     # Window search and management
     bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
-    bind = $mod, E, exec, loginctl terminate-session $XDG_SESSION_ID   # Exit to SDDM
+    bind = $mod, E, exec, pkill -TERM -u $USER   # Exit to SDDM
     bind = $mod SHIFT, E, movetoworkspace, special:minimized   # Minimize to special workspace
   '';
 }

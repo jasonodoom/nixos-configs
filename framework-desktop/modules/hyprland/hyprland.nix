@@ -277,7 +277,7 @@
     }
     {
         "label" : "logout",
-        "action" : "loginctl terminate-session $XDG_SESSION_ID",
+        "action" : "pkill -TERM -u $USER",
         "text" : "Logout",
         "keybind" : "e"
     }
