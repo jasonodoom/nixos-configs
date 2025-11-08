@@ -1,14 +1,15 @@
 # Hyprland configuration
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, pkgs-unstable, ... }:
 
 {
   imports = [
     ./binds.nix
     ./plugins  # Import all Hyprland plugins
   ];
-  # Enable Hyprland
+  # Enable Hyprland from unstable for latest version and plugin compatibility
   programs.hyprland = {
     enable = true;
+    package = pkgs-unstable.hyprland;
     withUWSM = true;  # Universal Wayland Session Manager (recommended)
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
@@ -221,17 +222,6 @@
 
     # Source plugin configurations
     source = /etc/hypr/hyprland-plugins.conf
-    source = /etc/hypr/hy3.conf
-    source = /etc/hypr/hyprfocus.conf
-    source = /etc/hypr/hyprbars.conf
-    source = /etc/hypr/hyprexpo.conf
-    source = /etc/hypr/darkwindow.conf
-
-    # Source plugin keybindings
-    source = /etc/hypr/hy3-binds.conf
-    source = /etc/hypr/hyprexpo-binds.conf
-    source = /etc/hypr/hyprspace-binds.conf
-    source = /etc/hypr/darkwindow-binds.conf
   '';
 
 

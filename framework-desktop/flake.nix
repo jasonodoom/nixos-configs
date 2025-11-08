@@ -25,29 +25,11 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    # Hyprland
-    hyprland.url = "github:hyprwm/Hyprland";
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
-    };
-
-    # hy3 plugin for Hyprland
-    hy3 = {
-      url = "github:outfoxxed/hy3";
-      inputs.hyprland.follows = "hyprland";
-    };
-
-    # Hypr-DarkWindow plugin - window effects
-    hypr-darkwindow = {
-      url = "github:micha4w/Hypr-DarkWindow";
-      inputs.hyprland.follows = "hyprland";
-    };
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, hyprland, hyprland-plugins, hy3, hypr-darkwindow, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       inherit system;
