@@ -206,7 +206,11 @@
 
 
     # Hypridle for advanced idle management
-    exec-once = hypridle &
+    exec-once = sleep 2 && hypridle &
+
+    # Clipboard history management
+    exec-once = wl-paste --type text --watch cliphist store
+    exec-once = wl-paste --type image --watch cliphist store
   '';
 
 
@@ -397,33 +401,35 @@
 
   # Hypridle configuration (desktop power management)
   environment.etc."hypr/hypridle.conf".text = ''
-    # Desktop Hypridle Configuration - Secure idle management
+    # Desktop Hypridle Configuration
+    # https://wiki.hypr.land/Hypr-Ecosystem/hypridle/
 
     general {
-        lock_cmd = pidof hyprlock || hyprlock
-        before_sleep_cmd = loginctl lock-session
-        after_sleep_cmd = hyprctl dispatch dpms on
-        ignore_dbus_inhibit = false
+        lock_cmd = pidof hyprlock || hyprlock       # DBus lock command
+        unlock_cmd = notify-send "Welcome back!"    # DBus unlock command
+        before_sleep_cmd = loginctl lock-session    # Before system sleep
+        after_sleep_cmd = hyprctl dispatch dpms on  # After system sleep
+        ignore_dbus_inhibit = false                 # Don't ignore DBus inhibit
+        ignore_systemd_inhibit = false              # Don't ignore systemd inhibit
     }
 
-    # Lock screen after 1 minute
+    # Lock screen after 1 minute of inactivity
     listener {
         timeout = 60
-        on-timeout = loginctl lock-session
+        on-timeout = hyprlock
     }
 
-    # Screensaver after 5 minutes
+    # Turn off monitor after 10 minutes
     listener {
-        timeout = 300
-        on-timeout = cmatrix -ab -C blue
-        on-resume = pkill cmatrix
-    }
-
-    # Turn off monitor after 30 minutes
-    listener {
-        timeout = 1800
+        timeout = 600
         on-timeout = hyprctl dispatch dpms off
         on-resume = hyprctl dispatch dpms on
+    }
+
+    # Suspend system after 30 minutes
+    listener {
+        timeout = 1800
+        on-timeout = systemctl suspend
     }
   '';
 
@@ -775,6 +781,20 @@
     qt5.qtquickcontrols2
     qt5.qtsvg
   ];
+
+  # Systemd user service for hypridle
+  systemd.user.services.hypridle = {
+    description = "Hypridle idle management for Hyprland";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.hypridle}/bin/hypridle";
+      Restart = "on-failure";
+      RestartSec = 1;
+      TimeoutStopSec = 10;
+    };
+  };
 
   # Enable required services
   services = {

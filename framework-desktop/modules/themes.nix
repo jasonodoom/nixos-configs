@@ -140,6 +140,11 @@ in {
         General = {
           # Don't force display server - let session choose
         };
+        X11 = {
+          # Display power management for login screen
+          ServerTimeout = 300;  # Turn off display after 5 minutes of inactivity
+          DisplayCommand = "/run/current-system/sw/bin/Xorg -background none -logfile /dev/null -logverbose 0 -nolisten tcp";
+        };
         Theme = {
           Current = selectedTheme.name;
           ThemeDir = "/run/current-system/sw/share/sddm/themes";
