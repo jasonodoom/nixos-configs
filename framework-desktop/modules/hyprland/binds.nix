@@ -14,7 +14,7 @@
     bind = $mod, Q, killactive
     bind = $mod, M, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'
     bind = $mod, E, movetoworkspace, special:minimized
-    bind = $mod, V, togglefloating
+    bind = $mod, F, togglefloating
     bind = $mod, R, exec, rofi -show drun
     bind = $mod, P, pseudo
     bind = $mod, J, togglesplit
@@ -30,7 +30,7 @@
     bind = $mod, period, exec, rofimoji
 
     # Clipboard manager
-    bind = $mod, V, exec, clipse
+    bind = $mod, V, exec, cliphist list | rofi -dmenu -display-columns 2 | cliphist decode | wl-copy
 
     # Rofi extensions
     bind = $mod, C, exec, rofi -show calc
@@ -108,6 +108,9 @@
 
     # Screen lock binding - ultimate modern Hyprland lock
     bind = $mod, L, exec, hyprlock
+
+    # Lock and start screensaver immediately
+    bind = $mod CTRL, L, exec, bash -c 'hyprlock & sleep 1 && cmatrix -ab -C blue'
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session

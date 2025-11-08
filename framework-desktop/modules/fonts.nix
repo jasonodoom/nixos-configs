@@ -21,8 +21,15 @@
     fira-code
     fira-code-symbols
     jetbrains-mono
+
+    # Nerd Fonts for proper icon rendering
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
+    nerd-fonts.droid-sans-mono
+    nerd-fonts.noto
+    nerd-fonts.hack
+    nerd-fonts.ubuntu
+    nerd-fonts.symbols-only
 
     # Icon and emoji fonts
     twemoji-color-font # Twitter emoji font
@@ -43,5 +50,11 @@
       monospace = [ "JetBrains Mono Nerd Font" "Fira Code" ];
       emoji = [ "Twemoji" "Noto Color Emoji" ];
     };
+  };
+
+  # Ensure font cache is rebuilt on changes (NixOS does this automatically, but being explicit)
+  system.activationScripts.fonts-cache = {
+    text = "${pkgs.fontconfig}/bin/fc-cache -r";
+    deps = [ ];
   };
 }

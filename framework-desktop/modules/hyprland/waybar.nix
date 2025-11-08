@@ -14,7 +14,7 @@
     waybar
 
     # Waybar-specific tools (rofi/wlogout installed by other modules)
-    clipse             # Modern clipboard manager
+    cliphist           # Clipboard history manager
     nwg-displays       # Monitor configuration GUI
 
     # Waybar-specific packages
@@ -72,15 +72,16 @@
         "*" = [1 2 3 4 5 6 7 8 9];
       };
       format-icons = {
-        "1" = "<span>  </span>";
-        "2" = "<span> 󰅩 </span>";
-        "3" = "<span>  </span>";
-        "4" = "<span>  </span>";
-        "5" = "<span> 󰉋 </span>";
-        "6" = "<span>  </span>";
-        "7" = "<span>  </span>";
-        "8" = "<span>  </span>";
-        "default" = "<span>  </span>";
+        "1" = "";
+        "2" = "";
+        "3" = "";
+        "4" = "";
+        "5" = "";
+        "6" = "󰉋";
+        "7" = "";
+        "8" = "";
+        "9" = "";
+        "default" = "";
       };
     };
 
