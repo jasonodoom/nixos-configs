@@ -25,9 +25,7 @@
     tela-icon-theme         # Flat modern icons
     numix-icon-theme        # Popular flat icons
     kdePackages.breeze-icons  # KDE icons for compatibility
-    gnome.gnome-themes-extra  # Additional GNOME icons
-    elementary-icon-theme     # Elementary OS icons
-    qogir-icon-theme         # Modern icon theme
+    gnome-themes-extra  # Additional GNOME icons
 
     # GTK themes for modern dark aesthetic
     arc-theme              # Modern flat theme
