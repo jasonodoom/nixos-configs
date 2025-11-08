@@ -54,7 +54,6 @@
 
     modules-left = [
       "custom/drawer"
-      "clock"
       "hyprland/window"
     ];
 
@@ -66,20 +65,22 @@
       "wireplumber"
       "bluetooth"
       "network"
+      "tray"
       "cpu"
       "memory"
       "idle_inhibitor"
       "mpris"
       "custom/clipboard"
+      "custom/notifications"
       "privacy"
       "custom/keybindings"
-      "tray"
+      "clock"
       "custom/power"
     ];
 
     # Module configurations
     "custom/drawer" = {
-      format = "";
+      format = "☰";
       tooltip = false;
       on-click = "pgrep nwg-drawer && pkill nwg-drawer || nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
     };
@@ -163,6 +164,14 @@
       on-click = "clipse";
     };
 
+    "custom/notifications" = {
+      format = "";
+      tooltip = false;
+      on-click = "dunstctl history-pop";
+      on-click-right = "dunstctl set-paused toggle";
+      on-click-middle = "dunstctl close-all";
+    };
+
     privacy = {
       icon-spacing = 4;
       icon-size = 18;
@@ -216,8 +225,8 @@
       };
       scroll-step = 2;
       on-click = "playerctl play-pause";
-      on-click-right = "pgrep pavucontrol && pkill pavucontrol || pavucontrol";
-      on-click-middle = "pgrep pwvucontrol && pkill pwvucontrol || pwvucontrol";
+      on-click-right = "pavucontrol";
+      on-click-middle = "pwvucontrol";
       tooltip-format = "{desc} • Click: play/pause • Right-click: pavucontrol • Middle-click: pwvucontrol";
       max-volume = 150;
     };
@@ -231,7 +240,7 @@
       tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}";
       tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
       tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
-      on-click = "pgrep blueman-manager && pkill blueman-manager || blueman-manager";
+      on-click = "blueman-manager";
     };
 
     network = {
@@ -240,7 +249,7 @@
       format-disconnected = "󰤮";
       format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
       tooltip = false;
-      on-click = "pgrep nm-connection-editor && pkill nm-connection-editor || nm-connection-editor";
+      on-click = "nm-connection-editor";
     };
 
     cpu = {

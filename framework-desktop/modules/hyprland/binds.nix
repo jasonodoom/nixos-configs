@@ -40,9 +40,8 @@
     bind = $mod SHIFT, B, exec, waybar
     bind = $mod CTRL, B, exec, pkill waybar
 
-    # Dock controls
-    bind = $mod SHIFT, D, exec, nwg-dock-hyprland
-    bind = $mod CTRL, D, exec, pkill nwg-dock-hyprland
+    # Waybar reload
+    bind = $mod SHIFT, W, exec, pkill waybar && sleep 0.1 && waybar &
 
     # Hyprland reload
     bind = $mod CTRL, R, exec, hyprctl reload
