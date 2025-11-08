@@ -29,80 +29,92 @@
     btop
     playerctl  # Media control
     jq         # JSON processing for waybar
+    lm_sensors # Temperature monitoring
   ];
 
-  # Waybar configuration - ZaneyOS ddubs style
+  # Waybar configuration - Matte Black Theme
+  # https://github.com/tahayvr/matte-black-theme
   environment.etc."xdg/waybar/config".text = builtins.toJSON {
     layer = "top";
     position = "top";
+    height = 32;
+    spacing = 0;
 
     modules-left = [
-      "hyprland/window"
-      "wlr/taskbar"
+      "hyprland/workspaces"
+      "custom/lock"
+      "custom/reboot"
+      "custom/power"
     ];
 
     modules-center = [
-      "hyprland/workspaces"
+      "hyprland/window"
     ];
 
     modules-right = [
-      "wireplumber"
-      "bluetooth"
       "network"
-      "cpu"
+      "battery"
+      "wireplumber"
+      "custom/temperature"
       "memory"
-      "idle_inhibitor"
-      "mpris"
-      "custom/clipboard"
-      "custom/screenshare"
-      "custom/microphone"
-      "custom/notifications"
-      "custom/keybindings"
+      "cpu"
       "clock"
     ];
 
     # Module configurations
 
     "hyprland/workspaces" = {
+      disable-scroll = false;
+      all-outputs = true;
       format = "{icon}";
-      format-icons = {
-        default = "󰧞";
-        active = "󰮯";
-        urgent = "󰀧";
-      };
-      on-scroll-up = "hyprctl dispatch workspace e+1";
-      on-scroll-down = "hyprctl dispatch workspace e-1";
-      show-special = false;
+      on-click = "activate";
       persistent-workspaces = {
-        "1" = [];
-        "2" = [];
-        "3" = [];
-        "4" = [];
-        "5" = [];
+        "*" = [1 2 3 4 5 6 7 8 9];
+      };
+      format-icons = {
+        "1" = "<span>  </span>";
+        "2" = "<span> 󰅩 </span>";
+        "3" = "<span>  </span>";
+        "4" = "<span>  </span>";
+        "5" = "<span> 󰉋 </span>";
+        "6" = "<span>  </span>";
+        "7" = "<span>  </span>";
+        "8" = "<span>  </span>";
+        "default" = "<span>  </span>";
       };
     };
 
     "hyprland/window" = {
-      max-length = 22;
+      max-length = 50;
       separate-outputs = false;
-      rewrite = {
-        "" = " 🙈 No Windows? ";
-      };
     };
 
-    "wlr/taskbar" = {
-      format = "{icon}";
-      icon-size = 16;
-      icon-theme = "Papirus-Dark";
-      tooltip-format = "{title}";
-      on-click = "activate";
-      on-click-middle = "close";
-      ignore-list = [
-        "Alacritty"
-      ];
-      app_ids-mapping = {
-        "firefoxdeveloperedition" = "firefox-developer-edition";
-      };
+    "custom/lock" = {
+      format = "<span>  </span>";
+      on-click = "hyprlock";
+      tooltip = true;
+      tooltip-format = "Lock: Super + L";
+    };
+
+    "custom/reboot" = {
+      format = "<span>  </span>";
+      on-click = "systemctl reboot";
+      tooltip = true;
+      tooltip-format = "Reboot";
+    };
+
+    "custom/power" = {
+      format = "<span>  </span>";
+      on-click = "systemctl poweroff";
+      tooltip = true;
+      tooltip-format = "Shutdown";
+    };
+
+    "custom/temperature" = {
+      format = "{}°C";
+      exec = "sensors | grep 'Core 0' | awk '{print $3}' | sed 's/+//;s/°C.*//' || echo '0'";
+      interval = 10;
+      tooltip = false;
     };
 
     "custom/keybindings" = {
@@ -256,206 +268,70 @@
 # Power button removed - using wlogout via keybindings instead
   };
 
-  # ZaneyOS ddubs Style - Modern rounded rectangles with dynamic colors
-  # https://gitlab.com/Zaney/zaneyos/
-  # Uses a more balanced color scheme instead of heavy red theme
+  # Matte Black Theme CSS
   environment.etc."xdg/waybar/style.css".text = ''
     * {
+      font-family: "JetBrains Mono Nerd Font", "CaskaydiaMono Nerd Font";
+      font-weight: normal;
+      font-size: 14px;
+    }
+
+    #waybar {
+      background-color: rgba(0, 0, 0, 0);
       border: none;
-      border-radius: 0px;
-      font-family: "JetBrains Mono Nerd Font", sans-serif;
-      font-size: 18px;
-      min-height: 0px;
+      box-shadow: none;
     }
 
-    window#waybar {
-      background: rgba(0, 0, 0, 0);
-    }
-
-    #workspaces {
-      color: #0f0f0f;
-      background: #565f89;
-      margin: 4px 4px;
-      padding: 5px 5px;
-      border-radius: 16px;
-    }
-
-    #workspaces button {
-      font-weight: bold;
-      padding: 0px 5px;
-      margin: 0px 3px;
-      border-radius: 16px;
-      color: #0f0f0f;
-      background: linear-gradient(45deg, #7dcfff, #bb9af7);
-      opacity: 0.5;
-      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-    }
-
-    #workspaces button.active {
-      font-weight: bold;
-      padding: 0px 5px;
-      margin: 0px 3px;
-      border-radius: 16px;
-      color: #0f0f0f;
-      background: linear-gradient(45deg, #7dcfff, #bb9af7);
-      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-      opacity: 1.0;
-      min-width: 40px;
-    }
-
-    #workspaces button:hover {
-      font-weight: bold;
-      border-radius: 16px;
-      color: #0f0f0f;
-      background: linear-gradient(45deg, #7dcfff, #bb9af7);
-      opacity: 0.8;
-      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-    }
-
-    tooltip {
-      background: #1a1b26;
-      border: 1px solid #7dcfff;
-      border-radius: 12px;
-    }
-
-    tooltip label {
-      color: #7dcfff;
-    }
-
-    #window, #wireplumber, #cpu, #memory {
-      font-weight: bold;
-      margin: 4px 7px 4px 0px;
-      padding: 0px 18px;
-      background: #1a1b26;
-      color: #7dcfff;
-      border-radius: 8px 8px 8px 8px;
-    }
-
-    #network {
-      font-weight: bold;
-      margin: 4px 0px 4px 7px;
-      padding: 0px 18px;
-      background: #1a1b26;
-      color: #7dcfff;
-      border-radius: 8px 8px 8px 8px;
-    }
-
-    #idle_inhibitor {
-      font-weight: bold;
-      margin: 4px 7px 4px 0px;
-      padding: 0px 18px;
-      background: #1a1b26;
-      color: #7dcfff;
-      border-radius: 8px 8px 8px 8px;
-      font-size: 28px;
-    }
-
-    #custom-drawer {
-      background-color: #565f89;
-      color: #9ece6a;
-      font-size: 20px;
-      margin: 4px 7px 4px 0px;
-      padding: 0px 12px;
-      border-radius: 16px;
-      min-width: 32px;
-    }
-
-    #custom-logo {
-      color: #9ece6a;
-      background: #565f89;
-      font-size: 22px;
-      margin: 0px;
-      padding: 0px 5px 0px 5px;
-      border-radius: 16px 16px 16px 16px;
-    }
-
-    #bluetooth {
-      font-size: 20px;
-      background: #1a1b26;
-      color: #7dcfff;
-      margin: 4px 7px 4px 0px;
-      border-radius: 8px 8px 8px 8px;
-      padding: 0px 18px;
-    }
-
-    #custom-keybindings, #mpris, #tray, #custom-power {
-      font-size: 20px;
-      background: #1a1b26;
-      color: #7dcfff;
-      margin: 4px 7px 4px 0px;
-      border-radius: 8px 8px 8px 8px;
-      padding: 0px 18px;
-    }
-
-    #taskbar {
-      background: #1a1b26;
-      margin: 4px 4px;
-      padding: 0px 5px;
+    #workspaces,
+    #window {
+      background-color: #0e0e0e;
+      color: #8a8a8d;
+      padding: 4px 8px;
+      margin-top: 6px;
+      margin-left: 6px;
+      margin-right: 6px;
       border-radius: 10px;
+      border-width: 0px;
     }
 
-    #taskbar:empty {
-      display: none;
+    #clock,
+    #custom-power {
+      background-color: #0e0e0e;
+      color: #8a8a8d;
+      margin-top: 6px;
+      margin-right: 6px;
+      padding: 4px 8px;
+      border-radius: 0 10px 10px 0;
+      border-width: 0px;
     }
 
-    #taskbar button {
-      background: transparent;
-      color: #c0caf5;
-      border: none;
-      border-radius: 8px;
-      margin: 0px 3px;
-      padding: 5px 8px;
-      transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+    #network,
+    #custom-lock {
+      background-color: #0e0e0e;
+      color: #8a8a8d;
+      margin-top: 6px;
+      margin-left: 12px;
+      padding: 4px 8px;
+      border-radius: 10px 0 0 10px;
+      border-width: 0px;
     }
 
-    #taskbar button:hover {
-      background: rgba(125,207,255,0.15);
-      box-shadow: 0 2px 8px rgba(125,207,255,0.25);
+    #custom-reboot,
+    #battery,
+    #wireplumber,
+    #custom-temperature,
+    #memory,
+    #cpu {
+      background-color: #0e0e0e;
+      color: #8a8a8d;
+      margin-top: 6px;
+      padding: 4px 8px;
+      border-width: 0px;
     }
 
-    #taskbar button.active {
-      background: linear-gradient(45deg, #7dcfff, #bb9af7);
-      color: #0f0f0f;
-      font-weight: bold;
-    }
-
-    #taskbar button.minimized {
-      opacity: 0.6;
-      color: #565f89;
-    }
-
-    #custom-notifications {
-      font-size: 20px;
-      background: #1a1b26;
-      color: #7dcfff;
-      margin: 4px 12px 4px 0px;
-      border-radius: 8px 8px 8px 8px;
-      padding: 0px 18px;
-      transition: all 0.3s ease;
-    }
-
-    #custom-notifications.disabled {
-      color: #565f89;
-      opacity: 0.6;
-    }
-
-    #custom-screenshare, #custom-microphone {
-      font-size: 18px;
-      background: #1a1b26;
-      color: #f7768e;
-      margin: 4px 7px 4px 0px;
-      border-radius: 8px 8px 8px 8px;
-      padding: 0px 12px;
-    }
-
-    #clock {
-      font-weight: bold;
-      font-size: 16px;
-      color: #0D0E15;
-      background: linear-gradient(90deg, #9ece6a, #565f89);
-      margin: 0px;
-      padding: 0px 5px 0px 5px;
-      border-radius: 16px 16px 16px 16px;
+    #custom-temperature.critical,
+    #wireplumber.muted {
+      color: #f38ba8;
     }
 
   '';
