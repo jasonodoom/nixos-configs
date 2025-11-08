@@ -105,84 +105,35 @@
 
     # Decorations - GNOME-style Modern Aesthetic
     decoration {
-        rounding = 20
+        rounding = 8
 
-        # Enhanced blur for GNOME-like transparency
+        # Simplified blur to prevent crashes
         blur {
             enabled = true
-            size = 12
-            passes = 4
+            size = 3
+            passes = 1
             new_optimizations = true
-            xray = true
-            ignore_opacity = false
-            noise = 0.02
-            contrast = 1.3
-            brightness = 1.1
-            vibrancy = 0.3
-            vibrancy_darkness = 0.1
-            special = true
         }
 
-        # Subtle shadows like GNOME
-        shadow {
-            enabled = true
-            range = 40
-            render_power = 4
-            color = rgba(0000004d)
-            color_inactive = rgba(0000002a)
-            offset = 0 15
-            scale = 0.97
-        }
-
-        # Gentle window dimming
-        dim_inactive = true
-        dim_strength = 0.05
-        dim_special = 0.6
-        dim_around = 0.3
-
-        # Optional: Add drop shadow for floating windows
+        # Simple shadows
         drop_shadow = true
+        shadow_range = 4
+        shadow_render_power = 3
+        col.shadow = rgba(1a1a1aee)
     }
 
-    # Layer rules for waybar transparency and blur
-    layerrule = blur, waybar
-    layerrule = ignorealpha 0.5, waybar
-    layerrule = ignorealpha 0.5, notifications
 
-    # Animations - Fluid Motion Design
+    # Simple animations to prevent crashes
     animations {
         enabled = true
 
-        # Advanced bezier curves for different feels
-        bezier = wind, 0.05, 0.9, 0.1, 1.05
-        bezier = winIn, 0.1, 1.1, 0.1, 1.1
-        bezier = winOut, 0.3, -0.3, 0, 1
-        bezier = liner, 1, 1, 1, 1
-        bezier = bounce, 0.68, -0.55, 0.265, 1.55
-        bezier = smooth, 0.25, 0.1, 0.25, 1
-        bezier = elastic, 0.68, -0.6, 0.32, 1.6
+        bezier = myBezier, 0.05, 0.9, 0.1, 1.05
 
-        # Window animations with dramatic effects
-        animation = windows, 1, 6, wind, slide
-        animation = windowsIn, 1, 6, winIn, slide
-        animation = windowsOut, 1, 5, winOut, slide
-        animation = windowsMove, 1, 5, wind, slide
-
-        # Border animations with glow pulse
-        animation = border, 1, 10, smooth
-        animation = borderangle, 1, 30, liner, loop
-
-        # Fade animations for transparency effects
-        animation = fade, 1, 10, smooth
-        animation = fadeIn, 1, 10, smooth
-        animation = fadeOut, 1, 5, smooth
-
-        # Workspace animations with 3D effects
-        animation = workspaces, 1, 6, wind, slide
-        animation = specialWorkspace, 1, 6, elastic, slidevert
-
-        # Focus animations
-        animation = layers, 1, 5, smooth, popin 80%
+        animation = windows, 1, 4, myBezier
+        animation = windowsOut, 1, 4, default, popin 80%
+        animation = border, 1, 8, default
+        animation = fade, 1, 4, default
+        animation = workspaces, 1, 4, default
     }
 
     # Dwindle layout - Enhanced tiling
