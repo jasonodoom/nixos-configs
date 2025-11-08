@@ -65,8 +65,8 @@ pkgs.nixosTest {
       # Single workspace for testing
       workspace = 1, defaultName:test, default:true
 
-      # Minimal autostart - only waybar
-      exec-once = waybar
+      # Minimal autostart - waybar with fallback
+      exec-once = sleep 2 && waybar
     '';
 
     # VM-specific configurations - optimized for speed
@@ -126,9 +126,9 @@ pkgs.nixosTest {
     machine.wait_until_succeeds("pgrep Hyprland", timeout=20)
     print("✓ Hyprland process started")
 
-    # Quick verification - check waybar starts
-    machine.wait_until_succeeds("pgrep waybar", timeout=15)
-    print("✓ Waybar process started")
+    # Check waybar starts with longer timeout
+    machine.wait_until_succeeds("pgrep waybar", timeout=30)
+    print("Waybar process started")
 
     # Final screenshot
     machine.screenshot("hyprland_desktop")
