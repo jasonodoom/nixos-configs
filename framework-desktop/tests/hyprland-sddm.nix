@@ -27,7 +27,10 @@ pkgs.nixosTest {
     system.stateVersion = "25.05";
     services.displayManager.sddm.theme-config = "astronaut-hacker";
 
-    # Disable hych plugin for VM tests as plugins don't work well in VMs
+    # Disable Tailscale for VM tests (no internet access)
+    services.tailscale.enable = lib.mkForce false;
+
+    # Simplified Hyprland configuration for VM tests
     environment.etc."hypr/hyprland.conf".text = lib.mkForce ''
       # Monitor configuration for VM
       monitor=,preferred,auto,1
@@ -61,6 +64,7 @@ pkgs.nixosTest {
       # Basic workspace configuration
       workspace = 1, defaultName:main, default:true
       workspace = 2, defaultName:web
+      workspace = special:minimized, on-created-empty:ghostty
 
       # Basic autostart for VM
       exec-once = waybar
