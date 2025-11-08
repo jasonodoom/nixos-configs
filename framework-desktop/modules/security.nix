@@ -33,12 +33,21 @@
   # SSH configuration
   services.openssh = {
     enable = true;
+    ports = [ 666 ];
     settings = {
+      X11Forwarding = true;
       PasswordAuthentication = false;
       PermitRootLogin = "no";
       PubkeyAuthentication = true;
+      KbdInteractiveAuthentication = true;
     };
+    authorizedKeysFiles = [ ".ssh/authorized_keys" ];
+    extraConfig = "AllowUsers jason";
   };
+
+  # Enable SSH agent authentication
+  security.pam.sshAgentAuth.enable = true;
+  security.pam.services.sudo.sshAgentAuth = false;
 
   # GPG configuration
   programs.ssh.startAgent = false;

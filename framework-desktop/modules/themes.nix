@@ -104,16 +104,19 @@ in {
       selectedTheme.package
     ] ++ selectedTheme.extraPackages ++ [
       # Icon themes for comprehensive coverage
+      pkgs.adwaita-icon-theme      # GNOME default icons
+      pkgs.hicolor-icon-theme      # Fallback icon theme (required)
+      pkgs.papirus-icon-theme      # Modern colorful icons (best app coverage)
       pkgs.tela-icon-theme         # Flat modern icons
       pkgs.numix-icon-theme        # Popular flat icons
       pkgs.kdePackages.breeze-icons  # KDE icons for compatibility
+      pkgs.libsForQt5.breeze-icons # Qt5 breeze icons
       pkgs.gnome-themes-extra      # Additional GNOME icons
 
       # GTK themes for modern dark aesthetic
       pkgs.arc-theme              # Modern flat theme
       pkgs.numix-gtk-theme        # Beautiful flat dark theme (primary)
-      pkgs.adwaita-icon-theme     # Default fallback icons
-      pkgs.gnome-themes-extra     # Additional theme support
+      pkgs.nordic                 # Dark Nordic theme
     ];
 
     # Configure SDDM with appropriate Qt version per theme

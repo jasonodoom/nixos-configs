@@ -18,23 +18,7 @@
     };
   };
 
-  # SSH configuration
-  services.openssh = {
-    enable = true;
-    ports = [ 666 ];
-    settings = {
-      X11Forwarding = true;
-      PasswordAuthentication = false;
-      PermitRootLogin = "no";
-      KbdInteractiveAuthentication = true;
-    };
-    authorizedKeysFiles = [ ".ssh/authorized_keys" ];
-    extraConfig = "AllowUsers jason";
-  };
-
-  # Enable SSH agent authentication
-  security.pam.sshAgentAuth.enable = true;
-  security.pam.services.sudo.sshAgentAuth = false;
+  # SSH configuration moved to security.nix to avoid duplication
 
   # Tailscale for VPN
   services.tailscale.enable = true;

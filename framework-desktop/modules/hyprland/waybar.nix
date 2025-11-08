@@ -21,30 +21,16 @@
     clipse             # Modern clipboard manager
     nwg-displays       # Monitor configuration GUI
 
-    # Icon themes for comprehensive application coverage
-    adwaita-icon-theme      # GNOME default icons
-    hicolor-icon-theme      # Fallback icon theme
-    papirus-icon-theme      # Modern colorful icons
-    tela-icon-theme         # Flat modern icons
-    numix-icon-theme        # Popular flat icons
-    kdePackages.breeze-icons  # KDE icons for compatibility
-    gnome-themes-extra  # Additional GNOME icons
+    # Waybar-specific packages
     font-awesome           # Font Awesome icons for waybar
 
-    # GTK themes for modern dark aesthetic
-    arc-theme              # Modern flat theme
-    numix-gtk-theme        # Popular dark theme
-    nordic                 # Dark Nordic theme (matches Tokyo Night)
-
-    # Network and system utilities
+    # Network and system utilities for waybar functionality
     networkmanager
     networkmanagerapplet
     pavucontrol
     pwvucontrol  # PipeWire volume control
-    # System monitoring
     htop
     btop
-    # Required for waybar modules
     playerctl  # Media control
     jq         # JSON processing for waybar
   ];
