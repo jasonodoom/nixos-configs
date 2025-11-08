@@ -208,10 +208,6 @@
         psuoc = "!git push -u origin $(git bc)";
         psdc = "!git push origin :$(git bc)";
 
-        psu = "push --set-upstream";
-        psuo = "push --set-upstream origin";
-        psuoc = "push --set-upstream origin $(git bc)";
-
         # Pull operations
         pl = "pull";
         plo = "pull origin";
