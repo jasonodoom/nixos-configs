@@ -398,6 +398,10 @@
       border-radius: 10px;
     }
 
+    #taskbar:empty {
+      display: none;
+    }
+
     #taskbar button {
       background: transparent;
       color: #c0caf5;
