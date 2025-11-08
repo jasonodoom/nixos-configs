@@ -156,13 +156,13 @@
     };
 
     "custom/notifications" = {
-      format = "󰂚";
-      tooltip = "Notifications • Click to open history";
-      on-click = "dunstctl action || dunstctl history-pop || notify-send 'Notification Center' 'No notifications in history'";
+      format = "{}";
+      tooltip = "Notifications • Click to open history • Right-click to toggle";
+      on-click = "bash -c 'if [ $(dunstctl count history) -gt 0 ]; then dunstctl history | rofi -dmenu -i -p \"Notification History\" -lines 10 -width 60; else notify-send \"Notification Center\" \"No notifications in history\"; fi'";
       on-click-right = "dunstctl set-paused toggle && notify-send 'Notifications' \"$(dunstctl is-paused | grep -q 'true' && echo 'Paused' || echo 'Resumed')\"";
       on-click-middle = "dunstctl close-all && notify-send 'Notifications' 'All notifications cleared'";
-      exec = "dunstctl is-paused | grep -q 'false' && echo '󰂚' || echo '󰂛'";
-      interval = 5;
+      exec = "if dunstctl is-paused | grep -q 'false'; then count=$(dunstctl count waiting); if [ $count -gt 0 ]; then echo \"󰂚 $count\"; else echo '󰂚'; fi; else echo '󰂜'; fi";
+      interval = 3;
     };
 
     "custom/screenshare" = {
@@ -396,6 +396,12 @@
       margin: 4px 12px 4px 0px;
       border-radius: 8px 8px 8px 8px;
       padding: 0px 18px;
+      transition: all 0.3s ease;
+    }
+
+    #custom-notifications.disabled {
+      color: #565f89;
+      opacity: 0.6;
     }
 
     #custom-screenshare, #custom-microphone {
