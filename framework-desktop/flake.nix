@@ -29,7 +29,6 @@
     hyprland.url = "github:hyprwm/Hyprland";
     hych = {
       url = "github:DreamMaoMao/hych";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     flake-utils.url = "github:numtide/flake-utils";
