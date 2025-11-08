@@ -36,7 +36,7 @@
     bind = $mod SHIFT, T, exec, rofi -show top
 
     # File manager
-    bind = $mod, E, exec, nautilus
+    bind = $mod, N, exec, nautilus
 
     # Waybar controls
     bind = $mod SHIFT, B, exec, waybar
@@ -116,7 +116,7 @@
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session
-    bind = $mod SHIFT, Q, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'
+    bind = $mod, E, exec, hyprctl dispatch exit
     bind = $mod SHIFT, S, exec, systemctl suspend
     bind = $mod, Escape, exec, wlogout --layer-shell
     bind = $mod SHIFT, P, exec, wlogout --layer-shell
@@ -136,7 +136,6 @@
 
     # Window search and management
     bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
-    bind = $mod SHIFT, Q, exec, bash -c 'hyprctl dispatch exit; sleep 1; loginctl terminate-session ""'   # Exit to SDDM
     bind = $mod SHIFT, E, movetoworkspace, special:minimized   # Minimize to special workspace
   '';
 }

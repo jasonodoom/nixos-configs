@@ -206,8 +206,7 @@
     exec-once = sleep 1 && dunst &
 
 
-    # Hypridle for advanced idle management
-    exec-once = sleep 2 && hypridle &
+    # Hypridle for advanced idle management (managed by systemd service)
 
     # Clipboard history management
     exec-once = wl-paste --type text --watch cliphist store
@@ -417,9 +416,9 @@
         ignore_systemd_inhibit = false              # Don't ignore systemd inhibit
     }
 
-    # Lock screen after 1 minute of inactivity
+    # Lock screen after 5 minutes of inactivity
     listener {
-        timeout = 60
+        timeout = 300
         on-timeout = hyprlock
     }
 
@@ -434,6 +433,7 @@
     listener {
         timeout = 1800
         on-timeout = systemctl suspend
+    }
     }
   '';
 
