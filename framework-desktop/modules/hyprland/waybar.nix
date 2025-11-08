@@ -2,14 +2,10 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = [
-    ./eww.nix
-  ];
 
   # Install waybar but don't enable globally (will be started by Hyprland only)
   # programs.waybar.enable = true;
 
-# Removed nix logo - replaced with eww
 
 
   # Install required dependencies for waybar modules
@@ -17,7 +13,7 @@
     # Waybar itself (for Hyprland only)
     waybar
 
-    # Waybar-specific tools (rofi/eww/wlogout installed by other modules)
+    # Waybar-specific tools (rofi/wlogout installed by other modules)
     clipse             # Modern clipboard manager
     nwg-displays       # Monitor configuration GUI
 
@@ -65,7 +61,7 @@
       "clock"
     ];
 
-    # Module configurations removed drawer - using eww instead
+    # Module configurations
 
     "hyprland/workspaces" = {
       format = "{icon}";

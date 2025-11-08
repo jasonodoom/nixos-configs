@@ -75,7 +75,6 @@ pkgs.nixosTest {
 
       # Minimal autostart - no heavy widgets for VM test
       exec-once = sleep 2 && waybar
-      # Skip eww for faster VM testing
     '';
 
     # VM-specific configurations - optimized for speed
