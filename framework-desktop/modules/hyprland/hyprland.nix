@@ -464,15 +464,9 @@
         on-resume = brightnessctl -r
     }
 
-    # Start screensaver after 5 minutes of being locked
+    # Turn off monitor after 5 minutes
     listener {
         timeout = 300
-        on-timeout = pkill cmatrix; ghostty --class=screensaver -e cmatrix -s -C red
-    }
-
-    # Turn off monitor after 10 minutes
-    listener {
-        timeout = 600
         on-timeout = hyprctl dispatch dpms off
         on-resume = hyprctl dispatch dpms on
     }

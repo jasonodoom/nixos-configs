@@ -6,7 +6,7 @@
   # programs.waybar.enable = true;
 
   # Copy Nix logo for waybar drawer icon
-  environment.etc."xdg/waybar/nix-logo.png".source = "${./.}/icons/nix-logo.png";
+  environment.etc."xdg/waybar/nix-logo.png".source = ./icons/nix-logo.png;
 
 
   # Install required dependencies for waybar modules
@@ -84,7 +84,7 @@
 
     # Module configurations
     "custom/drawer" = {
-      format = "";
+      format = "❄️";
       tooltip = false;
       on-click = "pgrep nwg-drawer && pkill nwg-drawer || nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
     };
@@ -378,12 +378,8 @@
     }
 
     #custom-drawer {
-      background-image: url("/etc/xdg/waybar/nix-logo.png");
-      background-size: 20px 20px;
-      background-repeat: no-repeat;
-      background-position: center;
       background-color: #565f89;
-      color: transparent;
+      color: #9ece6a;
       font-size: 20px;
       margin: 4px 7px 4px 0px;
       padding: 0px 12px;
