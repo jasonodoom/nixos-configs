@@ -13,8 +13,9 @@
     # Application launchers and desktop tools
     rofi-wayland        # Application launcher fallback
     rofimoji           # Emoji picker
+    clipse             # Modern clipboard manager
+    wl-clipboard       # Wayland clipboard utilities
     nwg-drawer         # Modern application drawer (primary)
-    nwg-dock-hyprland  # Best dock for Hyprland
     nwg-displays       # Monitor configuration GUI
     wlogout            # Logout menu (for custom/power)
 
@@ -26,6 +27,7 @@
     numix-icon-theme        # Popular flat icons
     kdePackages.breeze-icons  # KDE icons for compatibility
     gnome-themes-extra  # Additional GNOME icons
+    font-awesome           # Font Awesome icons for waybar
 
     # GTK themes for modern dark aesthetic
     arc-theme              # Modern flat theme
@@ -51,6 +53,8 @@
     position = "top";
 
     modules-left = [
+      "custom/drawer"
+      "clock"
       "hyprland/window"
     ];
 
@@ -66,13 +70,20 @@
       "memory"
       "idle_inhibitor"
       "mpris"
+      "custom/clipboard"
+      "privacy"
       "custom/keybindings"
       "tray"
       "custom/power"
-      "clock"
     ];
 
     # Module configurations
+    "custom/drawer" = {
+      format = "";
+      tooltip = false;
+      on-click = "pgrep nwg-drawer && pkill nwg-drawer || nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
+    };
+
     "hyprland/workspaces" = {
       format = "{icon}";
       format-icons = {
@@ -102,7 +113,7 @@
 
     "custom/keybindings" = {
       tooltip = false;
-      format = "󱕴";
+      format = "";
       on-click = "rofi -show keys";
     };
 
@@ -144,6 +155,35 @@
       tooltip-format-activated = "Idle inhibited - Screen will NOT lock or turn off";
       tooltip-format-deactivated = "Idle enabled - Screen will lock after 1min";
       on-click = "notify-send 'Idle Management' 'Toggled idle inhibitor. Status will update in waybar.'";
+    };
+
+    "custom/clipboard" = {
+      format = "";
+      tooltip = false;
+      on-click = "clipse";
+    };
+
+    privacy = {
+      icon-spacing = 4;
+      icon-size = 18;
+      transition-duration = 250;
+      modules = [
+        {
+          type = "screenshare";
+          tooltip = true;
+          tooltip-icon-size = 24;
+        }
+        {
+          type = "audio-out";
+          tooltip = true;
+          tooltip-icon-size = 24;
+        }
+        {
+          type = "audio-in";
+          tooltip = true;
+          tooltip-icon-size = 24;
+        }
+      ];
     };
 
     mpris = {
@@ -223,7 +263,7 @@
     };
 
     "custom/power" = {
-      format = "󰤆";
+      format = "";
       tooltip = false;
       on-click = "wlogout --layer-shell --layout /etc/xdg/wlogout/layout --css /etc/xdg/wlogout/style.css";
       on-click-right = "hyprlock";
