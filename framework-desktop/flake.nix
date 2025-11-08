@@ -38,10 +38,22 @@
       inputs.hyprland.follows = "hyprland";
     };
 
+    # Hyprspace plugin - workspace overview
+    hyprspace = {
+      url = "github:KZDKM/Hyprspace";
+      inputs.hyprland.follows = "hyprland";
+    };
+
+    # Hypr-DarkWindow plugin - window effects
+    hypr-darkwindow = {
+      url = "github:micha4w/Hypr-DarkWindow";
+      inputs.hyprland.follows = "hyprland";
+    };
+
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, hyprland, hyprland-plugins, hy3, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, hyprland, hyprland-plugins, hy3, hyprspace, hypr-darkwindow, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       inherit system;
