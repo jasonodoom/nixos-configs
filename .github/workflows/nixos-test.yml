@@ -21,10 +21,13 @@ jobs:
         id: vm-test
         run: |
           cd framework-desktop
+          # Add flake config acceptance to avoid warnings
+          export NIX_CONFIG="accept-flake-config = true"
+
           # Capture both stdout and derivation path for logs
           set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace 2>&1 | tee vm-test-output.log
-          TEST_EXIT_CODE=$?
+          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace --accept-flake-config 2>&1 | tee vm-test-output.log
+          BUILD_EXIT_CODE=$?
 
           # Extract derivation path for logs
           DERIVATION_PATH=$(grep -o '/nix/store/[^-]*-vm-test-run[^/]*\.drv' vm-test-output.log | head -1) || true
@@ -33,20 +36,32 @@ jobs:
             nix log "$DERIVATION_PATH" > vm-full.log 2>&1 || echo "Could not get derivation logs" > vm-full.log
           fi
 
-          # Check for specific test failure patterns in addition to exit code
-          if [ $TEST_EXIT_CODE -eq 0 ] && ! grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed" vm-test-output.log; then
-            echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] VM test completed successfully"
-          else
-            echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] VM test failed (exit code: $TEST_EXIT_CODE)"
-            if grep -q "timed out\|RequestedAssertionFailed" vm-test-output.log; then
-              echo "Detected test timeout or assertion failure in logs"
-            fi
+          # Check for test failure indicators - build can succeed but VM test can fail
+          TEST_FAILED=false
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            TEST_FAILED=true
+            echo "Build failed with exit code $BUILD_EXIT_CODE"
           fi
 
-          # Always exit with the original test result to fail the workflow
-          exit $TEST_EXIT_CODE
+          # Check for test failure patterns in logs
+          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed" vm-test-output.log vm-full.log; then
+            TEST_FAILED=true
+            echo "Detected test failure patterns in logs"
+          fi
+
+          # Report results
+          if [ "$TEST_FAILED" = "false" ]; then
+            echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
+            echo "[PASSED] VM test completed successfully"
+            exit 0
+          else
+            echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
+            echo "[FAILED] VM test failed - build exit code: $BUILD_EXIT_CODE"
+            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" vm-test-output.log vm-full.log; then
+              echo "Detected test timeout or assertion failure in logs"
+            fi
+            exit 1
+          fi
 
       - name: Upload test screenshots
         uses: actions/upload-artifact@v4

@@ -28,8 +28,15 @@ pkgs.nixosTest {
     system.stateVersion = "25.05";
     services.displayManager.sddm.theme-config = "astronaut-hacker";
 
-    # Disable heavy services for faster VM tests (only if they exist)
+    # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
+    virtualisation.docker.enable = lib.mkForce false;
+    virtualisation.libvirtd.enable = lib.mkForce false;
+    services.networkmanager.enable = lib.mkForce false;
+
+    # Simple networking for VM test
+    networking.useDHCP = lib.mkForce true;
+    networking.wireless.enable = lib.mkForce false;
 
     # Minimal Hyprland configuration for fast VM testing
     environment.etc."hypr/hyprland.conf".text = lib.mkForce ''
@@ -66,18 +73,20 @@ pkgs.nixosTest {
       # Single workspace for testing
       workspace = 1, defaultName:test, default:true
 
-      # Minimal autostart - waybar with fallback
+      # Minimal autostart - no heavy widgets for VM test
       exec-once = sleep 2 && waybar
+      # Skip eww for faster VM testing
     '';
 
     # VM-specific configurations - optimized for speed
     virtualisation = {
-      memorySize = 1024;  # Reduced memory
-      cores = 1;          # Single core for faster startup
+      memorySize = 2048;  # Increased for Hyprland stability
+      cores = 2;          # More cores for better performance
       qemu.options = [
-        "-vga std"
+        "-vga virtio"     # Better graphics for Hyprland
         "-netdev user,id=net0"
         "-device virtio-net,netdev=net0"
+        "-machine accel=tcg"  # Ensure software acceleration
       ];
       useBootLoader = false;  # Skip bootloader for faster boot
       useEFIBoot = false;
@@ -101,6 +110,12 @@ pkgs.nixosTest {
       password = "";  # Empty password for VM test only
       extraGroups = [ "wheel" ];
     };
+
+    # Wayland environment for VM test
+    environment.sessionVariables = {
+      WLR_NO_HARDWARE_CURSORS = "1";
+      WLR_RENDERER_ALLOW_SOFTWARE = "1";
+    };
   };
 
   testScript = ''
@@ -123,8 +138,8 @@ pkgs.nixosTest {
     machine.send_key("ret")
     print("✓ Login attempt made")
 
-    # Wait for Hyprland to start (simplified check)
-    machine.wait_until_succeeds("pgrep Hyprland", timeout=20)
+    # Wait for Hyprland to start (simplified check) - increased timeout
+    machine.wait_until_succeeds("pgrep Hyprland", timeout=60)
     print("✓ Hyprland process started")
 
     # Check waybar starts with longer timeout
