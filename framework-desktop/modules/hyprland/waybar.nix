@@ -17,8 +17,7 @@
     cliphist           # Clipboard history manager
     nwg-displays       # Monitor configuration GUI
 
-    # Waybar-specific packages
-    font-awesome           # Font Awesome icons for waybar
+    # Waybar-specific packages (icons provided by Nerd Fonts)
 
     # Network and system utilities for waybar functionality
     networkmanager
@@ -70,11 +69,11 @@
       format = "{icon}";
       on-click = "activate";
       persistent-workspaces = {
-        "*" = [1 2 3 4 5 6 7 8 9];
+        "*" = [1 2 3 4 5 6 7 8 9 10];
       };
       format-icons = {
         "1" = "<span>  </span>";
-        "2" = "<span> 󰅩 </span>";
+        "2" = "<span>  </span>";
         "3" = "<span>  </span>";
         "4" = "<span>  </span>";
         "5" = "<span> 󰉋 </span>";
@@ -82,6 +81,7 @@
         "7" = "<span>  </span>";
         "8" = "<span>  </span>";
         "9" = "<span>  </span>";
+        "10" = "<span>  </span>";
         "default" = "<span>  </span>";
       };
     };
@@ -304,7 +304,7 @@
   # Matte Black Theme CSS
   environment.etc."xdg/waybar/style.css".text = ''
     * {
-      font-family: "JetBrains Mono Nerd Font", "CaskaydiaMono Nerd Font";
+      font-family: "CaskaydiaMono Nerd Font", "JetBrains Mono Nerd Font";
       font-weight: normal;
       font-size: 14px;
     }
