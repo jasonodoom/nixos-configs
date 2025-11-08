@@ -5,6 +5,10 @@
   # Install waybar but don't enable globally (will be started by Hyprland only)
   # programs.waybar.enable = true;
 
+  # Copy Nix logo for waybar drawer icon
+  environment.etc."xdg/waybar/nix-logo.png".source = "${./.}/icons/nix-logo.png";
+
+
   # Install required dependencies for waybar modules
   environment.systemPackages = with pkgs; [
     # Waybar itself (for Hyprland only)
@@ -80,7 +84,7 @@
 
     # Module configurations
     "custom/drawer" = {
-      format = "☰";
+      format = "";
       tooltip = false;
       on-click = "pgrep nwg-drawer && pkill nwg-drawer || nwg-drawer -mb 200 -mt 200 -mr 200 -ml 200";
     };
@@ -371,6 +375,20 @@
       color: #7dcfff;
       border-radius: 8px 8px 8px 8px;
       font-size: 28px;
+    }
+
+    #custom-drawer {
+      background-image: url("/etc/xdg/waybar/nix-logo.png");
+      background-size: 20px 20px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #565f89;
+      color: transparent;
+      font-size: 20px;
+      margin: 4px 7px 4px 0px;
+      padding: 0px 12px;
+      border-radius: 16px;
+      min-width: 32px;
     }
 
     #custom-logo {

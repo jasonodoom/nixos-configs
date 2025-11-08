@@ -49,7 +49,7 @@
     monitor=,preferred,auto,1
 
     # Special workspace for "minimized" windows
-    workspace = special:minimized, on-created-empty:kitty
+    workspace = special:minimized, on-created-empty:ghostty
 
     # Improved window management rules
     windowrulev2 = float, class:^(pavucontrol)$
@@ -60,7 +60,7 @@
     windowrulev2 = size 800 600, class:^(pavucontrol|blueman-manager|nm-connection-editor)$
 
     # Better focus handling for multiple windows
-    windowrulev2 = immediate, class:^(kitty)$
+    windowrulev2 = immediate, class:^(ghostty)$
     windowrulev2 = stayfocused, class:^(rofi)$
 
     # Common desktop output patterns - Hyprland will use what's available
@@ -210,7 +210,7 @@
     windowrulev2 = noborder,class:^(screensaver)$
 
     # Transparency rules for different app types
-    windowrulev2 = opacity 0.95 0.85,class:^(kitty)$
+    windowrulev2 = opacity 0.95 0.85,class:^(ghostty)$
     windowrulev2 = opacity 0.98 0.90,class:^(code)$
     windowrulev2 = opacity 1.0 0.95,class:^(firefox)$
     windowrulev2 = opacity 0.92 0.82,class:^(thunar)$
@@ -251,15 +251,7 @@
     exec-once = sleep 1 && dunst &
 
     # Hypridle for advanced idle management
-    exec-once = hypridle
-
-    # hych plugin configuration for window minimization
-    plugin {
-      hych {
-        enable_alt_release_exit = 1
-        alt_replace_key = code:64
-      }
-    }
+    exec-once = hypridle &
   '';
 
 
@@ -475,7 +467,7 @@
     # Start screensaver after 5 minutes of being locked
     listener {
         timeout = 300
-        on-timeout = pkill cmatrix; kitty --class=screensaver -e cmatrix -s -C red
+        on-timeout = pkill cmatrix; ghostty --class=screensaver -e cmatrix -s -C red
     }
 
     # Turn off monitor after 10 minutes
@@ -638,6 +630,67 @@
     }
   '';
 
+  # Ghostty terminal configuration
+  environment.etc."ghostty/config".text = ''
+    # Font configuration
+    font-family = Fira Code
+    font-size = 12
+    font-thicken = true
+
+    # Window configuration
+    window-padding-x = 8
+    window-padding-y = 8
+    window-decoration = true
+
+    # Transparency and visual effects
+    background-opacity = 0.9
+    unfocused-split-opacity = 0.75
+
+    # Cursor configuration
+    cursor-style = block
+    cursor-blink = false
+
+    # Tokyo Night theme colors
+    background = 1a1b26
+    foreground = c0caf5
+    cursor-color = c0caf5
+    cursor-text = 1a1b26
+
+    # Selection colors
+    selection-foreground = c0caf5
+    selection-background = 33467c
+
+    # 16-color palette (Tokyo Night)
+    palette = 0=#15161e
+    palette = 1=#f7768e
+    palette = 2=#9ece6a
+    palette = 3=#e0af68
+    palette = 4=#7aa2f7
+    palette = 5=#bb9af7
+    palette = 6=#7dcfff
+    palette = 7=#a9b1d6
+    palette = 8=#414868
+    palette = 9=#f7768e
+    palette = 10=#9ece6a
+    palette = 11=#e0af68
+    palette = 12=#7aa2f7
+    palette = 13=#bb9af7
+    palette = 14=#7dcfff
+    palette = 15=#c0caf5
+
+    # Mouse and clipboard
+    mouse-hide-while-typing = true
+    clipboard-read = allow
+    clipboard-write = allow
+
+    # Shell integration
+    shell-integration = bash,zsh,fish
+    shell-integration-features = cursor,sudo,title
+
+    # Scrollback
+    scrollback-limit = 2000
+  '';
+
   # Kitty terminal configuration
   environment.etc."xdg/kitty/kitty.conf".text = ''
     font_family Fira Code
@@ -683,7 +736,6 @@
     mark3_background #7aa2f7
 
     # The 16 terminal colors
-
     # black
     color0 #15161e
     color8 #414868
@@ -760,7 +812,8 @@
 
     # Applications
     xfce.thunar        # File manager
-    kitty              # Terminal
+    ghostty            # Modern GPU-accelerated terminal
+    kitty
     rofi-wayland       # Application launcher
     rofimoji           # Emoji picker
     flameshot          # Screenshot tool
