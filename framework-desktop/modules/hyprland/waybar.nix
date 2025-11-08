@@ -72,7 +72,8 @@
       "mpris"
       "custom/clipboard"
       "custom/notifications"
-      "privacy"
+      "custom/screenshare"
+      "custom/microphone"
       "custom/keybindings"
       "clock"
     ];
@@ -162,27 +163,22 @@
       on-click-middle = "dunstctl close-all";
     };
 
-    privacy = {
-      icon-spacing = 4;
-      icon-size = 18;
-      transition-duration = 250;
-      modules = [
-        {
-          type = "screenshare";
-          tooltip = true;
-          tooltip-icon-size = 24;
-        }
-        {
-          type = "audio-out";
-          tooltip = true;
-          tooltip-icon-size = 24;
-        }
-        {
-          type = "audio-in";
-          tooltip = true;
-          tooltip-icon-size = 24;
-        }
-      ];
+    "custom/screenshare" = {
+      format = "󰍹";
+      tooltip = "Screen sharing status";
+      exec = "if pgrep -f 'screen.*share\\|record' >/dev/null; then echo 'sharing'; else echo 'idle'; fi";
+      return-type = "json";
+      format-alt = "󰍹";
+      interval = 3;
+    };
+
+    "custom/microphone" = {
+      format = "󰍬";
+      tooltip = "Microphone status";
+      exec = "if pactl list sources | grep -A 10 'Name.*input' | grep -q 'State: RUNNING'; then echo 'active'; else echo 'muted'; fi";
+      return-type = "json";
+      format-alt = "󰍬";
+      interval = 2;
     };
 
     mpris = {
@@ -393,6 +389,15 @@
       margin: 4px 7px 4px 0px;
       border-radius: 8px 8px 8px 8px;
       padding: 0px 18px;
+    }
+
+    #custom-screenshare, #custom-microphone {
+      font-size: 18px;
+      background: #1a1b26;
+      color: #f7768e;
+      margin: 4px 7px 4px 0px;
+      border-radius: 8px 8px 8px 8px;
+      padding: 0px 12px;
     }
 
     #clock {

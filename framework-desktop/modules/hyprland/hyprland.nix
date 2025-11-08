@@ -277,7 +277,7 @@
     }
     {
         "label" : "logout",
-        "action" : "loginctl terminate-session ''",
+        "action" : "loginctl terminate-session",
         "text" : "Logout",
         "keybind" : "e"
     }
@@ -845,6 +845,4 @@
     sddm-greeter.enableGnomeKeyring = true;
     passwd.enableGnomeKeyring = true;
   };
-
-
 }
