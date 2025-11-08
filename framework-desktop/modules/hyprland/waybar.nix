@@ -59,6 +59,7 @@
       "memory"
       "cpu"
       "clock"
+      "wlr/taskbar"
     ];
 
     # Module configurations
@@ -109,6 +110,17 @@
       on-click = "systemctl poweroff";
       tooltip = true;
       tooltip-format = "Shutdown";
+    };
+
+    "wlr/taskbar" = {
+      format = "{icon}";
+      icon-size = 20;
+      icon-theme = "Papirus-Dark";
+      tooltip-format = "{title}";
+      on-click = "activate";
+      on-click-middle = "close";
+      on-click-right = "close";
+      ignore-list = [];
     };
 
     "custom/temperature" = {
@@ -293,6 +305,44 @@
       margin-right: 6px;
       border-radius: 10px;
       border-width: 0px;
+    }
+
+    #taskbar {
+      background-color: #0e0e0e;
+      margin-top: 6px;
+      margin-left: 6px;
+      margin-right: 6px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      border-width: 0px;
+    }
+
+    #taskbar:empty {
+      display: none;
+    }
+
+    #taskbar button {
+      background-color: transparent;
+      color: #8a8a8d;
+      border: none;
+      border-radius: 6px;
+      margin: 0 2px;
+      padding: 4px 8px;
+      transition: all 0.2s ease;
+    }
+
+    #taskbar button:hover {
+      background-color: rgba(138, 138, 141, 0.1);
+      color: #ffffff;
+    }
+
+    #taskbar button.active {
+      background-color: rgba(138, 138, 141, 0.2);
+      color: #ffffff;
+    }
+
+    #taskbar button.minimized {
+      opacity: 0.5;
     }
 
     #clock,
