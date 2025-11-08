@@ -27,16 +27,8 @@ pkgs.nixosTest {
     system.stateVersion = "25.05";
     services.displayManager.sddm.theme-config = "astronaut-hacker";
 
-    # Disable heavy services for faster VM tests
+    # Disable heavy services for faster VM tests (only if they exist)
     services.tailscale.enable = lib.mkForce false;
-    services.docker.enable = lib.mkForce false;
-    services.libvirtd.enable = lib.mkForce false;
-    services.networkmanager.enable = lib.mkForce false;  # Use simple networking
-
-    # Disable unnecessary features for testing
-    security.polkit.enable = lib.mkForce true;  # Keep minimal polkit
-    services.gnome.gnome-keyring.enable = lib.mkForce false;
-    services.udisks2.enable = lib.mkForce false;
 
     # Minimal Hyprland configuration for fast VM testing
     environment.etc."hypr/hyprland.conf".text = lib.mkForce ''
