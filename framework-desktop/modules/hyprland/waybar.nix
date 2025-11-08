@@ -14,7 +14,7 @@
     rofi-wayland        # Application launcher fallback
     rofimoji           # Emoji picker
     nwg-drawer         # Modern application drawer (primary)
-    nwg-dock-hyprland  # Dock for Hyprland
+    nwg-dock-hyprland  # Best dock for Hyprland
     nwg-displays       # Monitor configuration GUI
     wlogout            # Logout menu (for custom/power)
 
@@ -52,6 +52,7 @@
     modules-left = [
       "custom/logo"
       "hyprland/window"
+      "network"
     ];
 
     modules-center = [
@@ -199,6 +200,14 @@
       on-click = "blueman-manager";
     };
 
+    network = {
+      format-ethernet = "󰱓 {ifname}";
+      format-wifi = "{icon} {signalStrength}%";
+      format-disconnected = "󰤮";
+      format-icons = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
+      tooltip = false;
+      on-click = "nm-connection-editor";
+    };
 
     cpu = {
       format = "󰻠 {usage}%";
@@ -293,7 +302,7 @@
       color: #7dcfff;
     }
 
-    #window, #wireplumber, #cpu, #memory, #idle_inhibitor {
+    #window, #network, #wireplumber, #cpu, #memory, #idle_inhibitor {
       font-weight: bold;
       margin: 4px 0px;
       margin-left: 7px;
@@ -341,7 +350,7 @@
   # GTK theme configuration for modern dark aesthetic
   environment.etc."gtk-3.0/settings.ini".text = ''
     [Settings]
-    gtk-theme-name=Nordic-darker
+    gtk-theme-name=Numix-DarkBlue
     gtk-icon-theme-name=Papirus-Dark
     gtk-cursor-theme-name=breeze_cursors
     gtk-font-name=Inter 11
@@ -354,7 +363,7 @@
 
   environment.etc."gtk-4.0/settings.ini".text = ''
     [Settings]
-    gtk-theme-name=Nordic-darker
+    gtk-theme-name=Numix-DarkBlue
     gtk-icon-theme-name=Papirus-Dark
     gtk-cursor-theme-name=breeze_cursors
     gtk-font-name=Inter 11

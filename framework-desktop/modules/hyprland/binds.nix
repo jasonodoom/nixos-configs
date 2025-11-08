@@ -13,6 +13,7 @@
     bind = $mod, T, exec, kitty
     bind = $mod, Q, killactive
     bind = $mod, M, exit
+    bind = $mod, E, movetoworkspace, special:minimized
     bind = $mod, V, togglefloating
     bind = $mod, R, exec, rofi -show drun
     bind = $mod, P, pseudo
@@ -27,6 +28,10 @@
 
     # Emoji picker
     bind = $mod, period, exec, rofimoji
+
+    # Rofi extensions
+    bind = $mod, C, exec, rofi -show calc
+    bind = $mod SHIFT, T, exec, rofi -show top
 
     # Waybar controls
     bind = $mod SHIFT, B, exec, waybar
@@ -116,5 +121,13 @@
     # Mouse binds
     bindm = $mod, mouse:272, movewindow
     bindm = $mod, mouse:273, resizewindow
+
+    # hych plugin bindings for window minimization
+    bind = ALT, m, hych:minimize                    # Minimize window (Alt+M)
+    bind = ALT SHIFT, m, hych:restore_minimize      # Manual restore window
+    bind = ALT, w, hych:toggle_restore_window       # Toggle special workspace
+
+    # Update Super+E to use hych minimize instead
+    bind = $mod, E, hych:minimize                   # Minimize to dock (Super+E)
   '';
 }

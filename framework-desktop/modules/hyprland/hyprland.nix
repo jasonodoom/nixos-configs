@@ -12,6 +12,7 @@
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
   };
 
+
   # Force Hyprland to use system config and set up XDG directories
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
@@ -46,6 +47,9 @@
   environment.etc."hypr/hyprland.conf".text = ''
     # Monitor configuration - simplified auto-detection
     monitor=,preferred,auto,1
+
+    # Load hych plugin for window minimization
+    plugin = ${inputs.hych.packages.${pkgs.stdenv.hostPlatform.system}.hych}/lib/libhych.so
 
     # Common desktop output patterns - Hyprland will use what's available
     # Primary display (usually the main one detected)
@@ -228,7 +232,7 @@
     # Waybar autostart
     exec-once = sleep 2 && waybar > /tmp/waybar.log 2>&1
 
-    # nwg-dock for window management and minimized windows
+    # nwg-dock-hyprland for window management and dock experience
     exec-once = sleep 3 && nwg-dock-hyprland
 
     # Smart notification system
@@ -236,7 +240,16 @@
 
     # Hypridle for advanced idle management
     exec-once = hypridle
+
+    # hych plugin configuration for window minimization
+    plugin {
+      hych {
+        enable_alt_release_exit = 1
+        alt_replace_key = code:64
+      }
+    }
   '';
+
 
   # Wlogout configuration (beautiful graphical power menu)
   environment.etc."xdg/wlogout/layout".text = ''
@@ -712,6 +725,9 @@
     hypridle       # Idle management for Hyprland
     swaybg
     wlogout
+
+    # hych plugin for window minimization
+    (inputs.hych.packages.${pkgs.stdenv.hostPlatform.system}.hych)
 
     # System utilities
     libnotify

@@ -133,5 +133,9 @@
   environment.systemPackages = with pkgs; [
     rofi-wayland
     rofimoji
+    rofi-calc           # Calculator for rofi
+    rofi-top            # System process viewer
+    rofi-screenshot     # Screenshot utility
+    rofi-power-menu     # Power management menu
   ];
 }
