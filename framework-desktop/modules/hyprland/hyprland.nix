@@ -71,7 +71,17 @@
     windowrulev2 = immediate, class:^(ghostty)$
     windowrulev2 = stayfocused, class:^(rofi)$
 
-    # Workspace configuration omitted - Hyprland creates them dynamically
+    # Workspace configuration
+    workspace = 1, default:true
+    workspace = 2
+    workspace = 3
+    workspace = 4
+    workspace = 5
+    workspace = 6
+    workspace = 7
+    workspace = 8
+    workspace = 9
+    workspace = 10
 
     # Disable update news dialog and logo
     misc {
