@@ -4,6 +4,17 @@
 {
   environment.systemPackages = with pkgs; [ eww ];
 
+  # Create eww config symlink for user
+  systemd.user.services.eww-config-setup = {
+    description = "Setup eww configuration symlink";
+    wantedBy = [ "graphical-session.target" ];
+    before = [ "eww.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config && ln -sfn /etc/xdg/eww $HOME/.config/eww'";
+    };
+  };
+
   # --- EWW YUCK ---
   environment.etc."xdg/eww/eww.yuck".text = ''
     ;; ---------- Polls ----------

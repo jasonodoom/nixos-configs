@@ -253,8 +253,8 @@
     # Smart notification system
     exec-once = sleep 1 && dunst &
 
-    # Eww widgets
-    exec-once = sleep 4 && eww --config /etc/xdg/eww daemon && sleep 2 && eww --config /etc/xdg/eww open bar
+    # Eww widgets with error handling
+    exec-once = bash -c 'sleep 4; eww daemon || notify-send "Eww Error" "Failed to start daemon"; sleep 2; eww open bar || notify-send "Eww Error" "Failed to open bar"'
 
     # Hypridle for advanced idle management
     exec-once = hypridle &
