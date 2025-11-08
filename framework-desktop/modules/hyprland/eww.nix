@@ -4,14 +4,14 @@
 {
   environment.systemPackages = with pkgs; [ eww ];
 
-  # Create eww config symlink for user
+  # Create eww config in user directory instead of symlink
   systemd.user.services.eww-config-setup = {
-    description = "Setup eww configuration symlink";
+    description = "Setup eww configuration in user directory";
     wantedBy = [ "graphical-session.target" ];
     before = [ "eww.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config && ln -sfn /etc/xdg/eww $HOME/.config/eww'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'mkdir -p $HOME/.config/eww && cp -r /etc/xdg/eww/* $HOME/.config/eww/ 2>/dev/null || true'";
     };
   };
 
@@ -123,9 +123,7 @@
 
     /* ---------- Panel ---------- */
     .panel {
-      background: linear-gradient(145deg, rgba(26,27,38,0.60), rgba(36,40,59,0.52));
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
+      background: linear-gradient(145deg, rgba(26,27,38,0.85), rgba(36,40,59,0.80));
       border: 1px solid rgba(120,130,170,0.35);
       border-radius: 22px;
       padding: 18px 20px;
