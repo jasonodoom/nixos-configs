@@ -10,6 +10,7 @@ pkgs.nixosTest {
   nodes.machine = { config, pkgs, ... }: {
     imports = [
       ../modules/audio.nix
+      ../modules/fonts.nix    # Required for proper icon rendering
       ../modules/graphics.nix
       ../modules/hyprland/hyprland.nix
       ../modules/hyprland/rofi.nix
@@ -26,12 +27,16 @@ pkgs.nixosTest {
 
     # System essentials (from system.nix but without nixpkgs.config)
     system.stateVersion = "25.05";
-    services.displayManager.sddm.theme-config = "astronaut-hacker";
+    # Use default breeze theme for VM test to avoid QML issues
+    services.displayManager.sddm.theme-config = lib.mkForce "breeze";
 
     # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
     virtualisation.docker.enable = lib.mkForce false;
     virtualisation.libvirtd.enable = lib.mkForce false;
+
+    # Disable hypridle systemd service for VM test (causes startup issues)
+    systemd.user.services.hypridle.enable = lib.mkForce false;
 
     # Simple networking for VM test - override networking module
     networking.networkmanager.enable = lib.mkForce false;
@@ -75,17 +80,20 @@ pkgs.nixosTest {
 
       # Minimal autostart - no heavy widgets for VM test
       exec-once = sleep 2 && waybar
+      # Skip hypridle, dunst, and other services for VM test
     '';
 
     # VM-specific configurations - optimized for speed
     virtualisation = {
-      memorySize = 2048;  # Increased for Hyprland stability
+      memorySize = 3072;  # Increased for fonts and Hyprland stability
       cores = 2;          # More cores for better performance
+      diskSize = 4096;    # More disk space for fonts
       qemu.options = [
         "-vga virtio"     # Better graphics for Hyprland
         "-netdev user,id=net0"
         "-device virtio-net,netdev=net0"
         "-machine accel=tcg"  # Ensure software acceleration
+        "-device virtio-rng-pci"  # Better entropy for faster boot
       ];
       useBootLoader = false;  # Skip bootloader for faster boot
       useEFIBoot = false;
