@@ -1,194 +1,177 @@
-# Simplified Eww Widget System Configuration - Tokyo Night Theme
 { config, pkgs, lib, ... }:
 
 {
-  # Install eww widget system
-  environment.systemPackages = with pkgs; [
-    eww               # The widget system
-  ];
+  environment.systemPackages = with pkgs; [ eww ];
 
-  # Simple, reliable eww configuration
   environment.etc."xdg/eww/eww.yuck".text = ''
-    ;; Simple Tokyo Night themed widgets
-
-    ;; System polling variables
+    ;; POLLS
     (defpoll time :interval "1s" "date '+%H:%M'")
     (defpoll date :interval "10s" "date '+%A, %b %d'")
-    (defpoll cpu_usage :interval "3s" "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$3+$4)} END {print int(usage)}'")
-    (defpoll memory_usage :interval "3s" "free | grep Mem | awk '{printf \"%.0f\", $3/$2 * 100.0}'")
-    (defpoll workspace :interval "1s" "hyprctl activewindow | grep 'workspace:' | awk '{print $2}' || echo '1'")
 
-    ;; Modern glassmorphism system info widget
-    (defwidget sysinfo []
-      (box :class "main-container"
+    (defpoll cpu_usage :interval "2s" "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$3+$4)} END {print int(usage)}'")
+    (defpoll memory_usage :interval "2s" "free | grep Mem | awk '{printf \"%.0f\", $3/$2 * 100.0}'")
+
+    (defpoll workspace :interval "1s" "hyprctl activeworkspace -j | jq '.id' || echo '1'")
+
+    ;; ANIMATED CPU / RAM BAR WIDGET
+    (defwidget stat-bar [val label]
+      (box :orientation "v" :class "stat-bar-wrapper"
+        (box :class "stat-bar-bg"
+          (box :class "stat-bar-fill"
+                :style "width: ''${val}%")
+        )
+        (label :class "stat-bar-label" :text label)
+      )
+    )
+
+    ;; MAIN PANEL
+    (defwidget panel []
+      (box :class "panel slide-in"
            :orientation "v"
-           :spacing 0
-        ;; Header section with time
-        (box :class "time-section"
+           :spacing 20
+
+        ;; TIME
+        (box :class "time-box fade-in"
              :orientation "v"
-             :spacing 4
           (label :class "time" :text time)
           (label :class "date" :text date)
         )
 
-        ;; System stats cards
-        (box :class "stats-container"
-             :orientation "v"
-             :spacing 8
-          (box :class "stat-card cpu-card"
-               :orientation "v"
-               :spacing 2
-            (label :class "stat-icon" :text "")
-            (label :class "stat-value" :text "''${cpu_usage}%")
-            (label :class "stat-label" :text "CPU")
-          )
+        ;; CPU + RAM
+        (box :class "stats fade-in"
+          (stat-bar :val cpu_usage :label "CPU")
+          (stat-bar :val memory_usage :label "RAM")
+        )
 
-          (box :class "stat-card ram-card"
-               :orientation "v"
-               :spacing 2
-            (label :class "stat-icon" :text "")
-            (label :class "stat-value" :text "''${memory_usage}%")
-            (label :class "stat-label" :text "RAM")
-          )
-
-          (box :class "stat-card workspace-card"
-               :orientation "v"
-               :spacing 2
-            (label :class "stat-icon" :text "")
-            (label :class "stat-value" :text "''${workspace}")
-            (label :class "stat-label" :text "SPACE")
-          )
+        ;; WORKSPACE
+        (box :class "workspace-card fade-in"
+          (label :class "workspace-value" :text workspace)
+          (label :class "workspace-label" :text "WORKSPACE")
         )
       )
     )
 
-    ;; System info window (left side, slim)
-    (defwindow sysinfo
+    ;; WINDOW
+    (defwindow main
       :monitor 0
-      :geometry (geometry :x "10px"
+      :geometry (geometry :x "14px"
                           :y "50px"
-                          :width "80px"
-                          :height "400px"
+                          :width "90px"
+                          :height "440px"
                           :anchor "left center")
       :stacking "fg"
       :windowtype "dock"
       :wm-ignore true
-      (sysinfo)
+      (panel)
     )
   '';
 
-  # Modern Glassmorphism Theme CSS - Tokyo Night Colors
   environment.etc."xdg/eww/eww.css".text = ''
     * {
       all: unset;
-      font-family: "SF Pro Display", "Inter", "JetBrains Mono Nerd Font", sans-serif;
+      font-family: "Inter", "Source Sans Pro", "Ubuntu", "JetBrains Mono", sans-serif;
     }
 
-    .main-container {
-      background: linear-gradient(145deg, rgba(26, 27, 38, 0.85), rgba(36, 40, 59, 0.75));
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(192, 202, 245, 0.1);
-      border-radius: 24px;
+    /* ----- PANEL ----- */
+    .panel {
+      background: rgba(30, 32, 48, 0.55);
+      border-radius: 22px;
       padding: 20px 16px;
-      margin: 8px;
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(120, 130, 170, 0.35);
       box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 15px 30px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: panel-slide-in 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .time-section {
+    /* Slide-in animation from the left */
+    @keyframes panel-slide-in {
+      from { transform: translateX(-25px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fade-in 1.2s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; filter: blur(2px); }
+      to { opacity: 1; filter: blur(0); }
+    }
+
+    /* ----- TIME ----- */
+    .time-box {
       text-align: center;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(65, 72, 104, 0.3);
     }
 
     .time {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
       background: linear-gradient(135deg, #7aa2f7, #bb9af7);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 4px;
     }
 
     .date {
       font-size: 11px;
       color: rgba(187, 154, 247, 0.8);
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      margin-top: 4px;
     }
 
-    .stats-container {
-      margin-top: 8px;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, rgba(122, 162, 247, 0.1), rgba(125, 207, 255, 0.05));
-      border: 1px solid rgba(122, 162, 247, 0.2);
-      border-radius: 16px;
-      padding: 12px 8px;
-      text-align: center;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    }
-
-    .cpu-card {
-      border-color: rgba(158, 206, 106, 0.3);
-      background: linear-gradient(135deg, rgba(158, 206, 106, 0.15), rgba(158, 206, 106, 0.05));
-    }
-
-    .ram-card {
-      border-color: rgba(255, 158, 100, 0.3);
-      background: linear-gradient(135deg, rgba(255, 158, 100, 0.15), rgba(255, 158, 100, 0.05));
-    }
-
+    /* ----- WORKSPACE ----- */
     .workspace-card {
-      border-color: rgba(187, 154, 247, 0.3);
-      background: linear-gradient(135deg, rgba(187, 154, 247, 0.15), rgba(187, 154, 247, 0.05));
+      background: rgba(187,154,247,0.10);
+      border: 1px solid rgba(187,154,247,0.25);
+      border-radius: 14px;
+      padding: 10px 6px;
+      text-align: center;
+      backdrop-filter: blur(8px);
     }
 
-    .stat-icon {
-      font-size: 16px;
-      color: rgba(192, 202, 245, 0.7);
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 16px;
+    .workspace-value {
+      font-size: 18px;
       font-weight: 700;
       color: #c0caf5;
       margin-bottom: 2px;
     }
 
-    .stat-label {
-      font-size: 8px;
-      color: rgba(192, 202, 245, 0.6);
-      font-weight: 600;
+    .workspace-label {
+      font-size: 9px;
+      color: rgba(192,202,245,0.5);
       letter-spacing: 1px;
       text-transform: uppercase;
     }
 
-    /* Hover effects for interactivity */
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-      border-color: rgba(122, 162, 247, 0.4);
+    /* ----- STAT BARS ----- */
+    .stat-bar-wrapper {
+      padding: 4px 0;
+    }
+
+    .stat-bar-bg {
+      background: rgba(120,130,160,0.15);
+      border-radius: 6px;
+      width: 100%;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .stat-bar-fill {
+      background: linear-gradient(90deg, #7aa2f7, #bb9af7);
+      height: 100%;
+      width: 0%;
+      border-radius: 6px;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .stat-bar-label {
+      font-size: 10px;
+      text-align: center;
+      color: rgba(192,202,245,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   '';
 }

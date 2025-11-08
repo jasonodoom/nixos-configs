@@ -14,6 +14,8 @@
 
     # Modern UI fonts
     inter  # Modern sans-serif for ultimate theme
+    source-sans-pro  # Similar to SF Pro
+    ubuntu_font_family  # Good fallback for system UI fonts
 
     # Development fonts
     fira-code
