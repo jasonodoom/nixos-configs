@@ -100,12 +100,15 @@
           allowUnsupportedSystem = true;
         };
       };
+      pkgs-unstable = import nixpkgs-unstable {
+        inherit system;
+      };
     in
     {
       # VM tests for Hyprland and SDDM
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-        hyprland-sddm = import ./tests/hyprland-sddm.nix { inherit pkgs; };
-        desktop-integration = import ./tests/desktop-integration.nix { inherit pkgs; };
+        hyprland-sddm = import ./tests/hyprland-sddm.nix { inherit pkgs pkgs-unstable; };
+        desktop-integration = import ./tests/desktop-integration.nix { inherit pkgs pkgs-unstable; };
       };
 
       # Development shells

@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, lib ? pkgs.lib }:
+{ pkgs ? import <nixpkgs> {}, pkgs-unstable ? pkgs, lib ? pkgs.lib }:
 
 pkgs.nixosTest {
   name = "hyprland-sddm-test";
@@ -7,7 +7,8 @@ pkgs.nixosTest {
     maintainers = [ ];
   };
 
-  nodes.machine = { config, pkgs, ... }: {
+  nodes.machine = { config, pkgs, lib, ... }: {
+    _module.args.pkgs-unstable = pkgs-unstable;
     imports = [
       ../modules/audio.nix
       ../modules/fonts.nix    # Required for proper icon rendering
