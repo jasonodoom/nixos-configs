@@ -174,13 +174,13 @@ in
     gnomeExtensions.gsconnect
     gnomeExtensions.blur-my-shell
     gnomeExtensions.vitals
-    gnomeExtensions.sound-output-device-chooser
     gnomeExtensions.clipboard-indicator
 
     # GNOME apps and utilities
     gnome-tweaks
     dconf-editor
     gnome-extension-manager
+    rofi  # Application launcher for Super+R keybinding
 
     # Terminal applications
     gnome-terminal
