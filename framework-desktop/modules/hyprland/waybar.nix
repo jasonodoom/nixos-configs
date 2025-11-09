@@ -342,7 +342,8 @@
     #workspaces button:hover {
       background-color: rgba(138, 138, 141, 0.1);
       color: #ffffff;
-      transform: scale(1.05);
+      font-weight: bold;
+      padding: 7px 11px;
     }
 
     /* Active workspace with glow effect */
