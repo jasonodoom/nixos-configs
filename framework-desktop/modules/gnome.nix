@@ -19,21 +19,8 @@ in
       displayManager.gdm = lib.mkIf useGnomeAsDefault {
         enable = true;
         wayland = useWayland;
-        settings = {
-          daemon = {
-            # Security: Don't show user list, require manual username entry
-            TimedLoginEnable = false;
-            AutomaticLoginEnable = false;
-          };
-          greeter = {
-            # Security: Hide user list, require manual username entry
-            "disable-user-list" = true;
-          };
-          security = {
-            DisallowTCP = true;
-            AllowRemoteAutoLogin = false;
-          };
-        };
+        # Disable automatic login to force manual entry
+        autoSuspend = false;
       };
     };
 
@@ -61,23 +48,46 @@ in
     dbus.enable = lib.mkDefault true;
   };
 
-  # Configure GDM background image
-  systemd.services.gdm-background = lib.mkIf useGnomeAsDefault {
-    description = "Set GDM background image";
-    wantedBy = [ "display-manager.service" ];
+  # Configure GDM via dconf database
+  environment.etc."dconf/db/gdm.d/01-login".text = lib.mkIf useGnomeAsDefault ''
+    [org/gnome/desktop/background]
+    picture-uri='file:///run/current-system/sw/share/backgrounds/nixos/login-background.png'
+    picture-uri-dark='file:///run/current-system/sw/share/backgrounds/nixos/login-background.png'
+    picture-options='zoom'
+
+    [org/gnome/login-screen]
+    enable-fingerprint-authentication=false
+    enable-smartcard-authentication=false
+    enable-password-authentication=true
+    disable-user-list=true
+
+    [org/gnome/desktop/interface]
+    clock-show-seconds=false
+    clock-format='12h'
+  '';
+
+  environment.etc."dconf/profile/gdm".text = lib.mkIf useGnomeAsDefault ''
+    user-db:user
+    system-db:gdm
+    file-db:/usr/share/gdm/greeter-dconf-defaults
+  '';
+
+  # Update dconf database for GDM and ensure proper startup order
+  systemd.services.dconf-update = lib.mkIf useGnomeAsDefault {
+    description = "Update dconf database for GDM";
+    wantedBy = [ "multi-user.target" ];
     before = [ "display-manager.service" ];
     serviceConfig = {
       Type = "oneshot";
-      User = "gdm";
-      ExecStart = pkgs.writeShellScript "set-gdm-background" ''
-        # Wait for GDM to be ready
-        sleep 2
-
-        # Set GDM background to login wallpaper
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.background picture-uri "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png"
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.background picture-uri-dark "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png"
-      '';
+      ExecStart = "${pkgs.dconf}/bin/dconf update";
+      RemainAfterExit = true;
     };
+  };
+
+  # Ensure proper display manager startup dependencies to prevent TTY hanging
+  systemd.services.display-manager = lib.mkIf useGnomeAsDefault {
+    wants = [ "systemd-user-sessions.service" "plymouth-quit.service" ];
+    after = [ "systemd-user-sessions.service" "plymouth-quit.service" "systemd-logind.service" "dconf-update.service" ];
   };
 
   # Install GNOME packages only when GNOME is enabled
@@ -227,27 +237,18 @@ in
     };
   };
 
-  # Set user avatar picture via AccountsService
-  systemd.services.set-user-picture = lib.mkIf useGnomeAsDefault {
-    description = "Set user avatar picture";
-    wantedBy = [ "accounts-daemon.service" ];
-    after = [ "accounts-daemon.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = pkgs.writeShellScript "set-user-picture" ''
-        # Wait for AccountsService to be ready
-        sleep 3
-
-        # Set user picture using AccountsService
-        ${pkgs.accountsservice}/bin/busctl call \
-          org.freedesktop.Accounts \
-          /org/freedesktop/Accounts/User1000 \
-          org.freedesktop.Accounts.User \
-          SetIconFile \
-          s "/run/current-system/sw/share/backgrounds/nixos/desktopavatar.png"
-      '';
-    };
+  # Pre-configure user avatar via AccountsService config (more reliable)
+  environment.etc."accountsservice/users/jason" = lib.mkIf useGnomeAsDefault {
+    text = ''
+      [User]
+      Language=
+      XSession=gnome
+      Icon=/run/current-system/sw/share/backgrounds/nixos/desktopavatar.png
+      SystemAccount=false
+    '';
+    mode = "0644";
   };
+
 
   # Security (shared across desktop environments)
   security.polkit.enable = lib.mkDefault true;
