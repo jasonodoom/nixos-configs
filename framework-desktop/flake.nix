@@ -63,6 +63,7 @@
         ./modules/fonts.nix
         ./modules/gaming.nix
         ./modules/git.nix
+        ./modules/gnome.nix
         ./modules/graphics.nix
         ./modules/hyprland/hyprland.nix
         ./modules/hyprland/dunst.nix

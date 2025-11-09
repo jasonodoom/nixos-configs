@@ -1,10 +1,4 @@
 # SDDM Theme Configuration Module - Working Astronaut Theme with Qt5
-#
-# IMPORTANT: This configuration fixes a critical black screen issue with the astronaut theme.
-# The issue was that the astronaut theme expects Qt5 SDDM (sddm-greeter binary) but
-# Qt6 SDDM provides sddm-greeter-qt6, causing theme incompatibility and black screen
-# on mouse movement. Force Qt5 SDDM (libsForQt5.sddm) with Qt5 packages only.
-#
 { config, pkgs, lib, ... }:
 
 let
@@ -70,7 +64,7 @@ let
 
           # Copy custom background image to Backgrounds directory
           mkdir -p $out/share/sddm/themes/astronaut-hacker/Backgrounds
-          cp ${./hyprland/wallpapers/sddm-background.png} $out/share/sddm/themes/astronaut-hacker/Backgrounds/custom-background.png
+          cp ${../wallpapers/nix-wallpaper-binary-black.png} $out/share/sddm/themes/astronaut-hacker/Backgrounds/custom-background.png
 
           # Update theme.conf to use custom background
           sed -i 's|Background=.*|Background=Backgrounds/custom-background.png|g' $out/share/sddm/themes/astronaut-hacker/theme.conf
@@ -120,12 +114,13 @@ in {
     ];
 
     # Configure SDDM with appropriate Qt version per theme
+    # Only enable SDDM if GNOME is not enabled
     services = {
       # Enable upower for battery management
       upower.enable = lib.mkDefault true;
 
       displayManager.sddm = {
-      enable = true;
+      enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
 
       # Use Qt5 SDDM for astronaut themes
       package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")

@@ -5,9 +5,6 @@
   # System version
   system.stateVersion = "25.05";
 
-  # SDDM theme selection
-  services.displayManager.sddm.theme-selection = "astronaut-hacker";
-
   # Nix configuration
   nix = {
     settings = {

@@ -52,8 +52,11 @@
     parted
     udiskie
 
-    # Archive and Text Processing 
+    # Archive and Text Processing
     pdftk
+
+    # Terminal
+    ghostty
 
     # Security and System Tools
     cyberchef
