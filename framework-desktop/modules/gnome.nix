@@ -48,6 +48,18 @@ in
     dbus.enable = lib.mkDefault true;
   };
 
+  # Hide system users from appearing in user lists
+  environment.etc = lib.mkIf useGnomeAsDefault {
+    "accountsservice/users/gdm" = {
+      text = ''
+        [User]
+        SystemAccount=true
+        Language=
+      '';
+      mode = "0644";
+    };
+  };
+
   # Configure dconf for both GDM and user settings
   programs.dconf = lib.mkIf useGnomeAsDefault {
     enable = true;
@@ -59,6 +71,9 @@ in
           enable-smartcard-authentication = false;
           enable-password-authentication = true;
           disable-user-list = true;
+        };
+        "org/gnome/desktop/screensaver" = {
+          user-switch-enabled = false;
         };
         "org/gnome/desktop/interface" = {
           clock-show-seconds = false;
