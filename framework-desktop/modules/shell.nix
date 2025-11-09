@@ -30,9 +30,6 @@
 
       # Path additions
       export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
-
-      # System update alias
-      alias update-system='doas nixos-rebuild switch --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo" --refresh'
     '';
   };
 }
