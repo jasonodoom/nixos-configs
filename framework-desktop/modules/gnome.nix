@@ -55,6 +55,9 @@ in
     # Required services for GNOME (conditional)
     gvfs.enable = lib.mkIf useGnomeAsDefault true;
     tumbler.enable = lib.mkIf useGnomeAsDefault true;
+
+    # D-Bus service (shared across desktop environments)
+    dbus.enable = lib.mkDefault true;
   };
 
   # Install GNOME packages only when GNOME is enabled

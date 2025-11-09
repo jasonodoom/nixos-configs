@@ -832,7 +832,7 @@ in
 
   # Enable required services
   services = {
-    dbus.enable = true;
+    dbus.enable = lib.mkDefault true;
     gnome.gnome-keyring.enable = true;
     upower.enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
   };
