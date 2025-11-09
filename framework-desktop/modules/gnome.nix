@@ -69,6 +69,20 @@ in
           clock-show-seconds = false;
           clock-format = "12h";
         };
+        "org/gnome/settings-daemon/plugins/power" = {
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 900;
+          sleep-inactive-ac-type = "nothing";
+          idle-dim = true;
+          idle-brightness = lib.gvariant.mkInt32 30;
+        };
+        "org/gnome/desktop/session" = {
+          idle-delay = lib.gvariant.mkUint32 60;
+        };
+        "org/gnome/desktop/screensaver" = {
+          idle-activation-enabled = true;
+          lock-enabled = true;
+          lock-delay = lib.gvariant.mkUint32 0;
+        };
       };
     }];
     # User default settings
@@ -95,6 +109,22 @@ in
         "org/gnome/desktop/background" = {
           picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
           picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
+        };
+
+        # Power management settings (desktop - don't suspend)
+        "org/gnome/settings-daemon/plugins/power" = {
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 900;
+          sleep-inactive-ac-type = "nothing";
+          idle-dim = true;
+          idle-brightness = lib.gvariant.mkInt32 30;
+        };
+        "org/gnome/desktop/session" = {
+          idle-delay = lib.gvariant.mkUint32 60;
+        };
+        "org/gnome/desktop/screensaver" = {
+          idle-activation-enabled = true;
+          lock-enabled = true;
+          lock-delay = lib.gvariant.mkUint32 0;
         };
       };
     }];
@@ -196,33 +226,7 @@ in
     GDK_BACKEND = if useWayland then "wayland" else "x11";
   };
 
-  # Configure GNOME power settings
-  systemd.user.services.gnome-power-settings = lib.mkIf useGnomeAsDefault {
-    description = "Configure GNOME power management for desktop";
-    wantedBy = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = pkgs.writeShellScript "gnome-power-settings" ''
-        # Wait for GNOME to be ready
-        sleep 5
-
-        # Set screen lock and screensaver (1 minute idle, immediate lock)
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.session idle-delay 60
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.screensaver idle-activation-enabled true
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.screensaver lock-enabled true
-        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.screensaver lock-delay 0
-
-        # Set monitor sleep (15 minutes, don't suspend system - desktop with UPS)
-        ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 900
-        ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
-
-        # Enable screen dimming
-        ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power idle-dim true
-        ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power idle-brightness 30
-      '';
-    };
-  };
+  # Power management now configured via dconf above
 
   # Pre-configure user avatar via AccountsService config (more reliable)
   environment.etc."accountsservice/users/jason" = lib.mkIf useGnomeAsDefault {

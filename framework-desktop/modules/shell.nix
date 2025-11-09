@@ -43,8 +43,6 @@
       # System update alias
       alias update-system='doas nixos-rebuild switch --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo" --refresh'
 
-      # Run vocab on shell start (if available)
-      # [ -x /etc/vocab ] && /etc/vocab  # Temporarily disabled for compatibility
     '';
 
     # Bash-specific prompt configuration
