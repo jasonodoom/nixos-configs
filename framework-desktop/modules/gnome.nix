@@ -48,40 +48,56 @@ in
     dbus.enable = lib.mkDefault true;
   };
 
-  # Configure GDM via dconf database
-  environment.etc."dconf/db/gdm.d/01-login".text = lib.mkIf useGnomeAsDefault ''
-    [org/gnome/desktop/background]
-    picture-uri='file:///run/current-system/sw/share/backgrounds/nixos/login-background.png'
-    picture-uri-dark='file:///run/current-system/sw/share/backgrounds/nixos/login-background.png'
-    picture-options='zoom'
+  # Configure dconf for both GDM and user settings
+  programs.dconf = lib.mkIf useGnomeAsDefault {
+    enable = true;
+    # GDM login screen settings
+    profiles.gdm.databases = [{
+      settings = {
+        "org/gnome/desktop/background" = {
+          picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png";
+          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png";
+          picture-options = "zoom";
+        };
+        "org/gnome/login-screen" = {
+          enable-fingerprint-authentication = false;
+          enable-smartcard-authentication = false;
+          enable-password-authentication = true;
+          disable-user-list = true;
+        };
+        "org/gnome/desktop/interface" = {
+          clock-show-seconds = false;
+          clock-format = "12h";
+        };
+      };
+    }];
+    # User default settings
+    profiles.user.databases = [{
+      settings = {
+        # Set ghostty as default terminal application
+        "org/gnome/desktop/applications/terminal" = {
+          exec = "ghostty";
+        };
 
-    [org/gnome/login-screen]
-    enable-fingerprint-authentication=false
-    enable-smartcard-authentication=false
-    enable-password-authentication=true
-    disable-user-list=true
+        # Set firefox as default browser
+        "org/gnome/desktop/applications/browser" = {
+          exec = "firefox";
+          exec-arg = "%s";
+        };
 
-    [org/gnome/desktop/interface]
-    clock-show-seconds=false
-    clock-format='12h'
-  '';
+        # Set thunderbird as default email client
+        "org/gnome/desktop/applications/mail" = {
+          exec = "thunderbird";
+          exec-arg = "%s";
+        };
 
-  environment.etc."dconf/profile/gdm".text = lib.mkIf useGnomeAsDefault ''
-    user-db:user
-    system-db:gdm
-    file-db:/usr/share/gdm/greeter-dconf-defaults
-  '';
-
-  # Update dconf database for GDM and ensure proper startup order
-  systemd.services.dconf-update = lib.mkIf useGnomeAsDefault {
-    description = "Update dconf database for GDM";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "display-manager.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.dconf}/bin/dconf update";
-      RemainAfterExit = true;
-    };
+        # Set desktop wallpaper as background
+        "org/gnome/desktop/background" = {
+          picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
+          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
+        };
+      };
+    }];
   };
 
   # Ensure proper display manager startup dependencies to prevent TTY hanging
@@ -127,36 +143,7 @@ in
     git
   ]);
 
-  # Configure GNOME settings via dconf (only when GNOME is enabled)
-  programs.dconf.enable = lib.mkDefault useGnomeAsDefault;
-
-  # Set default applications and wallpaper (only for GNOME)
-  programs.dconf.profiles.user.databases = lib.mkIf useGnomeAsDefault [{
-    settings = {
-      # Set ghostty as default terminal application
-      "org/gnome/desktop/applications/terminal" = {
-        exec = "ghostty";
-      };
-
-      # Set firefox as default browser
-      "org/gnome/desktop/applications/browser" = {
-        exec = "firefox";
-        exec-arg = "%s";
-      };
-
-      # Set thunderbird as default email client
-      "org/gnome/desktop/applications/mail" = {
-        exec = "thunderbird";
-        exec-arg = "%s";
-      };
-
-      # Set desktop wallpaper as background
-      "org/gnome/desktop/background" = {
-        picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
-        picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
-      };
-    };
-  }];
+  # dconf settings already configured above in main programs.dconf block
 
   # GNOME-specific system configuration (only when GNOME is enabled)
   programs.gnome-disks.enable = lib.mkDefault useGnomeAsDefault;
