@@ -54,6 +54,9 @@ in
     gvfs.enable = lib.mkIf useGnomeAsDefault true;
     tumbler.enable = lib.mkIf useGnomeAsDefault true;
 
+    # AccountsService for user management (GNOME user avatar)
+    accounts-daemon.enable = lib.mkIf useGnomeAsDefault true;
+
     # D-Bus service (shared across desktop environments)
     dbus.enable = lib.mkDefault true;
   };
@@ -220,6 +223,28 @@ in
         # Enable screen dimming
         ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power idle-dim true
         ${pkgs.glib}/bin/gsettings set org.gnome.settings-daemon.plugins.power idle-brightness 30
+      '';
+    };
+  };
+
+  # Set user avatar picture via AccountsService
+  systemd.services.set-user-picture = lib.mkIf useGnomeAsDefault {
+    description = "Set user avatar picture";
+    wantedBy = [ "accounts-daemon.service" ];
+    after = [ "accounts-daemon.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "set-user-picture" ''
+        # Wait for AccountsService to be ready
+        sleep 3
+
+        # Set user picture using AccountsService
+        ${pkgs.accountsservice}/bin/busctl call \
+          org.freedesktop.Accounts \
+          /org/freedesktop/Accounts/User1000 \
+          org.freedesktop.Accounts.User \
+          SetIconFile \
+          s "/run/current-system/sw/share/backgrounds/nixos/desktopavatar.png"
       '';
     };
   };
