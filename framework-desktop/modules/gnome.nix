@@ -54,11 +54,6 @@ in
     # GDM login screen settings
     profiles.gdm.databases = [{
       settings = {
-        "org/gnome/desktop/background" = {
-          picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png";
-          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png";
-          picture-options = "zoom";
-        };
         "org/gnome/login-screen" = {
           enable-fingerprint-authentication = false;
           enable-smartcard-authentication = false;
@@ -105,11 +100,28 @@ in
           exec-arg = "%s";
         };
 
-        # Set desktop wallpaper as background
-        "org/gnome/desktop/background" = {
-          picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
-          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
+        # Interface and cursor configuration
+        "org/gnome/desktop/interface" = {
+          gtk-theme = "Numix-DarkBlue";
+          icon-theme = "Tela-dark";
+          cursor-theme = "breeze_cursors";
+          cursor-size = lib.gvariant.mkInt32 24;
+          font-name = "JetBrains Mono 11";
         };
+
+        # Custom keybindings
+        "org/gnome/settings-daemon/plugins/media-keys" = {
+          custom-keybindings = [
+            "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+          ];
+        };
+
+        "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
+          binding = "<Super>r";
+          command = "rofi -show drun";
+          name = "Launch Rofi";
+        };
+
 
         # Power management settings (desktop - don't suspend)
         "org/gnome/settings-daemon/plugins/power" = {
@@ -228,17 +240,6 @@ in
 
   # Power management now configured via dconf above
 
-  # Pre-configure user avatar via AccountsService config (more reliable)
-  environment.etc."accountsservice/users/jason" = lib.mkIf useGnomeAsDefault {
-    text = ''
-      [User]
-      Language=
-      XSession=gnome
-      Icon=/run/current-system/sw/share/backgrounds/nixos/desktopavatar.png
-      SystemAccount=false
-    '';
-    mode = "0644";
-  };
 
 
   # Security (shared across desktop environments)
