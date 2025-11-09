@@ -377,8 +377,9 @@
     }
 
     @keyframes workspace-urgent {
-      0%, 100% { opacity: 1; }
+      from { opacity: 1; }
       50% { opacity: 0.6; }
+      to { opacity: 1; }
     }
 
     #taskbar {
