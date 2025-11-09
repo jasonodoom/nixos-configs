@@ -18,7 +18,7 @@ pkgs.nixosTest {
       ../modules/networking.nix
       ../modules/security.nix
       ../modules/shell.nix
-      ../modules/themes.nix  # SDDM themes
+      # Excluding themes.nix from VM tests to avoid SDDM theme conflicts
       ../modules/user-config.nix
       ../modules/virtualization.nix
     ];

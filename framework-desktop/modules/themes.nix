@@ -206,7 +206,7 @@ in {
       (lib.mkIf (cfg == "astronaut-default" || cfg == "astronaut-hacker") {
         "sddm.conf.d/theme.conf".text = ''
           [Theme]
-          Current=sddm-astronaut-theme
+          Current=${themes.${cfg}.name}
           ThemeDir=/run/current-system/sw/share/sddm/themes
           CursorTheme=breeze_cursors
           Font=JetBrains Mono,12,-1,0,50,0,0,0,0,0
