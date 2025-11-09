@@ -33,6 +33,9 @@ pkgs.nixosTest {
     # Override Hyprland to disable UWSM for VM test
     programs.hyprland.withUWSM = lib.mkForce false;
 
+    # Set the correct default session for non-UWSM Hyprland
+    services.displayManager.defaultSession = lib.mkForce "hyprland";
+
     # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
     virtualisation.docker.enable = lib.mkForce false;

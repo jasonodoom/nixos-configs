@@ -33,6 +33,9 @@ pkgs.nixosTest {
     # Use simple built-in theme for VM test to avoid QML issues
     services.displayManager.sddm.theme = lib.mkForce "breeze";
 
+    # Set the correct default session for non-UWSM Hyprland
+    services.displayManager.defaultSession = lib.mkForce "hyprland";
+
     # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
     virtualisation.docker.enable = lib.mkForce false;
