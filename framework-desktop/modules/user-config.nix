@@ -26,4 +26,10 @@
     # passwordFile = config.age.secrets.jason-password.path;
   };
 
+  # Shell configuration
+  programs.bash = {
+    completion.enable = true;
+    enableLsColors = true;
+  };
+
 }
