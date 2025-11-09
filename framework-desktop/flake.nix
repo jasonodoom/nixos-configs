@@ -57,6 +57,7 @@
 
         ./modules/applications.nix
         ./modules/audio.nix
+        ./modules/bash.nix
         ./modules/bluetooth.nix
         ./modules/development.nix
         ./modules/firefox.nix
@@ -106,9 +107,12 @@
       };
     in
     {
-      # VM tests for Hyprland and SDDM
+      # VM tests - ordered from fastest to most comprehensive
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-        hyprland-sddm = import ./tests/hyprland-sddm.nix { inherit pkgs pkgs-unstable; };
+        # Fast: Service-only testing (headless, lightweight)
+        desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
+
+        # Comprehensive: Full desktop integration testing with screenshots
         desktop-integration = import ./tests/desktop-integration.nix { inherit pkgs pkgs-unstable; };
       };
 
