@@ -11,6 +11,7 @@
     # Program shortcuts
     bind = $mod, Return, exec, ghostty
     bind = $mod, T, exec, ghostty
+    bind = $mod SHIFT, Return, exec, ghostty tmux new-session -A -s main
     bind = $mod, Q, killactive
     bind = $mod, grave, movetoworkspace, special:minimized
     bind = $mod, F, togglefloating

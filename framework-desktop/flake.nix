@@ -69,6 +69,8 @@
         ./modules/hyprland/waybar.nix
         ./modules/hyprland/rofi.nix
         ./modules/networking.nix
+        ./modules/screen.nix
+        ./modules/tmux.nix
         ./modules/security.nix
         ./modules/shell.nix
         ./modules/system.nix
