@@ -1,10 +1,22 @@
 # Hyprland configuration
 { config, pkgs, lib, inputs, pkgs-unstable, ... }:
 
+with lib; let
+  # Hyprland plugins from nixpkgs-unstable
+  hypr-plugin-dir = pkgs.symlinkJoin {
+    name = "hyprland-plugins";
+    paths = with pkgs-unstable.hyprlandPlugins; [
+      hy3
+      hyprexpo
+      hyprfocus
+      hyprbars
+      hyprspace
+    ];
+  };
+in
 {
   imports = [
     ./binds.nix
-    ./plugins  # Import all Hyprland plugins
   ];
   # Enable Hyprland from unstable for latest version and plugin compatibility
   programs.hyprland = {
@@ -27,6 +39,9 @@
 
     # Ensure rofi finds its config
     XDG_CONFIG_HOME = lib.mkDefault "$HOME/.config";
+
+    # Plugin directory for Hyprland plugins
+    HYPR_PLUGIN_DIR = "${hypr-plugin-dir}";
   };
 
   # Create a wrapper that forces the config path
@@ -191,6 +206,13 @@
     # Ensure display is on at startup
     exec-once = hyprctl dispatch dpms on
 
+    # Load Hyprland plugins first
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhy3.so"
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprexpo.so"
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprfocus.so"
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprbars.so"
+    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"
+
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
@@ -213,7 +235,6 @@
     exec-once = wl-paste --type image --watch cliphist store
 
     # Source plugin configurations
-    source = /etc/hypr/hyprland-plugins.conf
   '';
 
 
