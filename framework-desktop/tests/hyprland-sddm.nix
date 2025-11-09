@@ -12,9 +12,7 @@ pkgs.nixosTest {
       ../modules/audio.nix
       ../modules/fonts.nix    # Required for proper icon rendering
       ../modules/graphics.nix
-      ../modules/hyprland/binds.nix    # Just bindings, not plugins
-      ../modules/hyprland/rofi.nix
-      ../modules/hyprland/waybar.nix
+      # NOT importing hyprland modules - will configure minimal hyprland below
       ../modules/networking.nix
       ../modules/security.nix
       ../modules/shell.nix
@@ -27,6 +25,14 @@ pkgs.nixosTest {
 
     # System essentials (from system.nix but without nixpkgs.config)
     system.stateVersion = "25.05";
+
+    # Minimal Hyprland configuration for VM test (no UWSM)
+    programs.hyprland = {
+      enable = true;
+      withUWSM = false;  # Disable UWSM for VM test
+      xwayland.enable = true;
+    };
+
     # Use simple theme for VM test to avoid QML issues
     services.displayManager.sddm.theme-selection = lib.mkForce "astronaut-default";
 
@@ -108,8 +114,8 @@ pkgs.nixosTest {
     # Make sure SDDM starts
     services.displayManager.sddm.enable = true;
 
-    # Set Hyprland as default session
-    services.displayManager.defaultSession = "hyprland-uwsm";
+    # Set Hyprland as default session (use standard hyprland for VM test)
+    services.displayManager.defaultSession = "hyprland";
 
     # Create test user
     users.users.testuser = {
