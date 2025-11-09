@@ -117,7 +117,7 @@
 
     # Power management shortcuts
     bind = $mod SHIFT, L, exec, loginctl lock-session
-    bind = $mod, E, exec, loginctl terminate-user $USER
+    bind = $mod, E, exec, loginctl kill-session $XDG_SESSION_ID
     bind = $mod SHIFT, S, exec, systemctl suspend
     bind = $mod, Escape, exec, wlogout --layer-shell
     bind = $mod SHIFT, P, exec, wlogout --layer-shell

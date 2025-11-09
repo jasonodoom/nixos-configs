@@ -1,7 +1,7 @@
 name: NixOS Integration Tests
 on:
   push:
-    branches: [main]
+    branches: [main, unstable]
   pull_request:
     branches: [main]
 
@@ -17,8 +17,8 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Run Hyprland and SDDM VM test
-        id: vm-test
+      - name: Run basic SDDM VM test
+        id: basic-test
         run: |
           cd framework-desktop
           # Add flake config acceptance to avoid warnings
@@ -26,7 +26,19 @@ jobs:
 
           # Capture both stdout and derivation path for logs
           set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace --accept-flake-config 2>&1 | tee vm-test-output.log
+          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace --accept-flake-config 2>&1 | tee basic-vm-test-output.log
+          BASIC_EXIT_CODE=$?
+
+          echo "BASIC_EXIT_CODE=$BASIC_EXIT_CODE" >> $GITHUB_OUTPUT
+
+      - name: Run comprehensive desktop integration test
+        id: vm-test
+        run: |
+          cd framework-desktop
+          export NIX_CONFIG="accept-flake-config = true"
+
+          set +e  # Don't exit on error so we can capture logs
+          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee vm-test-output.log
           BUILD_EXIT_CODE=$?
 
           # Extract derivation path for logs
@@ -36,22 +48,23 @@ jobs:
             nix log "$DERIVATION_PATH" > vm-full.log 2>&1 || echo "Could not get derivation logs" > vm-full.log
           fi
 
+
           # Check for test failure indicators - build can succeed but VM test can fail
           TEST_FAILED=false
-          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          if [ $BUILD_EXIT_CODE -ne 0 ] || [ "${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
-            echo "Build failed with exit code $BUILD_EXIT_CODE"
+            echo "Build failed - Basic: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}, Desktop: $BUILD_EXIT_CODE"
           fi
 
           # Check for test failure patterns in logs - include evaluation errors
-          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" vm-test-output.log vm-full.log 2>/dev/null || \
-             grep -q "error:" vm-test-output.log 2>/dev/null; then
+          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" vm-test-output.log vm-full.log basic-vm-test-output.log 2>/dev/null || \
+             grep -q "error:" vm-test-output.log basic-vm-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Detected test failure patterns in logs"
           fi
 
           # Additional check - if we see specific error patterns that indicate failure
-          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" vm-test-output.log 2>/dev/null; then
+          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" vm-test-output.log basic-vm-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Detected NixOS evaluation error in logs"
           fi
@@ -59,33 +72,26 @@ jobs:
           # Report results
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] VM test completed successfully"
+            echo "[PASSED] All VM tests completed successfully"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] VM test failed - build exit code: $BUILD_EXIT_CODE"
-            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" vm-test-output.log vm-full.log; then
+            echo "[FAILED] VM tests failed - Basic: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}, Desktop: $BUILD_EXIT_CODE"
+            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" vm-test-output.log vm-full.log basic-vm-test-output.log; then
               echo "Detected test timeout or assertion failure in logs"
             fi
             exit 1
           fi
 
-      - name: Upload test screenshots
+      - name: Upload test screenshots and logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hyprland-sddm-screenshots
-          path: framework-desktop/result/
-          retention-days: 30
-
-      - name: Upload test logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: hyprland-sddm-logs
+          name: vm-test-artifacts
           path: |
-            framework-desktop/result/log.html
+            framework-desktop/result/
             framework-desktop/vm-test-output.log
+            framework-desktop/basic-vm-test-output.log
             framework-desktop/vm-full.log
           retention-days: 7
 
@@ -94,12 +100,20 @@ jobs:
         run: |
           echo "## VM Test Results" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.vm-test.outputs.TEST_RESULT }}" = "success" ]; then
-            echo "**VM test passed successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "**All VM tests passed successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Tests Completed:" >> $GITHUB_STEP_SUMMARY
+            echo "- Basic SDDM/Hyprland test" >> $GITHUB_STEP_SUMMARY
+            echo "- Comprehensive desktop integration test" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "View the **vm-test-artifacts** artifact for screenshots and detailed logs." >> $GITHUB_STEP_SUMMARY
           else
-            echo "**VM test failed**" >> $GITHUB_STEP_SUMMARY
+            echo "**VM tests failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
+            echo "- Basic test: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE == '0' && 'PASSED' || 'FAILED' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Desktop integration test: FAILED" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Check the uploaded artifacts for detailed logs:" >> $GITHUB_STEP_SUMMARY
-            echo "- VM test output logs" >> $GITHUB_STEP_SUMMARY
-            echo "- Full derivation logs" >> $GITHUB_STEP_SUMMARY
-            echo "- Screenshots (if available)" >> $GITHUB_STEP_SUMMARY
+            echo "- **vm-test-artifacts**: Screenshots, logs and test data" >> $GITHUB_STEP_SUMMARY
           fi

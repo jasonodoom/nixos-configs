@@ -33,8 +33,8 @@ pkgs.nixosTest {
       xwayland.enable = true;
     };
 
-    # Use simple theme for VM test to avoid QML issues
-    services.displayManager.sddm.theme-selection = lib.mkForce "astronaut-default";
+    # Use simple built-in theme for VM test to avoid QML issues
+    services.displayManager.sddm.theme = lib.mkForce "breeze";
 
     # Disable heavy services for faster VM tests
     services.tailscale.enable = lib.mkForce false;
