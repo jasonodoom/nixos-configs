@@ -105,6 +105,7 @@
       # VM tests for Hyprland and SDDM
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
         hyprland-sddm = import ./tests/hyprland-sddm.nix { inherit pkgs; };
+        desktop-integration = import ./tests/desktop-integration.nix { inherit pkgs; };
       };
 
       # Development shells
