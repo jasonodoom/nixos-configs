@@ -138,5 +138,9 @@
     # Window search and management
     bind = $mod, Tab, exec, rofi -show window -window-format '{c} {t}'  # Window switcher
     bind = $mod SHIFT, E, movetoworkspace, special:minimized   # Minimize to special workspace
+
+    # Session save/restore (macOS-like session restoration)
+    bind = $mod CTRL, F, exec, hyprctl dispatch savesession ~/.config/hypr/session.json && notify-send "Session Saved" "Current workspace layout saved"
+    bind = $mod CTRL, G, exec, hyprctl dispatch restoresession ~/.config/hypr/session.json && notify-send "Session Restored" "Workspace layout restored"
   '';
 }

@@ -213,6 +213,9 @@ in
     exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprbars.so"
     exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"
 
+    # Auto-restore previous session on login (if session file exists)
+    exec-once = [ -f ~/.config/hypr/session.json ] && sleep 3 && hyprctl dispatch restoresession ~/.config/hypr/session.json
+
     # Kill any duplicate applets that might autostart
     exec-once = pkill nm-applet || true
     exec-once = pkill blueman-applet || true
@@ -233,6 +236,10 @@ in
     # Clipboard history management
     exec-once = wl-paste --type text --watch cliphist store
     exec-once = wl-paste --type image --watch cliphist store
+
+    # Session management - auto-save every 10 minutes for crash recovery
+    exec-once = mkdir -p ~/.config/hypr
+    exec-once = while true; do sleep 600; hyprctl dispatch savesession ~/.config/hypr/session.json; done &
 
     # Source plugin configurations
   '';
