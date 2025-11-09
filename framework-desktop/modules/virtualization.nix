@@ -22,6 +22,7 @@
 
   # Virtualization packages
   environment.systemPackages = with pkgs; [
-    virt-manager 
+    virt-manager
+    docker-compose
   ];
 }
