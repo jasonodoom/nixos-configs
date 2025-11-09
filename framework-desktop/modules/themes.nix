@@ -62,9 +62,9 @@ let
           mkdir -p $out/share/sddm/themes/astronaut-hacker
           cp -R * $out/share/sddm/themes/astronaut-hacker/
 
-          # Copy custom background image to Backgrounds directory
+          # Copy custom login background image to Backgrounds directory
           mkdir -p $out/share/sddm/themes/astronaut-hacker/Backgrounds
-          cp ${../wallpapers/nix-wallpaper-binary-black.png} $out/share/sddm/themes/astronaut-hacker/Backgrounds/custom-background.png
+          cp ${../wallpapers/login-background.png} $out/share/sddm/themes/astronaut-hacker/Backgrounds/custom-background.png
 
           # Update theme.conf to use custom background
           sed -i 's|Background=.*|Background=Backgrounds/custom-background.png|g' $out/share/sddm/themes/astronaut-hacker/theme.conf

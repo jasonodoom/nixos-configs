@@ -26,10 +26,8 @@ in
             AutomaticLoginEnable = false;
           };
           greeter = {
-            # Security: Disable user list for better security
-            IncludeAll = false;
-            Include = "";
-            Exclude = "root";
+            # Security: Hide user list, require manual username entry
+            "disable-user-list" = true;
           };
           security = {
             DisallowTCP = true;
@@ -58,6 +56,25 @@ in
 
     # D-Bus service (shared across desktop environments)
     dbus.enable = lib.mkDefault true;
+  };
+
+  # Configure GDM background image
+  systemd.services.gdm-background = lib.mkIf useGnomeAsDefault {
+    description = "Set GDM background image";
+    wantedBy = [ "display-manager.service" ];
+    before = [ "display-manager.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "gdm";
+      ExecStart = pkgs.writeShellScript "set-gdm-background" ''
+        # Wait for GDM to be ready
+        sleep 2
+
+        # Set GDM background to login wallpaper
+        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.background picture-uri "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png"
+        ${pkgs.glib}/bin/gsettings set org.gnome.desktop.background picture-uri-dark "file:///run/current-system/sw/share/backgrounds/nixos/login-background.png"
+      '';
+    };
   };
 
   # Install GNOME packages only when GNOME is enabled
@@ -120,7 +137,7 @@ in
         exec-arg = "%s";
       };
 
-      # Set NixOS wallpaper as desktop background
+      # Set desktop wallpaper as background
       "org/gnome/desktop/background" = {
         picture-uri = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";
         picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-binary-black.png";

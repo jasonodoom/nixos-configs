@@ -7,8 +7,20 @@
     networkmanager.enable = true;
     useDHCP = false;
 
+    # Static IP configuration
+    interfaces = {
+      # Set static IP for primary ethernet interface
+      enp0s25.ipv4.addresses = [ {
+        address = "192.168.88.5";
+        prefixLength = 24;
+      } ];
+    };
+
+    # Default gateway
+    defaultGateway = "192.168.88.1";
+
     # DNS configuration
-    nameservers = [ "1.1.1.1" "8.8.8.8" ];
+    nameservers = [ "1.1.1.1" "9.9.9.9" ];
 
     # Firewall
     firewall = {
