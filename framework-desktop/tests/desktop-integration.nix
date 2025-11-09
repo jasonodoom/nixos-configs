@@ -74,8 +74,6 @@ pkgs.nixosTest {
     # Make sure SDDM starts
     services.displayManager.sddm.enable = true;
 
-    # Set Hyprland as default session
-    services.displayManager.defaultSession = "hyprland";
 
     # Create test user
     users.users.testuser = {

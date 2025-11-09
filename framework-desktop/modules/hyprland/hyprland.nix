@@ -55,7 +55,8 @@ in
   };
 
   # SDDM theme configuration is now handled by themes.nix
-  services.displayManager.defaultSession = "hyprland-uwsm";
+  # Set default session based on UWSM configuration
+  services.displayManager.defaultSession = if config.programs.hyprland.withUWSM then "hyprland-uwsm" else "hyprland";
 
 
 
