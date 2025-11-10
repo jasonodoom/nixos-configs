@@ -64,12 +64,27 @@
         echo -e "\n\033[1;31mMemory stats:\033[0m"; free -h 2>/dev/null || echo "free command not available"
         echo -e "\n\033[1;31mDiskspace:\033[0m"; df -h / 2>/dev/null | tail -1 || echo "df command not available"
         echo -e "\n\033[1;31mLocal IP Address:\033[0m"; ip route get 1 2>/dev/null | awk '{print $7; exit}' || echo "Not connected"
+        echo -e "\n\033[1;31mOpen connections:\033[0m"; netstat -pan --inet 2>/dev/null | head -10 || ss -tuln | head -10
         echo
 
-        # Screen status if available
-        if command -v screen >/dev/null 2>&1; then
-          echo -e "\033[1;31mScreen:\033[0m"
-          screen -ls 2>/dev/null || echo "No screen sessions"
+        # Session status if available
+        local has_sessions=false
+        if command -v screen >/dev/null 2>&1 && screen -ls 2>/dev/null | grep -q "Socket"; then
+          if [[ $has_sessions == false ]]; then
+            echo -e "\033[1;31mSessions:\033[0m"
+            has_sessions=true
+          fi
+          echo "Screen: $(screen -ls 2>/dev/null | grep -c "Socket") active"
+        fi
+        if command -v tmux >/dev/null 2>&1 && tmux list-sessions 2>/dev/null | grep -q .; then
+          if [[ $has_sessions == false ]]; then
+            echo -e "\033[1;31mSessions:\033[0m"
+            has_sessions=true
+          fi
+          echo "Tmux: $(tmux list-sessions 2>/dev/null | wc -l) active"
+        fi
+        if [[ $has_sessions == false ]]; then
+          echo -e "\033[1;31mSessions:\033[0m No active sessions"
         fi
 
         echo -e "\n\033[1;31mThe Date & Time is:\033[0m"
@@ -176,31 +191,52 @@
         fi
       }
 
-      # Status indicator that takes exit code as parameter
+      # Status indicator that takes exit code as parameter (git-aware)
       status_indicator() {
         local exit_code=$1
-        if [[ $exit_code -eq 0 ]]; then
-          echo -e "\033[0;32m✓\033[0m"
-        else
-          echo -e "\033[0;31m✗\033[0m"
+        if git rev-parse --git-dir >/dev/null 2>&1; then
+          if [[ $exit_code -eq 0 ]]; then
+            echo -e "\033[0;32m✓\033[0m"
+          else
+            echo -e "\033[0;31m✗\033[0m"
+          fi
         fi
       }
 
       # Git-aware background color
       git_bg_color() {
         if git rev-parse --git-dir >/dev/null 2>&1; then
-          echo -e "\033[48;5;22m"  # Dark green background
+          echo -e "\033[48;5;28m"  # Lighter green background
         fi
       }
 
       # Main PS1 with git-aware background highlighting
-      PS1="\$(git_bg_color)''${BOLD}''${GREEN}\u''${RESET}\$(git_bg_color)''${BOLD}@''${GREEN}\h''${RESET}\$(git_bg_color) ''${BLUE}\w''${RESET}\$(parse_git_branch) \$(status_indicator \$?) ''${RESET}\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
+      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} \$(git_bg_color)''${BLUE}\w\$(parse_git_branch) \$(status_indicator \$?)''${RESET}\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
 
       # FZF integration for better history search
       if command -v fzf >/dev/null 2>&1; then
+        # FZF function definitions
+        __fzf_history() {
+          local selected
+          selected=$(HISTTIMEFORMAT= history | fzf --tac --no-sort --query="$READLINE_LINE" | sed 's/^ *[0-9]* *//')
+          if [[ -n "$selected" ]]; then
+            READLINE_LINE="$selected"
+            READLINE_POINT=''${#READLINE_LINE}
+          fi
+        }
+
+        __fzf_file_widget() {
+          local selected
+          selected=$(fzf --preview 'cat {}' --preview-window=right:60%:wrap)
+          if [[ -n "$selected" ]]; then
+            READLINE_LINE="''${READLINE_LINE:0:READLINE_POINT}$selected''${READLINE_LINE:READLINE_POINT}"
+            READLINE_POINT=$((READLINE_POINT + ''${#selected}))
+          fi
+        }
+
         # Ctrl+R: fuzzy history search
         bind '"\C-r": "\C-x1\e^\er"'
         bind -x '"\C-x1": __fzf_history'
@@ -250,24 +286,6 @@
   # Shell functions
   environment.shellInit = ''
     # FZF widget functions for fish-like autocomplete
-    __fzf_history() {
-      local selected
-      selected=$(HISTTIMEFORMAT= history | fzf --tac --no-sort --query="$READLINE_LINE" | sed 's/^ *[0-9]* *//')
-      if [[ -n "$selected" ]]; then
-        READLINE_LINE="$selected"
-        READLINE_POINT=''${#READLINE_LINE}
-      fi
-    }
-
-    __fzf_file_widget() {
-      local selected
-      selected=$(fzf --preview 'cat {}' --preview-window=right:60%:wrap)
-      if [[ -n "$selected" ]]; then
-        READLINE_LINE="''${READLINE_LINE:0:READLINE_POINT}$selected''${READLINE_LINE:READLINE_POINT}"
-        READLINE_POINT=$((READLINE_POINT + ''${#selected}))
-      fi
-    }
-
     __fzf_cd_widget() {
       local selected
       selected=$(find . -type d 2>/dev/null | fzf --preview 'ls -la {}' --preview-window=right:60%)
