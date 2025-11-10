@@ -21,7 +21,6 @@ pkgs.nixosTest {
         ../modules/networking.nix
         ../modules/security.nix
         ../modules/themes.nix          # For wallpaper testing
-        ../modules/user-config.nix
         ../modules/virtualization.nix
       ];
 
@@ -61,7 +60,7 @@ pkgs.nixosTest {
       # Create test user
       users.users.testuser = {
         isNormalUser = true;
-        password = "";  # Empty password for VM test only
+        hashedPassword = "";  # Empty password for VM test only
         extraGroups = [ "wheel" ];
       };
 
@@ -108,7 +107,6 @@ pkgs.nixosTest {
         ../modules/networking.nix
         ../modules/security.nix
         ../modules/themes.nix          # SDDM themes
-        ../modules/user-config.nix
         ../modules/virtualization.nix
       ];
 
@@ -212,7 +210,7 @@ pkgs.nixosTest {
       # Create test user
       users.users.testuser = {
         isNormalUser = true;
-        password = "";
+        hashedPassword = "";
         extraGroups = [ "wheel" ];
       };
 
