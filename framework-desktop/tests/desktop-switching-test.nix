@@ -21,9 +21,17 @@ pkgs.nixosTest {
         ../modules/themes.nix          # SDDM themes
         ../modules/networking.nix
         ../modules/security.nix
-        ../modules/user-config.nix
         ../modules/virtualization.nix
       ];
+
+      # Test-specific user (no agenix dependency)
+      users.users.jason = {
+        isNormalUser = true;
+        description = "Test User";
+        extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
+        shell = pkgs.bash;
+        hashedPassword = ""; # Empty password for test environment
+      };
 
       system.stateVersion = "25.05";
 
