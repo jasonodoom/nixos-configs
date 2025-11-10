@@ -68,23 +68,14 @@
         echo
 
         # Session status if available
-        local has_sessions=false
-        if command -v screen >/dev/null 2>&1 && screen -ls 2>/dev/null | grep -q "Socket"; then
-          if [[ $has_sessions == false ]]; then
-            echo -e "\033[1;31mSessions:\033[0m"
-            has_sessions=true
-          fi
-          echo "Screen: $(screen -ls 2>/dev/null | grep -c "Socket") active"
+        echo -e "\033[1;31mSessions:\033[0m"
+        if command -v screen >/dev/null 2>&1; then
+          screen_count=$(screen -ls 2>/dev/null | grep -c "Detached\|Attached" || echo "0")
+          echo "  Screen: $screen_count sessions"
         fi
-        if command -v tmux >/dev/null 2>&1 && tmux list-sessions 2>/dev/null | grep -q .; then
-          if [[ $has_sessions == false ]]; then
-            echo -e "\033[1;31mSessions:\033[0m"
-            has_sessions=true
-          fi
-          echo "Tmux: $(tmux list-sessions 2>/dev/null | wc -l) active"
-        fi
-        if [[ $has_sessions == false ]]; then
-          echo -e "\033[1;31mSessions:\033[0m No active sessions"
+        if command -v tmux >/dev/null 2>&1; then
+          tmux_count=$(tmux list-sessions 2>/dev/null | wc -l || echo "0")
+          echo "  Tmux: $tmux_count sessions"
         fi
 
         echo -e "\n\033[1;31mThe Date & Time is:\033[0m"
@@ -191,15 +182,13 @@
         fi
       }
 
-      # Status indicator that takes exit code as parameter (git-aware)
+      # Status indicator that takes exit code as parameter
       status_indicator() {
         local exit_code=$1
-        if git rev-parse --git-dir >/dev/null 2>&1; then
-          if [[ $exit_code -eq 0 ]]; then
-            echo -e "\033[0;32m✓\033[0m"
-          else
-            echo -e "\033[0;31m✗\033[0m"
-          fi
+        if [[ $exit_code -eq 0 ]]; then
+          echo -e "\033[0;32m✓\033[0m"
+        else
+          echo -e "\033[0;31m✗\033[0m"
         fi
       }
 
