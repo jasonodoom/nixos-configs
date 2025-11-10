@@ -23,6 +23,6 @@ let
   all = users ++ systems;
 in
 {
-  # User password secret
-  "jason-password.age".publicKeys = all;
+  # User password secret (commented until file exists)
+  # "jason-password.age".publicKeys = all;
 }
