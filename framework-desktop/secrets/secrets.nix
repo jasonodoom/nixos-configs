@@ -25,4 +25,7 @@ in
 {
   # User password secret
   "jason-password.age".publicKeys = all;
+
+  # SSH client configuration
+  "ssh-config.age".publicKeys = all;
 }

@@ -23,44 +23,13 @@
     enable = true;
     enableSSHSupport = true;
   };
-  environment.etc."ssh/ssh_config".text = ''
-    Host *
-      Protocol 2
-      HashKnownHosts yes
-      PasswordAuthentication no
-      StrictHostKeyChecking ask
-      PubkeyAuthentication yes
-      IdentitiesOnly yes
-      VisualHostKey yes
-      LogLevel INFO
-      ControlMaster auto
-      ControlPath ~/.ssh/controlmasters/%r@%h:%p
-      ControlPersist 10m
-      UseRoaming no
-      ServerAliveInterval 60
-      ServerAliveCountMax 3
-      KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
-      HostKeyAlgorithms ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256
-      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
-      MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,umac-128-etm@openssh.com
-      IdentityFile ~/.ssh/id_ed25519
-      IdentityFile ~/.ssh/id_rsa
-      User jason
+  # SSH client configuration from encrypted agenix secret
+  age.secrets.ssh-config = {
+    file = ../secrets/ssh-config.age;
+    mode = "0644";
+  };
 
-    Host github.com
-      HostName github.com
-      User git
-      PubkeyAuthentication yes
-      IdentitiesOnly yes
-      IdentityFile ~/.ssh/id_rsa_yubikey.pub
-
-    Host gitlab.com
-      HostName gitlab.com
-      User git
-      PubkeyAuthentication yes
-      IdentitiesOnly yes
-      IdentityFile ~/.ssh/id_rsa_yubikey.pub
-  '';
+  environment.etc."ssh/ssh_config".source = config.age.secrets.ssh-config.path;
 
   systemd.user.services.ssh-controlmasters = {
     description = "Create SSH ControlMaster directory";

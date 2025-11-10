@@ -1,8 +1,16 @@
 { config, pkgs, lib, ... }:
 
 {
-  # Kitty terminal configuration
-  environment.etc."xdg/kitty/kitty.conf".text = ''
+  # Create user kitty config directory and file
+  systemd.user.services.kitty-config = {
+    description = "Create kitty user config";
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.writeShellScript "kitty-setup" ''
+        mkdir -p $HOME/.config/kitty
+        cat > $HOME/.config/kitty/kitty.conf << 'EOF'
     font_family Fira Code
     font_size 12
     background_opacity 0.9
@@ -77,5 +85,9 @@
     # white
     color7 #a9b1d6
     color15 #c0caf5
-  '';
+EOF
+        chmod 644 $HOME/.config/kitty/kitty.conf
+      ''}";
+    };
+  };
 }

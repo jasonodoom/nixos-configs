@@ -1,8 +1,16 @@
 { config, pkgs, lib, ... }:
 
 {
-  # Ghostty terminal configuration
-  environment.etc."ghostty/config".text = ''
+  # Create user ghostty config directory and file
+  systemd.user.services.ghostty-config = {
+    description = "Create ghostty user config";
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.writeShellScript "ghostty-setup" ''
+        mkdir -p $HOME/.config/ghostty
+        cat > $HOME/.config/ghostty/config << 'EOF'
     # Font configuration
     font-family = Fira Code
     font-size = 12
@@ -60,5 +68,9 @@
 
     # Scrollback
     scrollback-limit = 2000
-  '';
+EOF
+        chmod 644 $HOME/.config/ghostty/config
+      ''}";
+    };
+  };
 }
