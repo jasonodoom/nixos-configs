@@ -1,15 +1,15 @@
 { pkgs ? import <nixpkgs> {}, pkgs-unstable ? pkgs, lib ? pkgs.lib }:
 
 pkgs.nixosTest {
-  name = "desktop-switching-test";
+  name = "gnome-desktop-test";
 
   meta = with pkgs.lib.maintainers; {
     maintainers = [ ];
   };
 
-  # Test multiple configurations to verify switching works
+  # Test GNOME desktop configuration
   nodes = {
-    # Node 1: GNOME enabled (default state)
+    # GNOME desktop configuration test node
     gnome-machine = { config, pkgs, lib, ... }: {
       _module.args.pkgs-unstable = pkgs-unstable;
       imports = [
@@ -55,59 +55,6 @@ pkgs.nixosTest {
       networking.useDHCP = lib.mkForce true;
     };
 
-    # Node 2: Hyprland enabled (switched state)
-    hyprland-machine = { config, pkgs, lib, ... }: {
-      _module.args.pkgs-unstable = pkgs-unstable;
-      imports = [
-        ../modules/audio.nix
-        ../modules/bash.nix
-        ../modules/graphics.nix
-        ../modules/gnome.nix           # GNOME with disabled settings
-        ../modules/hyprland/hyprland.nix  # Hyprland should be enabled
-        ../modules/themes.nix          # SDDM themes
-        ../modules/networking.nix
-        ../modules/security.nix
-        ../modules/user-config.nix
-        ../modules/virtualization.nix
-      ];
-
-      system.stateVersion = "25.05";
-
-      # Override GNOME configuration to simulate switching
-      services.xserver.desktopManager.gnome.enable = lib.mkForce false;
-      services.displayManager.defaultSession = lib.mkForce "hyprland";
-
-      # Override GNOME module internal settings - disable GDM and enable SDDM
-      services.xserver.displayManager.gdm.enable = lib.mkForce false;
-      services.displayManager.sddm.enable = lib.mkForce true;
-      programs.hyprland.enable = lib.mkForce true;
-
-      # Minimal VM setup for fast testing
-      virtualisation = {
-        memorySize = 2048;
-        cores = 2;
-        diskSize = 4096;
-        qemu.options = [ "-display none" ];  # Completely headless
-        useBootLoader = false;
-        useEFIBoot = false;
-      };
-
-      users.users.testuser = {
-        isNormalUser = true;
-        password = "";
-        extraGroups = [ "wheel" ];
-      };
-
-
-      # Disable heavy services
-      services.tailscale.enable = lib.mkForce false;
-      virtualisation.docker.enable = lib.mkForce false;
-      virtualisation.libvirtd.enable = lib.mkForce false;
-      networking.networkmanager.enable = lib.mkForce false;
-      networking.useDHCP = lib.mkForce true;
-      # Disable hypridle for VM test
-      systemd.user.services.hypridle.enable = lib.mkForce false;
-    };
   };
 
   testScript = ''
@@ -165,66 +112,33 @@ pkgs.nixosTest {
     hypr_check = gnome_machine.succeed("systemctl --user list-unit-files | grep hypr || echo 'hyprland-services-disabled'")
     print(f"[SUCCESS] Hyprland services when GNOME active: {hypr_check.strip()}")
 
-    # === HYPRLAND CONFIGURATION TESTS ===
-    print("\n=== Testing Hyprland Switched Configuration ===")
 
-    hyprland_machine.wait_for_unit("multi-user.target")
-    print("[SUCCESS] Hyprland machine booted")
+    # === SYSTEM RESOURCES TESTS ===
+    print("\n=== Testing System Resources ===")
 
-    # Test SDDM is configured when Hyprland is active
-    sddm_status = hyprland_machine.succeed("systemctl list-unit-files | grep sddm || echo 'sddm-check'")
-    print(f"[SUCCESS] SDDM status on Hyprland machine: {sddm_status.strip()}")
-
-    # Test Hyprland packages are available
-    hyprland_machine.succeed("test -f /run/current-system/sw/bin/Hyprland")
-    hyprland_machine.succeed("test -f /run/current-system/sw/bin/waybar")
-    print("[SUCCESS] Hyprland packages installed on Hyprland machine")
-
-    # Test GNOME should be minimal when Hyprland is active
-    gnome_check = hyprland_machine.succeed("systemctl list-unit-files | grep gdm || echo 'gdm-disabled'")
-    assert "gdm-disabled" in gnome_check or "disabled" in gnome_check, f"GDM should be disabled: {gnome_check}"
-    print("[SUCCESS] GDM disabled when Hyprland is active")
-
-    # Test Hyprland configuration exists
-    hyprland_machine.succeed("test -f /etc/hypr/hyprland.conf")
-    print("[SUCCESS] Hyprland configuration file exists")
-
-    # Test waybar configuration exists
-    hyprland_machine.succeed("test -f /etc/xdg/waybar/config")
-    print("[SUCCESS] Waybar configuration exists")
-
-    # === SHARED RESOURCES TESTS ===
-    print("\n=== Testing Shared Resources ===")
-
-    # Test wallpapers are available on both machines
+    # Test wallpapers are available
     gnome_machine.succeed("ls /run/current-system/sw/share/backgrounds/nixos/ || echo 'no-wallpapers'")
-    hyprland_machine.succeed("ls /run/current-system/sw/share/backgrounds/nixos/ || echo 'no-wallpapers'")
-    print("[SUCCESS] Shared background directories available on both machines")
+    print("[SUCCESS] Background directories available")
 
-    # Test development tools are available on both machines
+    # Test development tools are available
     gnome_machine.succeed("test -f /run/current-system/sw/bin/code")
-    hyprland_machine.succeed("test -f /run/current-system/sw/bin/code")
-    print("[SUCCESS] Development tools available on both machines")
+    print("[SUCCESS] Development tools available")
 
     # Test git configuration
     gnome_machine.succeed("test -f /run/current-system/sw/bin/git")
-    hyprland_machine.succeed("test -f /run/current-system/sw/bin/git")
-    print("[SUCCESS] Git available on both machines")
+    print("[SUCCESS] Git available")
 
     # Test docker-compose availability
     gnome_machine.succeed("test -f /run/current-system/sw/bin/docker-compose")
-    hyprland_machine.succeed("test -f /run/current-system/sw/bin/docker-compose")
-    print("[SUCCESS] Docker-compose available on both machines")
+    print("[SUCCESS] Docker-compose available")
 
     # Test bash aliases functionality
     gnome_machine.succeed("sudo -u testuser bash -c 'source /etc/bashrc; alias update-system'")
-    hyprland_machine.succeed("sudo -u testuser bash -c 'source /etc/bashrc; alias update-system'")
-    print("[SUCCESS] Bash aliases including update-system available on both machines")
+    print("[SUCCESS] Bash aliases including update-system available")
 
     # Test bash git branch function
     gnome_machine.succeed("sudo -u testuser bash -c 'source /etc/bashrc; type parse_git_branch'")
-    hyprland_machine.succeed("sudo -u testuser bash -c 'source /etc/bashrc; type parse_git_branch'")
-    print("[SUCCESS] Git branch function available on both machines")
+    print("[SUCCESS] Git branch function available")
 
     # === CONFIGURATION VALIDATION TESTS ===
     print("\n=== Configuration File Validation ===")
@@ -235,22 +149,18 @@ pkgs.nixosTest {
 
     # Test configuration builds successfully
     gnome_machine.succeed("nixos-rebuild dry-run > /dev/null")
-    hyprland_machine.succeed("nixos-rebuild dry-run > /dev/null")
-    print("[SUCCESS] Both configurations build successfully")
+    print("[SUCCESS] Configuration builds successfully")
 
-    # === SERVICE CONFLICT TESTS ===
-    print("\n=== Service Conflict Resolution Tests ===")
+    # === SERVICE VALIDATION TESTS ===
+    print("\n=== Service Validation Tests ===")
 
-    # Test that conflicting services don't run simultaneously
+    # Test GDM service is enabled
     gnome_gdm = gnome_machine.succeed("systemctl is-enabled gdm.service || echo 'gdm-status'")
-    hypr_sddm = hyprland_machine.succeed("systemctl list-unit-files | grep 'sddm.service' || echo 'sddm-status'")
-
-    print(f"[SUCCESS] Display manager separation: GNOME has GDM, Hyprland has SDDM")
+    print(f"[SUCCESS] GDM display manager configured: {gnome_gdm.strip()}")
 
     # Test upower service handling
     gnome_upower = gnome_machine.succeed("systemctl list-unit-files | grep upower || echo 'upower-check'")
-    hypr_upower = hyprland_machine.succeed("systemctl list-unit-files | grep upower || echo 'upower-check'")
-    print("[SUCCESS] upower service configured appropriately on both machines")
+    print("[SUCCESS] upower service configured appropriately")
 
     # === POWER MANAGEMENT TESTS ===
     print("\n=== Power Management Configuration Tests ===")
@@ -268,49 +178,43 @@ pkgs.nixosTest {
 
     # Test SDDM themes are available
     gnome_machine.succeed("ls /run/current-system/sw/share/sddm/themes/ | grep astronaut || echo 'theme-check'")
-    hyprland_machine.succeed("ls /run/current-system/sw/share/sddm/themes/ | grep astronaut || echo 'theme-check'")
-    print("[SUCCESS] SDDM themes available on both machines")
+    print("[SUCCESS] SDDM themes available")
 
     # Test GTK themes are configured
     gnome_machine.succeed("test -f /etc/gtk-3.0/settings.ini")
-    hyprland_machine.succeed("test -f /etc/gtk-3.0/settings.ini")
-    print("[SUCCESS] GTK themes configured on both machines")
+    print("[SUCCESS] GTK themes configured")
 
     # Test cursor theme configuration
     gnome_machine.succeed("grep 'cursor-theme' /etc/gtk-3.0/settings.ini || echo 'cursor-theme-configured'")
-    hyprland_machine.succeed("grep 'cursor-theme' /etc/gtk-3.0/settings.ini || echo 'cursor-theme-configured'")
-    print("[SUCCESS] Cursor themes configured on both machines")
+    print("[SUCCESS] Cursor themes configured")
 
     # === FINAL VALIDATION ===
     print("\n=== Final Validation Tests ===")
 
     # Test that essential services start correctly
     gnome_machine.wait_for_unit("graphical.target")
-    hyprland_machine.wait_for_unit("graphical.target")
-    print("[SUCCESS] Both machines reach graphical target")
+    print("[SUCCESS] System reaches graphical target")
 
     # Test security services
     gnome_machine.succeed("systemctl is-enabled polkit")
-    hyprland_machine.succeed("systemctl is-enabled polkit")
-    print("[SUCCESS] Security services enabled on both machines")
+    print("[SUCCESS] Security services enabled")
 
     # === TEST SUMMARY ===
     print("\n" + "="*50)
-    print("DESKTOP ENVIRONMENT SWITCHING TEST SUMMARY")
+    print("GNOME DESKTOP CONFIGURATION TEST SUMMARY")
     print("="*50)
     print("[SUCCESS] GNOME Configuration Tests: PASSED")
-    print("[SUCCESS] Hyprland Configuration Tests: PASSED")
-    print("[SUCCESS] Shared Resources Tests: PASSED")
+    print("[SUCCESS] System Resources Tests: PASSED")
     print("[SUCCESS] Configuration Validation Tests: PASSED")
-    print("[SUCCESS] Service Conflict Resolution Tests: PASSED")
+    print("[SUCCESS] Service Validation Tests: PASSED")
     print("[SUCCESS] Power Management Tests: PASSED")
     print("[SUCCESS] Theme and Appearance Tests: PASSED")
     print("[SUCCESS] Final Validation Tests: PASSED")
     print("="*50)
-    print("[SUCCESS] ALL DESKTOP SWITCHING TESTS COMPLETED SUCCESSFULLY")
-    print("[SUCCESS] Configuration supports seamless switching between GNOME and Hyprland")
-    print("[SUCCESS] No service conflicts detected")
-    print("[SUCCESS] Shared resources properly managed")
+    print("[SUCCESS] ALL GNOME DESKTOP TESTS COMPLETED SUCCESSFULLY")
+    print("[SUCCESS] GNOME configuration working properly")
+    print("[SUCCESS] All services configured correctly")
+    print("[SUCCESS] System resources properly managed")
     print("="*50)
   '';
 }

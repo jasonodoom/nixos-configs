@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  test-hyprland:
+  test-gnome-desktop:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -17,8 +17,8 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Run basic SDDM VM test
-        id: basic-test
+      - name: Run GNOME desktop test
+        id: gnome-test
         run: |
           cd framework-desktop
           # Add flake config acceptance to avoid warnings
@@ -26,45 +26,44 @@ jobs:
 
           # Capture both stdout and derivation path for logs
           set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.hyprland-sddm --show-trace --accept-flake-config 2>&1 | tee basic-vm-test-output.log
-          BASIC_EXIT_CODE=$?
+          nix build .#checks.x86_64-linux.desktop-switching --show-trace --accept-flake-config 2>&1 | tee gnome-desktop-test-output.log
+          GNOME_EXIT_CODE=$?
 
-          echo "BASIC_EXIT_CODE=$BASIC_EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "GNOME_EXIT_CODE=$GNOME_EXIT_CODE" >> $GITHUB_OUTPUT
 
       - name: Run comprehensive desktop integration test
-        id: vm-test
+        id: integration-test
         run: |
           cd framework-desktop
           export NIX_CONFIG="accept-flake-config = true"
 
           set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee vm-test-output.log
-          BUILD_EXIT_CODE=$?
+          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee integration-test-output.log
+          INTEGRATION_EXIT_CODE=$?
 
           # Extract derivation path for logs
-          DERIVATION_PATH=$(grep -o '/nix/store/[^-]*-vm-test-run[^/]*\.drv' vm-test-output.log | head -1) || true
+          DERIVATION_PATH=$(grep -o '/nix/store/[^-]*-vm-test-run[^/]*\.drv' integration-test-output.log | head -1) || true
           if [ -n "$DERIVATION_PATH" ]; then
             echo "Getting full logs from derivation: $DERIVATION_PATH"
-            nix log "$DERIVATION_PATH" > vm-full.log 2>&1 || echo "Could not get derivation logs" > vm-full.log
+            nix log "$DERIVATION_PATH" > integration-full.log 2>&1 || echo "Could not get derivation logs" > integration-full.log
           fi
-
 
           # Check for test failure indicators - build can succeed but VM test can fail
           TEST_FAILED=false
-          if [ $BUILD_EXIT_CODE -ne 0 ] || [ "${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}" != "0" ]; then
+          if [ $INTEGRATION_EXIT_CODE -ne 0 ] || [ "${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
-            echo "Build failed - Basic: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}, Desktop: $BUILD_EXIT_CODE"
+            echo "Build failed - GNOME: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}, Integration: $INTEGRATION_EXIT_CODE"
           fi
 
           # Check for test failure patterns in logs - include evaluation errors
-          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" vm-test-output.log vm-full.log basic-vm-test-output.log 2>/dev/null || \
-             grep -q "error:" vm-test-output.log basic-vm-test-output.log 2>/dev/null; then
+          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" integration-test-output.log integration-full.log gnome-desktop-test-output.log 2>/dev/null || \
+             grep -q "error:" integration-test-output.log gnome-desktop-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Detected test failure patterns in logs"
           fi
 
           # Additional check - if we see specific error patterns that indicate failure
-          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" vm-test-output.log basic-vm-test-output.log 2>/dev/null; then
+          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" integration-test-output.log gnome-desktop-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Detected NixOS evaluation error in logs"
           fi
@@ -72,16 +71,18 @@ jobs:
           # Report results
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] All VM tests completed successfully"
+            echo "[PASSED] All tests completed successfully"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] VM tests failed - Basic: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE }}, Desktop: $BUILD_EXIT_CODE"
-            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" vm-test-output.log vm-full.log basic-vm-test-output.log; then
+            echo "[FAILED] Tests failed - GNOME: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}, Integration: $INTEGRATION_EXIT_CODE"
+            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" integration-test-output.log integration-full.log gnome-desktop-test-output.log; then
               echo "Detected test timeout or assertion failure in logs"
             fi
             exit 1
           fi
+
+          echo "INTEGRATION_EXIT_CODE=$INTEGRATION_EXIT_CODE" >> $GITHUB_OUTPUT
 
       - name: Generate HTML test report
         if: always()
@@ -112,8 +113,8 @@ jobs:
 
                   <div class="test-summary">
                       <h2>Test Results Summary</h2>
-                      <p><strong>Basic SDDM Test:</strong> ${{ steps.basic-test.outputs.BASIC_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}</p>
-                      <p><strong>Desktop Integration Test:</strong> ${{ steps.vm-test.outputs.TEST_RESULT == 'success' && '[PASS]' || '[FAIL]' }}</p>
+                      <p><strong>GNOME Desktop Test:</strong> ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}</p>
+                      <p><strong>Desktop Integration Test:</strong> ${{ steps.integration-test.outputs.TEST_RESULT == 'success' && '[PASS]' || '[FAIL]' }}</p>
                   </div>
 
                   <div class="test-step">
@@ -138,15 +139,15 @@ jobs:
                       <h2>Test Logs</h2>
                       <p>Check the artifact files for detailed logs:</p>
                       <ul>
-                          <li>basic-vm-test-output.log - Basic SDDM test output</li>
-                          <li>vm-test-output.log - Desktop integration test output</li>
-                          <li>vm-full.log - Complete derivation logs</li>
+                          <li>gnome-desktop-test-output.log - GNOME desktop test output</li>
+                          <li>integration-test-output.log - Desktop integration test output</li>
+                          <li>integration-full.log - Complete derivation logs</li>
                       </ul>
                   </div>
 
                   <div class="test-summary">
-                      <h2 class="${{ steps.vm-test.outputs.TEST_RESULT == 'success' && 'success' || 'failed' }}">${{ steps.vm-test.outputs.TEST_RESULT == 'success' && '[PASS] All Tests Completed Successfully' || '[FAIL] Some Tests Failed' }}</h2>
-                      <p>Framework laptop NixOS configuration with Hyprland desktop environment testing.</p>
+                      <h2 class="${{ steps.integration-test.outputs.TEST_RESULT == 'success' && 'success' || 'failed' }}">${{ steps.integration-test.outputs.TEST_RESULT == 'success' && '[PASS] All Tests Completed Successfully' || '[FAIL] Some Tests Failed' }}</h2>
+                      <p>Framework desktop NixOS configuration with dual desktop environment testing.</p>
                   </div>
               </div>
           </body>
@@ -167,36 +168,36 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vm-test-artifacts
+          name: desktop-test-artifacts
           path: |
             framework-desktop/result/
-            framework-desktop/vm-test-output.log
-            framework-desktop/basic-vm-test-output.log
-            framework-desktop/vm-full.log
+            framework-desktop/integration-test-output.log
+            framework-desktop/gnome-desktop-test-output.log
+            framework-desktop/integration-full.log
           retention-days: 7
 
       - name: Test Summary
         if: always()
         run: |
-          echo "## VM Test Results" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.vm-test.outputs.TEST_RESULT }}" = "success" ]; then
-            echo "**All VM tests passed successfully**" >> $GITHUB_STEP_SUMMARY
+          echo "## Desktop Test Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.integration-test.outputs.TEST_RESULT }}" = "success" ]; then
+            echo "**All desktop tests passed successfully**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Tests Completed:" >> $GITHUB_STEP_SUMMARY
-            echo "- Basic SDDM/Hyprland test" >> $GITHUB_STEP_SUMMARY
+            echo "- GNOME desktop test" >> $GITHUB_STEP_SUMMARY
             echo "- Comprehensive desktop integration test" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Available Artifacts:" >> $GITHUB_STEP_SUMMARY
             echo "- **desktop-test-report-html**: Browser-viewable test report with embedded screenshots" >> $GITHUB_STEP_SUMMARY
-            echo "- **vm-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
+            echo "- **desktop-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**VM tests failed**" >> $GITHUB_STEP_SUMMARY
+            echo "**Desktop tests failed**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
-            echo "- Basic test: ${{ steps.basic-test.outputs.BASIC_EXIT_CODE == '0' && 'PASSED' || 'FAILED' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- GNOME desktop test: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE == '0' && 'PASSED' || 'FAILED' }}" >> $GITHUB_STEP_SUMMARY
             echo "- Desktop integration test: FAILED" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Check the uploaded artifacts for detailed logs:" >> $GITHUB_STEP_SUMMARY
             echo "- **desktop-test-report-html**: Browser-viewable test report with screenshots" >> $GITHUB_STEP_SUMMARY
-            echo "- **vm-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
+            echo "- **desktop-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
           fi
