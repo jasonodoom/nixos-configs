@@ -64,7 +64,7 @@
         echo -e "\n\033[1;31mMemory stats:\033[0m"; free -h 2>/dev/null || echo "free command not available"
         echo -e "\n\033[1;31mDiskspace:\033[0m"; df -h / 2>/dev/null | tail -1 || echo "df command not available"
         echo -e "\n\033[1;31mLocal IP Address:\033[0m"; ip route get 1 2>/dev/null | awk '{print $7; exit}' || echo "Not connected"
-        echo -e "\n\033[1;31mOpen connections:\033[0m"; netstat -pan --inet 2>/dev/null | head -10 || ss -tuln | head -10
+        echo -e "\n\033[1;31mOpen connections:\033[0m"; netstat -tul --inet 2>/dev/null | head -10 || ss -tuln | head -10
         echo
 
         # Session status if available
@@ -193,14 +193,20 @@
       }
 
       # Git-aware background color
-      git_bg_color() {
+      git_bg_start() {
         if git rev-parse --git-dir >/dev/null 2>&1; then
-          echo -e "\033[48;5;28m"  # Lighter green background
+          echo -e "\033[48;5;28m"
+        fi
+      }
+
+      git_bg_end() {
+        if git rev-parse --git-dir >/dev/null 2>&1; then
+          echo -e "\033[0m"
         fi
       }
 
       # Main PS1 with git-aware background highlighting
-      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} \$(git_bg_color)''${BLUE}\w\$(parse_git_branch) \$(status_indicator \$?)''${RESET}\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
+      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} \$(git_bg_start)''${BLUE}\w\$(parse_git_branch) \$(status_indicator \$?)\$(git_bg_end)''${RESET}\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
@@ -253,14 +259,6 @@
       bind '"\C-f": "\C-x4\e^\er"'
       bind -x '"\C-x4": __auto_suggest'
 
-      # Right arrow: accept suggestion when at end of line
-      bind '"\e[C": "\C-x5\e[C"'
-      bind -x '"\C-x5": __check_and_accept_suggestion'
-
-      # Alt+F: accept next word from suggestion
-      bind '"\ef": "\C-x6\e^\er"'
-      bind -x '"\C-x6": __accept_suggestion_word'
-
       # Enhanced history configuration
       shopt -s histappend
       shopt -s cmdhist
@@ -299,46 +297,7 @@
       fi
     }
 
-    # Autosuggestion key bindings
-    __accept_suggestion() {
-      local current_line="$READLINE_LINE"
-      local suggestion=""
 
-      # Get the most recent command from history that starts with current input
-      suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
-
-      if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
-        READLINE_LINE="$suggestion"
-        READLINE_POINT=''${#suggestion}
-      fi
-    }
-
-    __accept_suggestion_word() {
-      local current_line="$READLINE_LINE"
-      local suggestion=""
-
-      # Get the most recent command from history that starts with current input
-      suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
-
-      if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
-        local remaining="''${suggestion#$current_line}"
-        local next_word=$(echo "$remaining" | grep -o '^[^ ]*')
-        READLINE_LINE="$current_line$next_word"
-        READLINE_POINT=''${#READLINE_LINE}
-      fi
-    }
-
-    __check_and_accept_suggestion() {
-      # If cursor is at end of line, try to accept suggestion
-      if [[ $READLINE_POINT -eq ''${#READLINE_LINE} ]]; then
-        __accept_suggestion
-      else
-        # Otherwise just move cursor right normally
-        if [[ $READLINE_POINT -lt ''${#READLINE_LINE} ]]; then
-          ((READLINE_POINT++))
-        fi
-      fi
-    }
     # Extract function
     extract() {
       if [[ ! -f "$1" ]]; then
