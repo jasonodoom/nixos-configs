@@ -15,6 +15,7 @@
 
     # Version control (git configuration now in git.nix)
     git-interactive-rebase-tool
+    delta
 
     # Editors
     vim

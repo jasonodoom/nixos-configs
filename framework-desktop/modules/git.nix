@@ -32,7 +32,25 @@
       core = {
         editor = "/run/current-system/sw/bin/vim";
         whitespace = "fix,-indent-with-non-tab,trailing-space,cr-at-eol";
-        pager = "less";
+        pager = "delta";
+      };
+
+      # Delta configuration
+      delta = {
+        navigate = true;
+        light = false;
+        side-by-side = false;
+        line-numbers = true;
+        syntax-theme = "Dracula";
+        features = "decorations";
+      };
+
+      # Delta decorations
+      "delta \"decorations\"" = {
+        commit-decoration-style = "bold yellow box ul";
+        file-style = "bold yellow ul";
+        file-decoration-style = "none";
+        hunk-header-decoration-style = "cyan box ul";
       };
 
       # Web and instaweb
