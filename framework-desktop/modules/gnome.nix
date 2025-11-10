@@ -133,7 +133,7 @@ in
 
         "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
           binding = "<Super>r";
-          command = "rofi -show drun";
+          command = "GDK_BACKEND=x11 rofi -show drun";
           name = "Launch Rofi";
         };
 
