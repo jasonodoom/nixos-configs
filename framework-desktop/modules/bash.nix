@@ -235,11 +235,11 @@
         }
 
         # Ctrl+R: fuzzy history search
-        bind '"\C-r": "\C-x1\e^\er"'
+        bind '"\C-r": "\C-x1"'
         bind -x '"\C-x1": __fzf_history'
 
         # Ctrl+T: fuzzy file finder
-        bind '"\C-t": "\C-x2\e^\er"'
+        bind '"\C-t": "\C-x2"'
         bind -x '"\C-x2": __fzf_file_widget'
       fi
 
@@ -258,7 +258,7 @@
 
       # Autosuggestion bindings
       # Ctrl+F: accept full suggestion
-      bind '"\C-f": "\C-x4\e^\er"'
+      bind '"\C-f": "\C-x4"'
       bind -x '"\C-x4": __auto_suggest'
 
       # Enhanced history configuration
