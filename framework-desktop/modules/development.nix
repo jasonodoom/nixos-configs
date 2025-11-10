@@ -10,6 +10,9 @@
 
   # Development packages
   environment.systemPackages = with pkgs; [
+    # AI assistants
+    claude-code
+
     # Version control (git configuration now in git.nix)
     git-interactive-rebase-tool
 
