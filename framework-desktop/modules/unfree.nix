@@ -38,6 +38,9 @@
     # Media
     "cider"
 
+    # Productivity
+    "obsidian"
+
     # Virtualization
     "vagrant"
 

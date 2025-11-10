@@ -34,6 +34,7 @@
     shutter
     xournalpp
     libreoffice-qt6
+    obsidian
 
     # AI/ML Tools
     ollama
