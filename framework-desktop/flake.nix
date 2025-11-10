@@ -63,8 +63,10 @@
         ./modules/firefox.nix
         ./modules/fonts.nix
         ./modules/gaming.nix
+        ./modules/ghostty.nix
         ./modules/git.nix
         ./modules/gnome.nix
+        ./modules/kitty.nix
         ./modules/graphics.nix
         ./modules/hyprland/hyprland.nix
         ./modules/hyprland/dunst.nix
@@ -73,7 +75,9 @@
         ./modules/networking.nix
         ./modules/screen.nix
         ./modules/tmux.nix
+        ./modules/secrets.nix
         ./modules/security.nix
+        ./modules/ssh.nix
         ./modules/shell.nix
         ./modules/system.nix
         ./modules/themes.nix  # SDDM themes
