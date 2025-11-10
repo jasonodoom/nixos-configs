@@ -59,7 +59,7 @@
     ghostty
 
     # Security and System Tools
-    agenix  # Age encryption secret management CLI
+    ragenix
     cyberchef
 
     # Screen and Display
