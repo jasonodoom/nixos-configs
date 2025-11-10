@@ -36,6 +36,7 @@
     screen
     tmux
     jq
+    fzf  # Fuzzy finder for fish-like autocompletion
 
     # Network tools
     iftop

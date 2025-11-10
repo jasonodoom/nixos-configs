@@ -191,11 +191,153 @@
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
+
+      # Fish-like autosuggestions
+      if command -v fzf >/dev/null 2>&1; then
+        # FZF key bindings for enhanced history search
+        # Ctrl+R: fuzzy history search
+        bind '"\C-r": "\C-x1\e^\er"'
+        bind -x '"\C-x1": __fzf_history'
+
+        # Ctrl+T: fuzzy file finder
+        bind '"\C-t": "\C-x2\e^\er"'
+        bind -x '"\C-x2": __fzf_file_widget'
+
+        # Alt+C: fuzzy directory changer
+        bind '"\ec": "\C-x3\e^\er"'
+        bind -x '"\C-x3": __fzf_cd_widget'
+      fi
+
+      # Enable enhanced tab completion
+      set show-all-if-ambiguous on
+      set completion-ignore-case on
+      set completion-map-case on
+      set show-all-if-unmodified on
+      set menu-complete-display-prefix on
+
+      # History-based autosuggestions (simple implementation)
+      # This provides basic fish-like suggestions
+      bind '"\e[A": history-search-backward'
+      bind '"\e[B": history-search-forward'
+      bind '"\eOA": history-search-backward'
+      bind '"\eOB": history-search-forward'
+
+      # Visual autosuggestion key bindings
+      # Right arrow: accept full suggestion (if at end of line)
+      bind '"\e[C": "\C-x4\e[C"'
+      bind -x '"\C-x4": __check_and_accept_suggestion'
+
+      # Alt+F: accept next word from suggestion
+      bind '"\ef": "\C-x5\e^\er"'
+      bind -x '"\C-x5": __accept_suggestion_word'
+
+      # Bind space to trigger autosuggestion display
+      bind 'SPACE: "\C-x6 "'
+      bind -x '"\C-x6": __auto_suggest'
+
+      # Enhanced history configuration
+      shopt -s histappend
+      shopt -s cmdhist
+      shopt -s histverify
+      export HISTCONTROL=ignoredups:erasedups:ignorespace
+      export HISTSIZE=10000
+      export HISTFILESIZE=20000
+      export HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "
     '';
   };
 
   # Shell functions
   environment.shellInit = ''
+    # FZF widget functions for fish-like autocomplete
+    __fzf_history() {
+      local selected
+      selected=$(HISTTIMEFORMAT= history | fzf --tac --no-sort --query="$READLINE_LINE" | sed 's/^ *[0-9]* *//')
+      if [[ -n "$selected" ]]; then
+        READLINE_LINE="$selected"
+        READLINE_POINT=''${#READLINE_LINE}
+      fi
+    }
+
+    __fzf_file_widget() {
+      local selected
+      selected=$(fzf --preview 'cat {}' --preview-window=right:60%:wrap)
+      if [[ -n "$selected" ]]; then
+        READLINE_LINE="''${READLINE_LINE:0:READLINE_POINT}$selected''${READLINE_LINE:READLINE_POINT}"
+        READLINE_POINT=$((READLINE_POINT + ''${#selected}))
+      fi
+    }
+
+    __fzf_cd_widget() {
+      local selected
+      selected=$(find . -type d 2>/dev/null | fzf --preview 'ls -la {}' --preview-window=right:60%)
+      if [[ -n "$selected" ]]; then
+        cd "$selected" || return
+        READLINE_LINE=""
+        READLINE_POINT=0
+      fi
+    }
+
+    # Visual autosuggestion system (fish-like)
+    __auto_suggest() {
+      local current_line="$READLINE_LINE"
+      local suggestion=""
+
+      # Skip if line is empty or too short
+      [[ ''${#current_line} -lt 2 ]] && return
+
+      # Get the most recent command from history that starts with current input
+      suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
+
+      # If we found a suggestion and it's different from current line
+      if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
+        local remaining="''${suggestion#$current_line}"
+        # Show suggestion in gray (dim) color
+        echo -ne "\033[2m$remaining\033[0m"
+        # Move cursor back to original position
+        echo -ne "\033[''${#remaining}D"
+      fi
+    }
+
+    # Autosuggestion key bindings
+    __accept_suggestion() {
+      local current_line="$READLINE_LINE"
+      local suggestion=""
+
+      # Get the most recent command from history that starts with current input
+      suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
+
+      if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
+        READLINE_LINE="$suggestion"
+        READLINE_POINT=''${#suggestion}
+      fi
+    }
+
+    __accept_suggestion_word() {
+      local current_line="$READLINE_LINE"
+      local suggestion=""
+
+      # Get the most recent command from history that starts with current input
+      suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
+
+      if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
+        local remaining="''${suggestion#$current_line}"
+        local next_word=$(echo "$remaining" | grep -o '^[^ ]*')
+        READLINE_LINE="$current_line$next_word"
+        READLINE_POINT=''${#READLINE_LINE}
+      fi
+    }
+
+    __check_and_accept_suggestion() {
+      # If cursor is at end of line, try to accept suggestion
+      if [[ $READLINE_POINT -eq ''${#READLINE_LINE} ]]; then
+        __accept_suggestion
+      else
+        # Otherwise just move cursor right normally
+        if [[ $READLINE_POINT -lt ''${#READLINE_LINE} ]]; then
+          ((READLINE_POINT++))
+        fi
+      fi
+    }
     # Extract function
     extract() {
       if [[ ! -f "$1" ]]; then
@@ -306,6 +448,136 @@
         return 1
       fi
       ps aux | grep -v grep | grep --color=always "$1"
+    }
+
+    # Command correction function
+    command_not_found_handle() {
+      local cmd="$1"
+      local suggestion=""
+
+      # Common command abbreviations and typos
+      case "$cmd" in
+        "gt") suggestion="git" ;;
+        "gi") suggestion="git" ;;
+        "gti") suggestion="git" ;;
+        "got") suggestion="git" ;;
+        "gut") suggestion="git" ;;
+        "sl") suggestion="ls" ;;
+        "l") suggestion="ls" ;;
+        "la") suggestion="ls -la" ;;
+        "ll") suggestion="ls -l" ;;
+        "cd..") suggestion="cd .." ;;
+        "cd...") suggestion="cd ../.." ;;
+        "mkdir") suggestion="mkdir" ;;
+        "mkdr") suggestion="mkdir" ;;
+        "mkdi") suggestion="mkdir" ;;
+        "rm") suggestion="rm" ;;
+        "rmr") suggestion="rm -r" ;;
+        "mv") suggestion="mv" ;;
+        "cp") suggestion="cp" ;;
+        "chr") suggestion="chmod" ;;
+        "chmd") suggestion="chmod" ;;
+        "chmdo") suggestion="chmod" ;;
+        "chown") suggestion="chown" ;;
+        "chonw") suggestion="chown" ;;
+        "grep") suggestion="grep" ;;
+        "gerp") suggestion="grep" ;;
+        "grpe") suggestion="grep" ;;
+        "find") suggestion="find" ;;
+        "finde") suggestion="find" ;;
+        "findd") suggestion="find" ;;
+        "cat") suggestion="cat" ;;
+        "cta") suggestion="cat" ;;
+        "vim") suggestion="vim" ;;
+        "vi") suggestion="vim" ;;
+        "vm") suggestion="vim" ;;
+        "nano") suggestion="nano" ;;
+        "nao") suggestion="nano" ;;
+        "emacs") suggestion="emacs" ;;
+        "emac") suggestion="emacs" ;;
+        "ssh") suggestion="ssh" ;;
+        "shh") suggestion="ssh" ;;
+        "scp") suggestion="scp" ;;
+        "rsync") suggestion="rsync" ;;
+        "rync") suggestion="rsync" ;;
+        "wget") suggestion="wget" ;;
+        "wgte") suggestion="wget" ;;
+        "curl") suggestion="curl" ;;
+        "crul") suggestion="curl" ;;
+        "ps") suggestion="ps" ;;
+        "top") suggestion="top" ;;
+        "htop") suggestion="htop" ;;
+        "htp") suggestion="htop" ;;
+        "df") suggestion="df" ;;
+        "du") suggestion="du" ;;
+        "tar") suggestion="tar" ;;
+        "tra") suggestion="tar" ;;
+        "zip") suggestion="zip" ;;
+        "unzip") suggestion="unzip" ;;
+        "man") suggestion="man" ;;
+        "amn") suggestion="man" ;;
+        "which") suggestion="which" ;;
+        "whch") suggestion="which" ;;
+        "history") suggestion="history" ;;
+        "hstory") suggestion="history" ;;
+        "histroy") suggestion="history" ;;
+        "clear") suggestion="clear" ;;
+        "clar") suggestion="clear" ;;
+        "cls") suggestion="clear" ;;
+        "exit") suggestion="exit" ;;
+        "eixt") suggestion="exit" ;;
+        "exti") suggestion="exit" ;;
+        "logout") suggestion="logout" ;;
+        "logut") suggestion="logout" ;;
+      esac
+
+      # If no predefined suggestion, try fuzzy matching with available commands
+      if [[ -z "$suggestion" ]]; then
+        # Get list of available commands and find closest match
+        local commands=($(compgen -c | sort -u))
+        local best_match=""
+        local min_distance=999
+
+        for command in "''${commands[@]}"; do
+          # Simple distance calculation (character differences)
+          if [[ ''${#command} -ge $((''${#cmd} - 2)) ]] && [[ ''${#command} -le $((''${#cmd} + 2)) ]]; then
+            # Check if command contains most of the typed characters
+            local match_count=0
+            for (( i=0; i<''${#cmd}; i++ )); do
+              if [[ "$command" == *"''${cmd:$i:1}"* ]]; then
+                ((match_count++))
+              fi
+            done
+
+            # If most characters match, consider it a good suggestion
+            if [[ $match_count -gt $((''${#cmd} * 60 / 100)) ]]; then
+              if [[ $match_count -gt $((min_distance)) ]]; then
+                min_distance=$match_count
+                best_match="$command"
+              fi
+            fi
+          fi
+        done
+
+        if [[ -n "$best_match" ]]; then
+          suggestion="$best_match"
+        fi
+      fi
+
+      if [[ -n "$suggestion" ]]; then
+        echo -e "\033[31mCommand '$cmd' not found.\033[0m"
+        echo -e "Did you mean: \033[32m$suggestion\033[0m?"
+        read -p "Run '$suggestion'? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+          # Shift to remove the original command and pass remaining arguments
+          shift
+          eval "$suggestion" "$@"
+        fi
+      else
+        echo -e "\033[31mCommand '$cmd' not found.\033[0m"
+        return 127
+      fi
     }
   '';
 
