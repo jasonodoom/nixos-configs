@@ -78,7 +78,7 @@ pkgs.nixosTest {
       services.displayManager.defaultSession = lib.mkForce "hyprland";
 
       # Override GNOME module internal settings - disable GDM and enable SDDM
-      services.displayManager.gdm.enable = lib.mkForce false;
+      services.xserver.displayManager.gdm.enable = lib.mkForce false;
       services.displayManager.sddm.enable = lib.mkForce true;
       programs.hyprland.enable = lib.mkForce true;
 
