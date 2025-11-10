@@ -24,7 +24,7 @@
     ];
     # Password managed via agenix secrets
     # NOTE: For fresh installs, comment this out until after creating encrypted password
-    # hashedPasswordFile = config.age.secrets.jason-password.path;
+    hashedPasswordFile = config.age.secrets.jason-password.path;
   };
 
   # Shell configuration moved to bash.nix module
