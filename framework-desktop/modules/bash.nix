@@ -192,23 +192,21 @@
         fi
       }
 
-      # Git-aware path with background
-      git_path_info() {
-        local path_display="''${PWD/#$HOME/~}"
+      # Git background check functions
+      git_bg_start() {
         if git rev-parse --git-dir >/dev/null 2>&1; then
-          printf "\033[48;5;28m\033[0;34m%s" "$path_display"
-          parse_git_branch
-          printf " "
-          status_indicator $?
-          printf "\033[0m"
-        else
-          printf "\033[0;34m%s " "$path_display"
-          status_indicator $?
+          echo -n -e "\033[48;5;28m"
+        fi
+      }
+
+      git_bg_end() {
+        if git rev-parse --git-dir >/dev/null 2>&1; then
+          echo -n -e "\033[0m"
         fi
       }
 
       # Main PS1 with git-aware background highlighting
-      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} \$(git_path_info)\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
+      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} \$(git_bg_start)''${BLUE}\w\$(parse_git_branch) \$(status_indicator \$?)\$(git_bg_end)\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
