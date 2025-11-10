@@ -186,15 +186,21 @@
         fi
       }
 
-      # Main PS1 with bold lambda and status indicator - capture $? first
+      # Git-aware background color
+      git_bg_color() {
+        if git rev-parse --git-dir >/dev/null 2>&1; then
+          echo -e "\033[48;5;22m"  # Dark green background
+        fi
+      }
+
+      # Main PS1 with git-aware background highlighting
       PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} ''${BLUE}\w''${RESET}\$(parse_git_branch) \$(status_indicator \$?) \n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
 
-      # Fish-like autosuggestions
+      # FZF integration for better history search
       if command -v fzf >/dev/null 2>&1; then
-        # FZF key bindings for enhanced history search
         # Ctrl+R: fuzzy history search
         bind '"\C-r": "\C-x1\e^\er"'
         bind -x '"\C-x1": __fzf_history'
@@ -202,38 +208,33 @@
         # Ctrl+T: fuzzy file finder
         bind '"\C-t": "\C-x2\e^\er"'
         bind -x '"\C-x2": __fzf_file_widget'
-
-        # Alt+C: fuzzy directory changer
-        bind '"\ec": "\C-x3\e^\er"'
-        bind -x '"\C-x3": __fzf_cd_widget'
       fi
 
-      # Enable enhanced tab completion
+      # Enhanced history navigation (up/down arrows)
+      bind '"\e[A": history-search-backward'
+      bind '"\e[B": history-search-forward'
+      bind '"\eOA": history-search-backward'
+      bind '"\eOB": history-search-forward'
+
+      # Tab completion settings
       set show-all-if-ambiguous on
       set completion-ignore-case on
       set completion-map-case on
       set show-all-if-unmodified on
       set menu-complete-display-prefix on
 
-      # History-based autosuggestions (simple implementation)
-      # This provides basic fish-like suggestions
-      bind '"\e[A": history-search-backward'
-      bind '"\e[B": history-search-forward'
-      bind '"\eOA": history-search-backward'
-      bind '"\eOB": history-search-forward'
+      # Autosuggestion bindings
+      # Ctrl+F: accept full suggestion
+      bind '"\C-f": "\C-x4\e^\er"'
+      bind -x '"\C-x4": __auto_suggest'
 
-      # Visual autosuggestion key bindings
-      # Right arrow: accept full suggestion (if at end of line)
-      bind '"\e[C": "\C-x4\e[C"'
-      bind -x '"\C-x4": __check_and_accept_suggestion'
+      # Right arrow: accept suggestion when at end of line
+      bind '"\e[C": "\C-x5\e[C"'
+      bind -x '"\C-x5": __check_and_accept_suggestion'
 
       # Alt+F: accept next word from suggestion
-      bind '"\ef": "\C-x5\e^\er"'
-      bind -x '"\C-x5": __accept_suggestion_word'
-
-      # Bind space to trigger autosuggestion display
-      bind 'SPACE: "\C-x6 "'
-      bind -x '"\C-x6": __auto_suggest'
+      bind '"\ef": "\C-x6\e^\er"'
+      bind -x '"\C-x6": __accept_suggestion_word'
 
       # Enhanced history configuration
       shopt -s histappend
@@ -277,24 +278,17 @@
       fi
     }
 
-    # Visual autosuggestion system (fish-like)
     __auto_suggest() {
       local current_line="$READLINE_LINE"
       local suggestion=""
 
-      # Skip if line is empty or too short
       [[ ''${#current_line} -lt 2 ]] && return
 
-      # Get the most recent command from history that starts with current input
       suggestion=$(HISTTIMEFORMAT= history | grep "^ *[0-9]\\+ *$current_line" | tail -1 | sed 's/^ *[0-9]* *//')
 
-      # If we found a suggestion and it's different from current line
       if [[ -n "$suggestion" && "$suggestion" != "$current_line" ]]; then
-        local remaining="''${suggestion#$current_line}"
-        # Show suggestion in gray (dim) color
-        echo -ne "\033[2m$remaining\033[0m"
-        # Move cursor back to original position
-        echo -ne "\033[''${#remaining}D"
+        READLINE_LINE="$suggestion"
+        READLINE_POINT=''${#suggestion}
       fi
     }
 
