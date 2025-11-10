@@ -1,2 +1,4 @@
-# Temporarily ignore secrets until host key is configured
-framework-desktop/secrets/
+# Allow agenix config and encrypted files, block plaintext secrets
+framework-desktop/secrets/*
+!framework-desktop/secrets/secrets.nix
+!framework-desktop/secrets/*.age
