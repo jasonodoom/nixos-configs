@@ -32,7 +32,7 @@
       export MORE='-c'
       export GPG_TTY=$(tty)
       export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-      export KEYID='768A91A5'
+      export KEYID='0x68CCAF80768A91A5'
 
       # System information
       export MACHINE=$(uname -s)
@@ -42,8 +42,8 @@
       # Prevent programs from opening gnome dialogues for users and password
       unset SSH_ASKPASS
 
-      # Set umask so that default permission is 755
-      umask 022
+      # Set umask so that default permission is 750
+      umask 027
 
       # Color support
       if command -v dircolors >/dev/null 2>&1; then
@@ -194,7 +194,7 @@
       }
 
       # Main PS1 with git-aware background highlighting
-      PS1="''${BOLD}''${GREEN}\u''${RESET}''${BOLD}@''${GREEN}\h''${RESET} ''${BLUE}\w''${RESET}\$(parse_git_branch) \$(status_indicator \$?) \n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
+      PS1="\$(git_bg_color)''${BOLD}''${GREEN}\u''${RESET}\$(git_bg_color)''${BOLD}@''${GREEN}\h''${RESET}\$(git_bg_color) ''${BLUE}\w''${RESET}\$(parse_git_branch) \$(status_indicator \$?) ''${RESET}\n''${BOLD}''${YELLOW}❯ λ ''${RESET}"
       PS2=" > "
       PS3=" -> "
       PS4=" #-> "
