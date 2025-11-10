@@ -115,6 +115,19 @@ in
           exec-arg = "%s";
         };
 
+        # Set thunderbird as default calendar
+        "org/gnome/desktop/applications/calendar" = {
+          exec = "thunderbird";
+          exec-arg = "%s";
+        };
+
+        # Set default media applications
+        "org/gnome/desktop/applications/media" = {
+          video = "vlc";
+          music = "lollypop";
+          photo = "eog";
+        };
+
         # Interface and cursor configuration
         "org/gnome/desktop/interface" = {
           gtk-theme = "Numix-DarkBlue";
@@ -124,10 +137,26 @@ in
           font-name = "JetBrains Mono 11";
         };
 
+        # Enable GNOME Shell extensions
+        "org/gnome/shell" = {
+          enabled-extensions = [
+            "user-theme@gnome-shell-extensions.gcampax.github.com"
+            "dash-to-dock@micxgx.gmail.com"
+            "appindicatorsupport@rgcjonas.gmail.com"
+            "caffeine@patapon.info"
+            "gsconnect@andyholmes.github.io"
+            "blur-my-shell@aunetx"
+            "Vitals@CoreCoding.com"
+            "clipboard-indicator@tudmotu.com"
+            "just-perfection-desktop@just-perfection"
+          ];
+        };
+
         # Custom keybindings
         "org/gnome/settings-daemon/plugins/media-keys" = {
           custom-keybindings = [
             "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+            "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/"
           ];
         };
 
@@ -135,6 +164,12 @@ in
           binding = "<Super>r";
           command = "GDK_BACKEND=x11 rofi -show drun";
           name = "Launch Rofi";
+        };
+
+        "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1" = {
+          binding = "<Ctrl><Alt>t";
+          command = "ghostty";
+          name = "Launch Terminal";
         };
 
 
@@ -181,6 +216,10 @@ in
     dconf-editor
     gnome-extension-manager
     rofi  # Application launcher for Super+R keybinding
+
+    # GNOME media applications
+    lollypop  # Music player
+    eog  # Eye of GNOME image viewer
 
     # Terminal applications
     gnome-terminal
