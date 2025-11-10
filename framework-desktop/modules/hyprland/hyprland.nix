@@ -183,7 +183,6 @@ in
     windowrulev2 = opacity 0.95 0.85,class:^(ghostty)$
     windowrulev2 = opacity 0.98 0.90,class:^(code)$
     windowrulev2 = opacity 1.0 0.95,class:^(firefox)$
-    windowrulev2 = opacity 0.92 0.82,class:^(thunar)$
 
     # Special floating windows with enhanced effects
     windowrulev2 = float,class:^(pwvucontrol)$
@@ -799,7 +798,6 @@ in
     cmatrix      # Matrix screensaver
 
     # Applications (rofi installed by rofi.nix module)
-    xfce.thunar        # File manager
     ghostty            # Modern GPU-accelerated terminal
     kitty
     flameshot          # Screenshot tool
