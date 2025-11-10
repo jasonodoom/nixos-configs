@@ -33,7 +33,6 @@
   # GPG configuration
   programs.gnupg.agent = {
     enable = true;
-    enableSSHSupport = false;
   };
 
   # GPG configuration file
