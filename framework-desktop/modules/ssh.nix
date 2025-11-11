@@ -3,16 +3,18 @@
 {
   services.openssh = {
     enable = true;
-    ports = [ 666 ];
+    ports = [ 6666 ];
     settings = {
-      X11Forwarding = true;
+      X11Forwarding = false;
       PasswordAuthentication = false;
       PermitRootLogin = "no";
       PubkeyAuthentication = true;
-      KbdInteractiveAuthentication = true;
+      KbdInteractiveAuthentication = false;
     };
     authorizedKeysFiles = [ ".ssh/authorized_keys" ];
-    extraConfig = "AllowUsers jason";
+    extraConfig = ''
+      AllowUsers jason@192.168.1.* jason@10.8.* jason@100.* jason@172.16.200.*
+    '';
   };
 
   security.pam.sshAgentAuth.enable = true;

@@ -26,7 +26,7 @@
     firewall = {
       enable = true;
       allowPing = false;
-      allowedTCPPorts = [ 666 ]; # SSH port
+      allowedTCPPorts = [ 6666 ]; # SSH port
     };
   };
 
