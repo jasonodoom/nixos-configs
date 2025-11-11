@@ -28,12 +28,12 @@
     enableSSHSupport = true;
   };
   # SSH client configuration from encrypted agenix secret
-  age.secrets.ssh-config = {
-    file = ../secrets/ssh-config.age;
-    mode = "0644";
-  };
+  # age.secrets.ssh-config = {
+  #   file = ../secrets/ssh-config.age;
+  #   mode = "0644";
+  # };
 
-  environment.etc."ssh/ssh_config".source = config.age.secrets.ssh-config.path;
+  # environment.etc."ssh/ssh_config".source = config.age.secrets.ssh-config.path;
 
   systemd.user.services.ssh-controlmasters = {
     description = "Create SSH ControlMaster directory";
