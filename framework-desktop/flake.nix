@@ -57,7 +57,7 @@
 
         ./modules/applications.nix
         ./modules/audio.nix
-        ./modules/bash.nix
+        ./modules/bash/bash.nix
         ./modules/bluetooth.nix
         ./modules/development.nix
         ./modules/firefox.nix
