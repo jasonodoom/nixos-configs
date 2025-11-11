@@ -4,7 +4,6 @@
 {
   programs.bash.interactiveShellInit = ''
     # Bash options
-    set -o vi                    # Vi mode
     shopt -s autocd              # Auto cd into directories
     shopt -s cdspell             # Minor spelling correction for cd
     shopt -s checkwinsize        # Update LINES and COLUMNS after each command
