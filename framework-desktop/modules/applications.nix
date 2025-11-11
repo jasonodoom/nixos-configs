@@ -62,6 +62,11 @@
     # Security and System Tools
     ragenix
     cyberchef
+    tcpdump
+    tshark
+    wireshark
+    netcat
+    magic-wormhole
 
     # Screen and Display
     arandr
