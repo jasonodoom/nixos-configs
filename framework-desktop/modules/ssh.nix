@@ -14,6 +14,8 @@
     authorizedKeysFiles = [ ".ssh/authorized_keys" ];
     extraConfig = ''
       AllowUsers jason@192.168.1.* jason@10.8.* jason@100.* jason@172.16.200.*
+      # Entertainment VLAN
+      DenyUsers *@10.6.6.*
     '';
   };
 
