@@ -67,6 +67,7 @@
     wireshark
     netcat
     magic-wormhole
+    openssl
 
     # Screen and Display
     arandr
