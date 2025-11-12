@@ -1,0 +1,125 @@
+name: Check Tailscale Auth Key Expiry
+
+on:
+  schedule:
+    # Check weekly on Monday at 9 AM
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check-expiry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check auth key expiry date
+        id: check
+        run: |
+          # Read expiry date from secrets.nix comment
+          EXPIRY_DATE=$(grep -A1 "tailscale-initrd-key" lenovo-thinkcentre-m710q/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
+
+          if [ -z "$EXPIRY_DATE" ]; then
+            echo "No expiry date found in secrets.nix"
+            exit 0
+          fi
+
+          EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s)
+          TODAY_EPOCH=$(date +%s)
+          DAYS_LEFT=$(( ($EXPIRY_EPOCH - $TODAY_EPOCH) / 86400 ))
+
+          echo "days_left=$DAYS_LEFT" >> $GITHUB_OUTPUT
+          echo "expiry_date=$EXPIRY_DATE" >> $GITHUB_OUTPUT
+
+          if [ $DAYS_LEFT -le 7 ]; then
+            echo "warning=true" >> $GITHUB_OUTPUT
+          else
+            echo "warning=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if this is a follow-up (3 days before)
+          if [ $DAYS_LEFT -le 3 ]; then
+            echo "followup=true" >> $GITHUB_OUTPUT
+          else
+            echo "followup=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create reminder issue
+        if: steps.check.outputs.warning == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const daysLeft = ${{ steps.check.outputs.days_left }};
+            const expiryDate = '${{ steps.check.outputs.expiry_date }}';
+
+            const title = `[URGENT] Tailscale initrd auth key expires in ${daysLeft} days`;
+            const body = `## Tailscale Auth Key Expiring Soon
+
+            The Tailscale auth key for Congo initrd will expire on **${expiryDate}** (${daysLeft} days).
+
+            > This key will expire on ${expiryDate}. If you'll then want to continue using an auth key, you'll need to generate a new one.
+
+            ### Action Required:
+
+            1. Generate a new reusable auth key at https://login.tailscale.com/admin/settings/keys
+               - Reusable: ✓
+               - Ephemeral: ✓ (removes device when initrd stops)
+               - Pre-authorized: ✓
+               - Expiry: 90 days
+
+            2. Encrypt the new key:
+               \`\`\`bash
+               cd /etc/nixos/lenovo-thinkcentre-m710q
+               RULES=secrets/secrets.nix ragenix -e secrets/tailscale-initrd-key.age
+               # Paste the new key when prompted
+               \`\`\`
+
+            3. Update the expiry date comment in \`lenovo-thinkcentre-m710q/secrets/secrets.nix\`:
+               \`\`\`nix
+               # Tailscale auth key for initrd remote LUKS unlock
+               # Expires: YYYY-MM-DD
+               "tailscale-initrd-key.age".publicKeys = all;
+               \`\`\`
+
+            4. Rebuild Congo:
+               \`\`\`bash
+               doas nixos-rebuild switch --flake .#congo
+               \`\`\`
+
+            @jasonodoom`;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'tailscale,security'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Tailscale initrd auth key')
+            );
+
+            const isFollowup = '${{ steps.check.outputs.followup }}' === 'true';
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['tailscale', 'security', 'reminder'],
+                assignees: ['jasonodoom']
+              });
+            } else if (isFollowup && existingIssue.state === 'open') {
+              // Follow-up comment on existing open issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `**Follow-up reminder**: Only **${daysLeft} days** left until key expires on ${expiryDate}!`
+              });
+            }
