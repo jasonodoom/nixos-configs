@@ -12,7 +12,6 @@
 
   # Enable bash completion and colors
   programs.bash = {
-    enable = true;
     completion.enable = true;
     enableLsColors = true;
   };
