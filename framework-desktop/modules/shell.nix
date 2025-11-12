@@ -4,8 +4,6 @@
 {
   # Shell programs
   programs = {
-    zsh.enable = true;
-
     # Direnv for development environments
     direnv.enable = true;
   };
