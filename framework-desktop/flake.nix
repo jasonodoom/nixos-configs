@@ -79,7 +79,6 @@
         ./modules/tmux.nix
         ./modules/shell.nix
         ./modules/system.nix
-        ./secrets/secrets.nix
         ./modules/network/networking.nix
         ./modules/network/tailscale.nix
         ./modules/security/security.nix
