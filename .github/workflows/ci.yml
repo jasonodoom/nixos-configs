@@ -2,9 +2,9 @@ name: NixOS Configuration CI with Garnix
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, unstable ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, unstable ]
 
 jobs:
   build-with-garnix:
