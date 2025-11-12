@@ -16,7 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: unstable
           fetch-depth: 0
+
+      - name: Fetch main branch
+        run: |
+          git fetch origin main:main
 
       - name: Check if PR already exists
         id: check-pr
