@@ -22,14 +22,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    tailscale = {
+      url = "github:tailscale/tailscale/v1.90.6";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       inherit system;
@@ -72,15 +75,16 @@
         ./modules/hyprland/dunst.nix
         ./modules/hyprland/waybar.nix
         ./modules/hyprland/rofi.nix
-        ./modules/networking.nix
         ./modules/screen.nix
-        ./modules/tailscale.nix
         ./modules/tmux.nix
-        ./modules/secrets.nix
-        ./modules/security.nix
-        ./modules/ssh.nix
         ./modules/shell.nix
         ./modules/system.nix
+        ./secrets/secrets.nix
+        ./modules/network/networking.nix
+        ./modules/network/tailscale.nix
+        ./modules/security/security.nix
+        ./modules/security/secrets.nix
+        ./modules/security/ssh.nix
         ./modules/themes.nix  # SDDM themes
         ./modules/unfree.nix
         ./modules/user-config.nix

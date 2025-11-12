@@ -4,9 +4,9 @@
   # Import agenix secrets
   age = {
     secrets = {
-      # User password for login 
+      # User password for login
       jason-password = {
-        file = ../secrets/jason-password.age;
+        file = ../../secrets/jason-password.age;
         owner = "jason";
         group = "users";
         mode = "0400";
