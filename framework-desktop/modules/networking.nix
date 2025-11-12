@@ -31,7 +31,5 @@
   };
 
   # SSH configuration moved to security.nix to avoid duplication
-
-  # Tailscale for VPN
-  services.tailscale.enable = true;
+  # Tailscale configuration moved to tailscale.nix
 }
