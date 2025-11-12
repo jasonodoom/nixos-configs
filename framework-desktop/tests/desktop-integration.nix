@@ -114,6 +114,7 @@ pkgs.nixosTest {
 
       # Force Hyprland configuration (simulate switching)
       services.xserver.desktopManager.gnome.enable = lib.mkForce false;
+      services.xserver.displayManager.gdm.enable = lib.mkForce false;
       services.displayManager.defaultSession = lib.mkForce "hyprland";
       services.displayManager.sddm.enable = lib.mkForce true;
       programs.hyprland.enable = lib.mkForce true;
