@@ -14,12 +14,12 @@ pkgs.nixosTest {
       _module.args.pkgs-unstable = pkgs-unstable;
       imports = [
         ../modules/audio.nix
-        ../modules/bash.nix
+        ../modules/bash/bash.nix
         ../modules/bluetooth.nix
         ../modules/graphics.nix
         ../modules/gnome.nix           # GNOME configuration
-        ../modules/networking.nix
-        ../modules/security.nix
+        ../modules/network/networking.nix
+        ../modules/security/security.nix
         ../modules/themes.nix          # For wallpaper testing
         ../modules/virtualization.nix
       ];
@@ -97,15 +97,15 @@ pkgs.nixosTest {
       _module.args.pkgs-unstable = pkgs-unstable;
       imports = [
         ../modules/audio.nix
-        ../modules/bash.nix
+        ../modules/bash/bash.nix
         ../modules/graphics.nix
         ../modules/gnome.nix           # GNOME disabled
         ../modules/hyprland/hyprland.nix
         ../modules/hyprland/waybar.nix
         ../modules/hyprland/dunst.nix
         ../modules/hyprland/rofi.nix
-        ../modules/networking.nix
-        ../modules/security.nix
+        ../modules/network/networking.nix
+        ../modules/security/security.nix
         ../modules/themes.nix          # SDDM themes
         ../modules/virtualization.nix
       ];

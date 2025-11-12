@@ -14,13 +14,13 @@ pkgs.nixosTest {
       _module.args.pkgs-unstable = pkgs-unstable;
       imports = [
         ../modules/audio.nix
-        ../modules/bash.nix
+        ../modules/bash/bash.nix
         ../modules/graphics.nix
         ../modules/gnome.nix           # GNOME with default settings
         ../modules/hyprland/hyprland.nix  # Hyprland should be disabled
         ../modules/themes.nix          # SDDM themes
-        ../modules/networking.nix
-        ../modules/security.nix
+        ../modules/network/networking.nix
+        ../modules/security/security.nix
         ../modules/virtualization.nix
       ];
 
