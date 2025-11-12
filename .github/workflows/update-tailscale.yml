@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: unstable
+          ref: main
 
       - name: Install Nix
         uses: cachix/install-nix-action@v27
@@ -85,11 +85,17 @@ jobs:
           cd framework-desktop
           nix flake update tailscale
 
-      - name: Build configuration
+      - name: Build Perdurabo configuration
         if: steps.check-update.outputs.needed == 'true'
         run: |
           cd framework-desktop
           nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel --show-trace
+
+      - name: Build Congo configuration
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          cd lenovo-thinkcentre-m710q
+          nix build .#nixosConfigurations.congo.config.system.build.toplevel --show-trace
 
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
@@ -122,14 +128,14 @@ jobs:
           ## Changes
           - Updated Tailscale flake input to ${{ steps.tailscale-release.outputs.version }}
           - Ran \`nix flake update tailscale\`
-          - Build test passed successfully
+          - Build tests passed for both Perdurabo and Congo
 
           ## Release Notes
           $(cat /tmp/changelog.txt)
 
           ---
-          This PR was automatically created by the update-tailscale workflow." \
-            --base unstable \
+          This PR was automatically created by the update-tailscale workflow and will auto-merge after approval." \
+            --base main \
             --head "${branch}" \
             --label "dependencies" \
             --label "automated" \
@@ -141,6 +147,16 @@ jobs:
 
           # Enable auto-delete branch on merge
           gh pr edit "$PR_URL" --delete-branch-on-merge
+
+      - name: Enable auto-merge
+        if: steps.check-update.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
+        run: |
+          # Wait for PR to be created
+          sleep 2
+          PR_NUMBER=$(gh pr view "${branch}" --json number -q .number)
+          gh pr merge "${PR_NUMBER}" --auto --squash --admin
 
       - name: Notify on failure
         if: failure()

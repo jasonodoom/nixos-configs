@@ -5,6 +5,12 @@
   # Enable Tailscale service
   services.tailscale.enable = true;
 
+  # Ensure Tailscale always restarts on failure
+  systemd.services.tailscale.serviceConfig = {
+    Restart = "always";
+    RestartSec = "10s";
+  };
+
   # System packages for Tailscale management
   environment.systemPackages = with pkgs; [
     tailscale
