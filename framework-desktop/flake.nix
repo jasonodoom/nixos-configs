@@ -74,6 +74,7 @@
         ./modules/hyprland/rofi.nix
         ./modules/networking.nix
         ./modules/screen.nix
+        ./modules/tailscale.nix
         ./modules/tmux.nix
         ./modules/secrets.nix
         ./modules/security.nix
