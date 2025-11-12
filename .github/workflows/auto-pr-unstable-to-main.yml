@@ -1,0 +1,73 @@
+name: Auto PR unstable to main
+
+on:
+  push:
+    branches:
+      - unstable
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --head unstable --base main --state open --json number --jq 'length')
+          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.pr_exists == '0'
+        run: |
+          # Get the commits that are in unstable but not in main
+          COMMITS=$(git log main..unstable --oneline --no-decorate | head -10)
+
+          # Count total commits
+          COMMIT_COUNT=$(git log main..unstable --oneline --no-decorate | wc -l | xargs)
+
+          # Create PR body
+          cat > pr-body.md << 'EOF'
+          ## Changes in unstable branch
+
+          This PR merges changes from unstable to main after CI validation.
+
+          ### Commits in this PR:
+          EOF
+
+          echo '```' >> pr-body.md
+          echo "$COMMITS" >> pr-body.md
+          if [ "$COMMIT_COUNT" -gt 10 ]; then
+            echo "... and $((COMMIT_COUNT - 10)) more commits" >> pr-body.md
+          fi
+          echo '```' >> pr-body.md
+
+          cat >> pr-body.md << 'EOF'
+
+          ### CI Checks Required:
+          - build-with-garnix
+          - format-check
+          - security-check
+          - test-gnome-desktop
+
+          ---
+          Auto-generated PR from unstable branch
+          EOF
+
+          gh pr create \
+            --title "Merge unstable to main" \
+            --body "$(cat pr-body.md)" \
+            --base main \
+            --head unstable \
+            --label "automated"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
