@@ -2,6 +2,9 @@
 { config, pkgs, lib, ... }:
 
 {
+  # Prevent password changes except through configuration
+  users.mutableUsers = false;
+
   # Enable doas instead of sudo
   security.doas.enable = true;
   security.sudo.enable = false;

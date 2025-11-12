@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: unstable
 
       - name: Install Nix
         uses: cachix/install-nix-action@v27
@@ -127,7 +129,7 @@ jobs:
 
           ---
           This PR was automatically created by the update-tailscale workflow." \
-            --base main \
+            --base unstable \
             --head "${branch}" \
             --label "dependencies" \
             --label "automated" \
