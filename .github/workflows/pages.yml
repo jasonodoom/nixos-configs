@@ -27,13 +27,24 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: test-artifacts-*
+          pattern: desktop-integration-screenshots
           path: screenshots
           merge-multiple: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Check if screenshots exist
+        id: check-screenshots
+        run: |
+          if [ -d "screenshots" ] && [ "$(find screenshots -name '*.png' -o -name '*.jpg' | wc -l)" -gt 0 ]; then
+            echo "has_screenshots=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_screenshots=false" >> $GITHUB_OUTPUT
+            echo "No screenshots found, skipping Pages deployment"
+          fi
+
       - name: Generate gallery
+        if: steps.check-screenshots.outputs.has_screenshots == 'true'
         run: |
           cd screenshots
           cat > index.html << 'HTML'
@@ -89,13 +100,16 @@ jobs:
           HTML
 
       - name: Setup Pages
+        if: steps.check-screenshots.outputs.has_screenshots == 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: steps.check-screenshots.outputs.has_screenshots == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: screenshots
 
       - name: Deploy to GitHub Pages
+        if: steps.check-screenshots.outputs.has_screenshots == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
