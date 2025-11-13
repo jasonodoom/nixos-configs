@@ -77,3 +77,12 @@ jobs:
             --label "automated"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge with rebase
+        if: steps.check-pr.outputs.pr_exists == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sleep 2
+          PR_NUMBER=$(gh pr list --head unstable --base main --json number -q '.[0].number')
+          gh pr merge "${PR_NUMBER}" --auto --rebase

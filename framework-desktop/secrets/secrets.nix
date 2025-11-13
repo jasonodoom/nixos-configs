@@ -28,4 +28,8 @@ in
 
   # SSH client configuration
   "ssh-config.age".publicKeys = all;
+
+  # Tailscale auth key for initrd remote LUKS unlock
+  # Expires: 2026-02-11
+  "tailscale-initrd-key.age".publicKeys = all;
 }

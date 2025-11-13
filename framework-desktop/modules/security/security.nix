@@ -13,7 +13,7 @@
   security.doas.extraRules = [{
     users = [ "jason" ];
     keepEnv = true;
-    persist = true;
+    persist = true;  # Remember authentication for a session
   }];
 
   # YubiKey support
@@ -127,6 +127,7 @@
 
   security.pam.services = {
     # Enable YubiKey for doas
+    # Works over SSH with pcscd socket forwarding
     doas.yubicoAuth = true;
 
     login = {
