@@ -19,11 +19,34 @@ jobs:
       - name: Check auth key expiry date
         id: check
         run: |
-          # Read expiry date from secrets.nix comment
-          EXPIRY_DATE=$(grep -A1 "tailscale-initrd-key" lenovo-thinkcentre-m710q/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
+          # Read expiry dates from both Congo and Perdurabo secrets.nix
+          CONGO_EXPIRY=$(grep -A1 "tailscale-initrd-key" lenovo-thinkcentre-m710q/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
+          PERDURABO_EXPIRY=$(grep -A1 "tailscale-initrd-key" framework-desktop/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
+
+          # Find the earliest expiring key
+          EXPIRY_DATE=""
+          HOST=""
+
+          if [ -n "$CONGO_EXPIRY" ] && [ -n "$PERDURABO_EXPIRY" ]; then
+            CONGO_EPOCH=$(date -d "$CONGO_EXPIRY" +%s)
+            PERDURABO_EPOCH=$(date -d "$PERDURABO_EXPIRY" +%s)
+            if [ $CONGO_EPOCH -lt $PERDURABO_EPOCH ]; then
+              EXPIRY_DATE="$CONGO_EXPIRY"
+              HOST="Congo"
+            else
+              EXPIRY_DATE="$PERDURABO_EXPIRY"
+              HOST="Perdurabo"
+            fi
+          elif [ -n "$CONGO_EXPIRY" ]; then
+            EXPIRY_DATE="$CONGO_EXPIRY"
+            HOST="Congo"
+          elif [ -n "$PERDURABO_EXPIRY" ]; then
+            EXPIRY_DATE="$PERDURABO_EXPIRY"
+            HOST="Perdurabo"
+          fi
 
           if [ -z "$EXPIRY_DATE" ]; then
-            echo "No expiry date found in secrets.nix"
+            echo "No expiry date found in secrets.nix files"
             exit 0
           fi
 
@@ -33,6 +56,9 @@ jobs:
 
           echo "days_left=$DAYS_LEFT" >> $GITHUB_OUTPUT
           echo "expiry_date=$EXPIRY_DATE" >> $GITHUB_OUTPUT
+          echo "host=$HOST" >> $GITHUB_OUTPUT
+          echo "congo_expiry=$CONGO_EXPIRY" >> $GITHUB_OUTPUT
+          echo "perdurabo_expiry=$PERDURABO_EXPIRY" >> $GITHUB_OUTPUT
 
           if [ $DAYS_LEFT -le 7 ]; then
             echo "warning=true" >> $GITHUB_OUTPUT
@@ -54,11 +80,26 @@ jobs:
           script: |
             const daysLeft = ${{ steps.check.outputs.days_left }};
             const expiryDate = '${{ steps.check.outputs.expiry_date }}';
+            const host = '${{ steps.check.outputs.host }}';
+            const congoExpiry = '${{ steps.check.outputs.congo_expiry }}';
+            const perduraboExpiry = '${{ steps.check.outputs.perdurabo_expiry }}';
 
             const title = `[URGENT] Tailscale initrd auth key expires in ${daysLeft} days`;
+
+            let expiryInfo = '';
+            if (congoExpiry && perduraboExpiry) {
+              expiryInfo = `
+            **Congo:** ${congoExpiry}
+            **Perdurabo:** ${perduraboExpiry}
+
+            Next to expire: **${host}** on **${expiryDate}** (${daysLeft} days)`;
+            } else {
+              expiryInfo = `The Tailscale auth key for ${host} initrd will expire on **${expiryDate}** (${daysLeft} days).`;
+            }
+
             const body = `## Tailscale Auth Key Expiring Soon
 
-            The Tailscale auth key for Congo initrd will expire on **${expiryDate}** (${daysLeft} days).
+            ${expiryInfo}
 
             > This key will expire on ${expiryDate}. If you'll then want to continue using an auth key, you'll need to generate a new one.
 
@@ -70,23 +111,32 @@ jobs:
                - Pre-authorized: ✓
                - Expiry: 90 days
 
-            2. Encrypt the new key:
+            2. If Tailnet Lock is enabled, pre-sign the key:
+               \`\`\`bash
+               export AUTH_KEY="tskey-auth-YOUR-KEY-HERE"
+               tailscale lock sign "$AUTH_KEY"
+               \`\`\`
+
+            3. For **Congo**:
                \`\`\`bash
                cd /etc/nixos/lenovo-thinkcentre-m710q
                RULES=secrets/secrets.nix ragenix -e secrets/tailscale-initrd-key.age
-               # Paste the new key when prompted
-               \`\`\`
-
-            3. Update the expiry date comment in \`lenovo-thinkcentre-m710q/secrets/secrets.nix\`:
-               \`\`\`nix
-               # Tailscale auth key for initrd remote LUKS unlock
-               # Expires: YYYY-MM-DD
-               "tailscale-initrd-key.age".publicKeys = all;
-               \`\`\`
-
-            4. Rebuild Congo:
-               \`\`\`bash
+               # Paste the pre-signed key when prompted
+               # Update expiry date in lenovo-thinkcentre-m710q/secrets/secrets.nix
+               age --decrypt -i ~/.ssh/id_ed25519 secrets/tailscale-initrd-key.age | doas tee /etc/secrets/initrd/tailscale-auth-key
+               doas chmod 400 /etc/secrets/initrd/tailscale-auth-key
                doas nixos-rebuild switch --flake .#congo
+               \`\`\`
+
+            4. For **Perdurabo**:
+               \`\`\`bash
+               cd /etc/nixos/framework-desktop
+               RULES=secrets/secrets.nix ragenix -e secrets/tailscale-initrd-key.age
+               # Paste the pre-signed key when prompted
+               # Update expiry date in framework-desktop/secrets/secrets.nix
+               age --decrypt -i ~/.ssh/id_ed25519 secrets/tailscale-initrd-key.age | sudo tee /etc/secrets/initrd/tailscale-auth-key
+               sudo chmod 400 /etc/secrets/initrd/tailscale-auth-key
+               sudo nixos-rebuild switch --flake .#perdurabo
                \`\`\`
 
             @jasonodoom`;

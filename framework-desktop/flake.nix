@@ -85,6 +85,7 @@
         ./modules/security/security.nix
         ./modules/security/secrets.nix
         ./modules/security/ssh.nix
+        ./modules/security/luks.nix
         ./modules/themes.nix  # SDDM themes
         ./modules/unfree.nix
         ./modules/user-config.nix
