@@ -66,8 +66,6 @@ pkgs.nixosTest {
   };
 
   testScript = ''
-    import time
-
     start_all()
 
     # === GNOME CONFIGURATION TESTS ===
