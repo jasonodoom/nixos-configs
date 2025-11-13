@@ -199,8 +199,6 @@
           buildInputs = with pkgs; [
             terraform
             terraform-ls
-            ansible
-            ansible-lint
             kubectl
             k9s
             kustomize
@@ -208,11 +206,14 @@
             helm
             awscli2
             eksctl
-          ];
+          ] ++ (with pkgs-unstable; [
+            ansible
+            ansible-lint
+          ]);
           shellHook = ''
             echo "☁️ DevOps development environment loaded"
             echo "Terraform version: $(terraform --version)"
-            echo "Available tools: terraform, ansible, ansible-lint, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
+            echo "Available tools: terraform, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
           '';
         };
       };
