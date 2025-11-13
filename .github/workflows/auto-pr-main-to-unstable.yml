@@ -24,11 +24,22 @@ jobs:
         run: |
           git fetch origin unstable:unstable
 
-      - name: Check if PR already exists
+      - name: Check if PR already exists and close if obsolete
         id: check-pr
         run: |
           PR_EXISTS=$(gh pr list --head main --base unstable --state open --json number --jq 'length')
           echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+
+          # Close PR if it exists but has no commits to merge (already merged manually)
+          if [ "$PR_EXISTS" -gt 0 ]; then
+            DIFF=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
+            if [ "$DIFF" -eq 0 ]; then
+              PR_NUMBER=$(gh pr list --head main --base unstable --state open --json number -q '.[0].number')
+              gh pr close "${PR_NUMBER}" --comment "Closing - commits already merged into unstable"
+              echo "Closed obsolete PR #${PR_NUMBER}"
+              echo "pr_exists=0" >> $GITHUB_OUTPUT
+            fi
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -89,5 +100,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sleep 2
-          PR_NUMBER=$(gh pr view main --base unstable --json number -q .number)
+          PR_NUMBER=$(gh pr list --head main --base unstable --json number -q '.[0].number')
           gh pr merge "${PR_NUMBER}" --auto --merge
