@@ -1,4 +1,13 @@
-name: NixOS Configuration CI with Garnix
+name: NixOS Configuration CI
+
+# Cache strategy:
+# - Perdurabo (framework-desktop): Uses Garnix cache (configured via garnix.yaml)
+# - Congo (lenovo-thinkcentre-m710q): Uses Cachix (push from GitHub Actions)
+#
+# Why not use Garnix for both?
+# Garnix only supports one flakeDir per repo and we maintain independent flakes
+# per machine instead of a root flake. Cachix allows us to push from CI for Congo
+# while Garnix continues to build and cache Perdurabo automatically.
 
 on:
   push:
@@ -7,7 +16,7 @@ on:
     branches: [ main, unstable ]
 
 jobs:
-  build-with-garnix:
+  build-with-cache:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -41,29 +50,33 @@ jobs:
         echo "Disk usage after cleanup:"
         df -h
 
-    - name: Install Nix with Garnix cache
+    - name: Install Nix with cache configuration
       uses: DeterminateSystems/nix-installer-action@v13
       with:
         source-tag: "v3.12.1"
         extra-conf: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-          substituters = https://cache.garnix.io https://cache.nixos.org/
-          trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+          trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+    - name: Setup Cachix for Congo builds
+      if: matrix.config == 'congo'
+      uses: cachix/cachix-action@v15
+      with:
+        name: odoom-nixos-configs
 
     - name: Check flake syntax
       run: |
         cd ${{ matrix.host }}
         nix flake check --accept-flake-config
 
-    - name: Build NixOS configuration via Garnix cache
+    - name: Build NixOS configuration
       run: |
         cd ${{ matrix.host }}
-        # Use Garnix cache for faster builds
+        # Perdurabo uses Garnix cache, Congo uses Cachix (setup above)
         nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.toplevel \
           --accept-flake-config \
-          --option substituters "https://cache.garnix.io https://cache.nixos.org/" \
-          --option trusted-public-keys "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
           --option max-jobs 1 \
           --option cores 2 \
           --impure
