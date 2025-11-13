@@ -93,5 +93,12 @@
       # Congo server configuration
       congo = mkSystem "x86_64-linux";
     };
+
+    # Checks for x86_64-linux
+    checks.x86_64-linux = let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    in {
+      cli-access = import ./tests/luks-unlock-test.nix { inherit pkgs; };
+    };
   };
 }

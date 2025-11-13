@@ -118,6 +118,9 @@
     {
       # VM tests - ordered from fastest to most comprehensive
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+        # Fast: CLI access (console, SSH, Tailscale)
+        cli-access = import ./tests/luks-unlock-test.nix { inherit pkgs; };
+
         # Fast: Service-only testing (headless, lightweight)
         desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
 
