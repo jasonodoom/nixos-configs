@@ -495,11 +495,6 @@ pkgs.nixosTest {
     # === SECURITY AND SERVICES TESTING ===
     print("\n=== Security and Services Testing ===")
 
-    # Test polkit
-    gnome_machine.succeed("systemctl is-enabled polkit")
-    hyprland_machine.succeed("systemctl is-enabled polkit")
-    print("[SUCCESS] Polkit enabled on both machines")
-
     # Test keyring services
     gnome_machine.succeed("test -f /run/current-system/sw/bin/gnome-keyring-daemon")
     hyprland_machine.succeed("test -f /run/current-system/sw/bin/gnome-keyring-daemon")

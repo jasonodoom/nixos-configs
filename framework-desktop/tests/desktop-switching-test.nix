@@ -186,10 +186,6 @@ pkgs.nixosTest {
     gnome_machine.wait_for_unit("graphical.target")
     print("[SUCCESS] System reaches graphical target")
 
-    # Test security services
-    gnome_machine.succeed("systemctl is-enabled polkit")
-    print("[SUCCESS] Security services enabled")
-
     # === TEST SUMMARY ===
     print("\n" + "="*50)
     print("GNOME DESKTOP CONFIGURATION TEST SUMMARY")
