@@ -17,6 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # Keep Tailscale workflow targeting main so security updates aren't blocked
           ref: main
 
       - name: Install Nix
