@@ -19,10 +19,28 @@ jobs:
         with:
           ref: unstable
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch main branch
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync main into unstable first
         run: |
           git fetch origin main:main
+
+          # Check if main has changes that unstable doesn't have
+          BEHIND=$(git rev-list --count unstable..main)
+
+          if [ "$BEHIND" -gt 0 ]; then
+            echo "Unstable is $BEHIND commits behind main, syncing..."
+            # Merge main into unstable to keep them in sync
+            git merge main --no-edit
+            git push origin unstable
+          else
+            echo "Unstable is already up-to-date with main"
+          fi
 
       - name: Check if PR already exists
         id: check-pr
