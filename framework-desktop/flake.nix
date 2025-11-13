@@ -35,11 +35,12 @@
   outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
-      inherit system;
+      system = system;
       specialArgs = {
-        inherit inputs system;
+        inherit inputs;
+        system = system;
         pkgs-unstable = import nixpkgs-unstable {
-          inherit system;
+          system = system;
         };
       };
       modules = [
@@ -104,19 +105,22 @@
   } // (flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = import nixpkgs {
-        inherit system;
+        system = system;
         config = {
           allowUnfree = true;
           allowUnsupportedSystem = true;
         };
       };
       pkgs-unstable = import nixpkgs-unstable {
-        inherit system;
+        system = system;
       };
     in
     {
       # VM tests - ordered from fastest to most comprehensive
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+        # Fast: CLI access (console, SSH, Tailscale)
+        cli-access = import ./tests/luks-unlock-test.nix { inherit pkgs; };
+
         # Fast: Service-only testing (headless, lightweight)
         desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
 
@@ -198,8 +202,6 @@
           buildInputs = with pkgs; [
             terraform
             terraform-ls
-            ansible
-            ansible-lint
             kubectl
             k9s
             kustomize
@@ -207,11 +209,14 @@
             helm
             awscli2
             eksctl
-          ];
+          ] ++ (with pkgs-unstable; [
+            ansible
+            ansible-lint
+          ]);
           shellHook = ''
             echo "☁️ DevOps development environment loaded"
             echo "Terraform version: $(terraform --version)"
-            echo "Available tools: terraform, ansible, ansible-lint, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
+            echo "Available tools: terraform, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
           '';
         };
       };

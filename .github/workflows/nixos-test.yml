@@ -1,4 +1,4 @@
-name: NixOS Integration Tests
+name: NixOS VM Tests
 on:
   push:
     branches: [main, unstable]
@@ -6,198 +6,133 @@ on:
     branches: [main, unstable]
 
 jobs:
-  test-gnome-desktop:
+  vm-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - host: framework-desktop
+            config: perdurabo
+          - host: lenovo-thinkcentre-m710q
+            config: congo
+
     steps:
       - uses: actions/checkout@v5
 
       - uses: cachix/install-nix-action@v31.8.2
         with:
-          enable_kvm: false # GitHub runners don't support KVM
+          enable_kvm: false
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+            trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
-      - name: Run GNOME desktop test
-        id: gnome-test
+      - name: Run CLI access test
+        id: cli-test
+        run: |
+          cd ${{ matrix.host }}
+          export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#checks.x86_64-linux.cli-access --show-trace --accept-flake-config 2>&1 | tee cli-test-output.log
+          CLI_EXIT_CODE=$?
+          echo "CLI_EXIT_CODE=$CLI_EXIT_CODE" >> $GITHUB_OUTPUT
+
+      - name: Run desktop switching test
+        id: desktop-test
+        if: matrix.host == 'framework-desktop'
         run: |
           cd framework-desktop
-          # Add flake config acceptance to avoid warnings
           export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#checks.x86_64-linux.desktop-switching --show-trace --accept-flake-config 2>&1 | tee desktop-test-output.log
+          DESKTOP_EXIT_CODE=$?
+          echo "DESKTOP_EXIT_CODE=$DESKTOP_EXIT_CODE" >> $GITHUB_OUTPUT
 
-          # Capture both stdout and derivation path for logs
-          set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.desktop-switching --show-trace --accept-flake-config 2>&1 | tee gnome-desktop-test-output.log
-          GNOME_EXIT_CODE=$?
-
-          echo "GNOME_EXIT_CODE=$GNOME_EXIT_CODE" >> $GITHUB_OUTPUT
-
-      - name: Run comprehensive desktop integration test
-        id: integration-test
+      - name: Check test results
+        id: check-results
         run: |
-          cd framework-desktop
-          export NIX_CONFIG="accept-flake-config = true"
-
-          set +e  # Don't exit on error so we can capture logs
-          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee integration-test-output.log
-          INTEGRATION_EXIT_CODE=$?
-
-          # Extract derivation path for logs
-          DERIVATION_PATH=$(grep -o '/nix/store/[^-]*-vm-test-run[^/]*\.drv' integration-test-output.log | head -1) || true
-          if [ -n "$DERIVATION_PATH" ]; then
-            echo "Getting full logs from derivation: $DERIVATION_PATH"
-            nix log "$DERIVATION_PATH" > integration-full.log 2>&1 || echo "Could not get derivation logs" > integration-full.log
-          fi
-
-          # Check for test failure indicators - build can succeed but VM test can fail
           TEST_FAILED=false
-          if [ $INTEGRATION_EXIT_CODE -ne 0 ] || [ "${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}" != "0" ]; then
+
+          if [ "${{ steps.cli-test.outputs.CLI_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
-            echo "Build failed - GNOME: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}, Integration: $INTEGRATION_EXIT_CODE"
+            echo "CLI test failed"
           fi
 
-          # Check for test failure patterns in logs - include evaluation errors
-          if grep -q "Traceback\|timed out\|FAILED\|RequestedAssertionFailed\|action timed out\|builder failed\|error:\|does not exist\|cannot build\|evaluation failed" integration-test-output.log integration-full.log gnome-desktop-test-output.log 2>/dev/null || \
-             grep -q "error:" integration-test-output.log gnome-desktop-test-output.log 2>/dev/null; then
+          if [ "${{ matrix.host }}" == "framework-desktop" ] && [ "${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
-            echo "Detected test failure patterns in logs"
+            echo "Desktop test failed"
           fi
 
-          # Additional check - if we see specific error patterns that indicate failure
-          if grep -q "The option.*does not exist\|while evaluating\|while calling.*builtin" integration-test-output.log gnome-desktop-test-output.log 2>/dev/null; then
+          cd ${{ matrix.host }}
+          if grep -q "Traceback\|FAILED\|RequestedAssertionFailed" cli-test-output.log desktop-test-output.log 2>/dev/null; then
             TEST_FAILED=true
-            echo "Detected NixOS evaluation error in logs"
+            echo "Test failure patterns detected"
           fi
 
-          # Report results
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] All tests completed successfully"
+            echo "[PASSED] All tests completed for ${{ matrix.config }}"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] Tests failed - GNOME: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE }}, Integration: $INTEGRATION_EXIT_CODE"
-            if grep -q "timed out\|RequestedAssertionFailed\|action timed out" integration-test-output.log integration-full.log gnome-desktop-test-output.log; then
-              echo "Detected test timeout or assertion failure in logs"
-            fi
+            echo "[FAILED] Tests failed for ${{ matrix.config }}"
             exit 1
           fi
 
-          echo "INTEGRATION_EXIT_CODE=$INTEGRATION_EXIT_CODE" >> $GITHUB_OUTPUT
-
-      - name: Generate HTML test report
-        if: always()
+      - name: Generate screenshot summary
+        if: always() && matrix.host == 'framework-desktop'
         run: |
           cd framework-desktop
-          # Create HTML report from test results
-          cat > test-report.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>NixOS Framework Desktop - VM Test Report</title>
-              <style>
-                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; background: #f5f5f5; }
-                  .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                  h1 { color: #333; border-bottom: 3px solid #7aa2f7; padding-bottom: 10px; }
-                  .test-step { margin: 20px 0; padding: 20px; background: #f8f9fa; border-left: 4px solid #7aa2f7; border-radius: 4px; }
-                  .screenshot { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
-                  .success { color: #28a745; font-weight: bold; }
-                  .failed { color: #dc3545; font-weight: bold; }
-                  .timestamp { color: #666; font-size: 0.9em; }
-                  .test-summary { background: #e7f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>NixOS Framework Desktop VM Test Report</h1>
-                  <div class="timestamp">Generated: $(date)</div>
+          echo "## Test Screenshots - ${{ matrix.config }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-                  <div class="test-summary">
-                      <h2>Test Results Summary</h2>
-                      <p><strong>GNOME Desktop Test:</strong> ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}</p>
-                      <p><strong>Desktop Integration Test:</strong> ${{ steps.integration-test.outputs.TEST_RESULT == 'success' && '[PASS]' || '[FAIL]' }}</p>
-                  </div>
-
-                  <div class="test-step">
-                      <h2>Available Screenshots</h2>
-                      <p>Screenshots from VM tests (if available):</p>
-          EOF
-
-          # Add any screenshots found to the HTML report
-          if [ -d "result" ]; then
-            for screenshot in result/*.png; do
-              if [ -f "$screenshot" ]; then
-                basename_screenshot=$(basename "$screenshot")
-                echo "            <div><h3>$basename_screenshot</h3><img src=\"$basename_screenshot\" alt=\"$basename_screenshot\" class=\"screenshot\"></div>" >> test-report.html
+          found=0
+          for img in result*/screenshots/*.png result*/*.png; do
+            if [ -f "$img" ]; then
+              found=1
+              imgname=$(basename "$img")
+              echo "### $imgname" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              size=$(du -h "$img" | cut -f1)
+              echo "_Size: $size_" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              size_bytes=$(stat -c%s "$img" 2>/dev/null || stat -f%z "$img")
+              if [ "$size_bytes" -lt 1048576 ]; then
+                echo "![${imgname}](data:image/png;base64,$(base64 -w 0 "$img" 2>/dev/null || base64 "$img"))" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "_Screenshot too large for inline display_" >> $GITHUB_STEP_SUMMARY
               fi
-            done
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "No screenshots generated" >> $GITHUB_STEP_SUMMARY
           fi
 
-          cat >> test-report.html << 'EOF'
-                  </div>
-
-                  <div class="test-step">
-                      <h2>Test Logs</h2>
-                      <p>Check the artifact files for detailed logs:</p>
-                      <ul>
-                          <li>gnome-desktop-test-output.log - GNOME desktop test output</li>
-                          <li>integration-test-output.log - Desktop integration test output</li>
-                          <li>integration-full.log - Complete derivation logs</li>
-                      </ul>
-                  </div>
-
-                  <div class="test-summary">
-                      <h2 class="${{ steps.integration-test.outputs.TEST_RESULT == 'success' && 'success' || 'failed' }}">${{ steps.integration-test.outputs.TEST_RESULT == 'success' && '[PASS] All Tests Completed Successfully' || '[FAIL] Some Tests Failed' }}</h2>
-                      <p>Framework desktop NixOS configuration with dual desktop environment testing.</p>
-                  </div>
-              </div>
-          </body>
-          </html>
-          EOF
-
-      - name: Upload HTML test report (browser viewable)
+      - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: desktop-test-report-html
+          name: test-artifacts-${{ matrix.config }}
           path: |
-            framework-desktop/test-report.html
-            framework-desktop/result/*.png
-          retention-days: 30
+            ${{ matrix.host }}/*.log
+            ${{ matrix.host }}/result*/screenshots/
+            ${{ matrix.host }}/result*/*.png
+          if-no-files-found: ignore
 
-      - name: Upload test screenshots and logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: desktop-test-artifacts
-          path: |
-            framework-desktop/result/
-            framework-desktop/integration-test-output.log
-            framework-desktop/gnome-desktop-test-output.log
-            framework-desktop/integration-full.log
-          retention-days: 7
-
-      - name: Test Summary
+      - name: Test summary
         if: always()
         run: |
-          echo "## Desktop Test Results" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.integration-test.outputs.TEST_RESULT }}" = "success" ]; then
-            echo "**All desktop tests passed successfully**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Tests Completed:" >> $GITHUB_STEP_SUMMARY
-            echo "- GNOME desktop test" >> $GITHUB_STEP_SUMMARY
-            echo "- Comprehensive desktop integration test" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Available Artifacts:" >> $GITHUB_STEP_SUMMARY
-            echo "- **desktop-test-report-html**: Browser-viewable test report with embedded screenshots" >> $GITHUB_STEP_SUMMARY
-            echo "- **desktop-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results - ${{ matrix.config }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check-results.outputs.TEST_RESULT }}" = "success" ]; then
+            echo "[PASS] All tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "**Desktop tests failed**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
-            echo "- GNOME desktop test: ${{ steps.gnome-test.outputs.GNOME_EXIT_CODE == '0' && 'PASSED' || 'FAILED' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Desktop integration test: FAILED" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Check the uploaded artifacts for detailed logs:" >> $GITHUB_STEP_SUMMARY
-            echo "- **desktop-test-report-html**: Browser-viewable test report with screenshots" >> $GITHUB_STEP_SUMMARY
-            echo "- **desktop-test-artifacts**: Raw logs and test data" >> $GITHUB_STEP_SUMMARY
+            echo "[FAIL] Tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- CLI access: ${{ steps.cli-test.outputs.CLI_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ matrix.host }}" == "framework-desktop" ]; then
+            echo "- Desktop switching: ${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           fi

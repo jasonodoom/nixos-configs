@@ -7,8 +7,14 @@ A collection of NixOS system configurations for different machines.
 
 ## Systems
 
-### Framework Desktop Max+ 395
+### Framework Desktop Max+ 395 (Perdurabo)
 
 - **Location**: `./framework-desktop/`
 - **Description**: Pure NixOS configuration with Hyprland, LUKS encryption and isolated development shells
 - **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs/framework-desktop#perdurabo`
+
+### Lenovo ThinkCentre M710q (Congo)
+
+- **Location**: `./lenovo-thinkcentre-m710q/`
+- **Description**: Server configuration with LUKS remote unlock via Tailscale, OpenBao, Pi-hole and log aggregation
+- **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs/lenovo-thinkcentre-m710q#congo`

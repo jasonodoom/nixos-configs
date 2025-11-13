@@ -2,3 +2,7 @@
 framework-desktop/secrets/*
 !framework-desktop/secrets/secrets.nix
 !framework-desktop/secrets/*.age
+
+lenovo-thinkcentre-m710q/secrets/*
+!lenovo-thinkcentre-m710q/secrets/secrets.nix
+!lenovo-thinkcentre-m710q/secrets/*.age
