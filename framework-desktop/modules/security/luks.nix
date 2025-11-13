@@ -127,7 +127,7 @@
 # If SSH session, run unlock command
 if [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_CLIENT" ]; then
   echo "Unlocking LUKS encrypted disk..."
-  /bin/systemd-cryptsetup attach crypted /dev/disk/by-uuid/REPLACE_WITH_PERDURABO_UUID
+  /bin/systemd-cryptsetup attach crypted /dev/disk/by-uuid/842e66b5-0b98-4b86-9427-ed94fa425a06
   echo "Disk unlocked. SSH session will disconnect - boot will continue."
   echo "You can reconnect after boot completes."
   # Just exit - systemd will continue boot automatically after disk is unlocked
@@ -170,9 +170,8 @@ EOF
   # LUKS configuration
   boot.initrd.luks.devices = {
     "crypted" = {
-      # Use the UUID of the encrypted partition
-      # TODO: Replace with actual Perdurabo LUKS UUID
-      device = "/dev/disk/by-uuid/REPLACE_WITH_PERDURABO_UUID";
+      # Use the UUID of the encrypted partition (nvme0n1p2)
+      device = "/dev/disk/by-uuid/842e66b5-0b98-4b86-9427-ed94fa425a06";
       preLVM = true;
 
       # SSD optimization
