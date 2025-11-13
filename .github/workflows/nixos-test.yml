@@ -30,6 +30,16 @@ jobs:
             substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
             trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
+      - name: Build system configuration
+        id: system-build
+        run: |
+          cd ${{ matrix.host }}
+          export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.toplevel --dry-run --show-trace --accept-flake-config 2>&1 | tee system-build-output.log
+          SYSTEM_BUILD_EXIT_CODE=$?
+          echo "SYSTEM_BUILD_EXIT_CODE=$SYSTEM_BUILD_EXIT_CODE" >> $GITHUB_OUTPUT
+
       - name: Run CLI access test
         id: cli-test
         run: |
@@ -56,6 +66,11 @@ jobs:
         run: |
           TEST_FAILED=false
 
+          if [ "${{ steps.system-build.outputs.SYSTEM_BUILD_EXIT_CODE }}" != "0" ]; then
+            TEST_FAILED=true
+            echo "System build failed"
+          fi
+
           if [ "${{ steps.cli-test.outputs.CLI_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
             echo "CLI test failed"
@@ -67,7 +82,7 @@ jobs:
           fi
 
           cd ${{ matrix.host }}
-          if grep -q "Traceback\|FAILED\|RequestedAssertionFailed" cli-test-output.log desktop-test-output.log 2>/dev/null; then
+          if grep -q "Traceback\|FAILED\|RequestedAssertionFailed" system-build-output.log cli-test-output.log desktop-test-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
           fi

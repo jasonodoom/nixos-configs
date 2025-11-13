@@ -1,8 +1,10 @@
-name: Auto PR main to unstable
+name: Auto sync main to unstable
 
 on:
   pull_request:
     types: [closed]
+    branches: [main]
+  push:
     branches: [main]
 
 permissions:
@@ -11,8 +13,8 @@ permissions:
   issues: write
 
 jobs:
-  create-pr:
-    if: github.event.pull_request.merged == true
+  sync-branches:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,86 +22,34 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch unstable branch
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync main to unstable
         run: |
           git fetch origin unstable:unstable
 
-      - name: Check if PR already exists and close if obsolete
-        id: check-pr
-        run: |
-          PR_EXISTS=$(gh pr list --head main --base unstable --state open --json number --jq 'length')
-          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+          # Check if unstable is behind main
+          BEHIND=$(git rev-list --count main..unstable)
+          AHEAD=$(git rev-list --count unstable..main)
 
-          # Close PR if it exists but has no commits to merge (already merged manually)
-          if [ "$PR_EXISTS" -gt 0 ]; then
-            DIFF=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
-            if [ "$DIFF" -eq 0 ]; then
-              PR_NUMBER=$(gh pr list --head main --base unstable --state open --json number -q '.[0].number')
-              gh pr close "${PR_NUMBER}" --comment "Closing - commits already merged into unstable"
-              echo "Closed obsolete PR #${PR_NUMBER}"
-              echo "pr_exists=0" >> $GITHUB_OUTPUT
-            fi
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Unstable is $BEHIND commits behind main and $AHEAD commits ahead"
 
-      - name: Check if update needed
-        id: check-update
-        run: |
-          DIFF=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
-          echo "commits=$DIFF" >> $GITHUB_OUTPUT
-          if [ "$DIFF" -gt 0 ]; then
-            echo "Update needed: $DIFF commits"
-            echo "needed=true" >> $GITHUB_OUTPUT
+          if [ "$AHEAD" -gt 0 ]; then
+            echo "Main has new commits, syncing to unstable..."
+
+            # Reset unstable to main to keep them in sync
+            git checkout unstable
+            git reset --hard main
+            git push origin unstable --force-with-lease
+
+            echo "Successfully synced unstable with main"
           else
-            echo "No update needed"
-            echo "needed=false" >> $GITHUB_OUTPUT
+            echo "No sync needed - unstable is up to date with main"
           fi
-
-      - name: Create Pull Request
-        if: steps.check-pr.outputs.pr_exists == '0' && steps.check-update.outputs.needed == 'true'
-        run: |
-          COMMITS=$(git log unstable..main --oneline --no-decorate | head -10)
-          COMMIT_COUNT=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
-
-          cat > pr-body.md << 'EOF'
-          ## Changes from main branch
-
-          This PR merges changes from main to unstable (typically Tailscale or Dependabot updates).
-
-          ### Commits in this PR:
-          EOF
-
-          echo '```' >> pr-body.md
-          echo "$COMMITS" >> pr-body.md
-          if [ "$COMMIT_COUNT" -gt 10 ]; then
-            echo "... and $((COMMIT_COUNT - 10)) more commits" >> pr-body.md
-          fi
-          echo '```' >> pr-body.md
-
-          cat >> pr-body.md << 'EOF'
-
-          ---
-          Auto-generated PR from main branch
-          EOF
-
-          PR_URL=$(gh pr create \
-            --title "Merge main to unstable" \
-            --body "$(cat pr-body.md)" \
-            --base unstable \
-            --head main \
-            --label "automated")
-
-          echo "pr_url=${PR_URL}" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable auto-merge
-        if: steps.check-pr.outputs.pr_exists == '0' && steps.check-update.outputs.needed == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          sleep 2
-          PR_NUMBER=$(gh pr list --head main --base unstable --json number -q '.[0].number')
-          gh pr merge "${PR_NUMBER}" --auto --merge
