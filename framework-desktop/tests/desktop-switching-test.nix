@@ -139,11 +139,11 @@ pkgs.nixosTest {
     print("[SUCCESS] Docker-compose available")
 
     # Test bash aliases functionality
-    gnome_machine.succeed("runuser -u testuser -- bash -c 'source /etc/bashrc; alias update-system'")
+    gnome_machine.succeed("runuser -u testuser -- bash -i -c 'alias update-system'")
     print("[SUCCESS] Bash aliases including update-system available")
 
     # Test bash git branch function
-    gnome_machine.succeed("runuser -u testuser -- bash -c 'source /etc/bashrc; type parse_git_branch'")
+    gnome_machine.succeed("runuser -u testuser -- bash -i -c 'type parse_git_branch'")
     print("[SUCCESS] Git branch function available")
 
     # === CONFIGURATION VALIDATION TESTS ===
