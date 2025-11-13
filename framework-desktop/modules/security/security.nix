@@ -126,9 +126,17 @@
   };
 
   security.pam.services = {
-    # Enable YubiKey for doas
-    # Works over SSH with pcscd socket forwarding
-    doas.yubicoAuth = true;
+    # YubiKey for doas - require locally, password-only over SSH
+    doas = {
+      # Append conditional YubiKey check after standard auth
+      text = lib.mkAfter ''
+        # Skip YubiKey if in SSH session (pam_succeed_if returns success when SSH_CONNECTION is set)
+        # success=1 means skip next rule if this succeeds
+        auth [success=1 default=ignore] ${pkgs.pam}/lib/security/pam_succeed_if.so quiet env = SSH_CONNECTION
+        # Require YubiKey for non-SSH sessions
+        auth required ${pkgs.yubico-pam}/lib/security/pam_yubico.so mode=challenge-response chalresp_path=/etc/yubico id=5252959
+      '';
+    };
 
     login = {
       enableGnomeKeyring = true;

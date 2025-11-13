@@ -168,7 +168,8 @@ jobs:
           if [ $EXIT_CODE -eq 0 ]; then
             echo "[PASS] Desktop integration test completed"
           else
-            echo "[FAIL] Desktop integration test failed"
+            echo "[FAIL] Desktop integration test failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
           fi
 
       - name: Generate screenshot summary
