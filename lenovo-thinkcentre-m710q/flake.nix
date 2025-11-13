@@ -75,9 +75,9 @@
         ./modules/services/logs.nix
 
         # Container services
-        ./modules/containers/openbao.nix
-        ./modules/containers/pihole.nix
-        ./modules/containers/homepage.nix
+        # ./modules/containers/openbao.nix
+        # ./modules/containers/pihole.nix
+        # ./modules/containers/homepage.nix
       ];
     };
   in
