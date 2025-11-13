@@ -345,10 +345,6 @@ pkgs.nixosTest {
     gnome_machine.succeed("grep 'SystemAccount=true' /etc/accountsservice/users/gdm")
     print("[SUCCESS] GDM user properly hidden from user lists")
 
-    # Test power management service
-    gnome_machine.succeed("systemctl --user list-unit-files | grep gnome-power-settings || echo 'power-service-check'")
-    print("[SUCCESS] GNOME power management configured")
-
     # Take screenshot of GNOME login screen
     gnome_machine.succeed("DISPLAY=:99 xwd -root | convert xwd:- /tmp/gnome_login_screen.png || echo 'Screenshot attempted'")
     print("[SUCCESS] GNOME login screen screenshot taken")
