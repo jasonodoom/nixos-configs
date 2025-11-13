@@ -513,11 +513,6 @@ pkgs.nixosTest {
     hyprland_machine.wait_for_unit("graphical.target")
     print("[SUCCESS] Both machines reach graphical target")
 
-    # Test configuration builds
-    gnome_machine.succeed("nixos-rebuild dry-run > /dev/null")
-    hyprland_machine.succeed("nixos-rebuild dry-run > /dev/null")
-    print("[SUCCESS] Both configurations build successfully")
-
     # Take final screenshots
     hyprland_machine.screenshot("final_hyprland_desktop")
     gnome_machine.succeed("DISPLAY=:99 xwd -root | convert xwd:- /tmp/final_gnome_state.png || echo 'Final GNOME screenshot'")

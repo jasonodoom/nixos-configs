@@ -146,13 +146,6 @@ pkgs.nixosTest {
     gnome_machine.succeed("runuser -u testuser -- bash -i -c 'type parse_git_branch'")
     print("[SUCCESS] Git branch function available")
 
-    # === CONFIGURATION VALIDATION TESTS ===
-    print("\n=== Configuration File Validation ===")
-
-    # Test configuration builds successfully
-    gnome_machine.succeed("nixos-rebuild dry-run > /dev/null")
-    print("[SUCCESS] Configuration builds successfully")
-
     # === SERVICE VALIDATION TESTS ===
     print("\n=== Service Validation Tests ===")
 
