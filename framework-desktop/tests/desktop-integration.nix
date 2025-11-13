@@ -290,8 +290,6 @@ pkgs.nixosTest {
   };
 
   testScript = ''
-    import time
-
     start_all()
 
     # === GNOME COMPREHENSIVE TESTING ===
