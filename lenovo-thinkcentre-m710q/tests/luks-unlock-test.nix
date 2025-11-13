@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {}, lib ? pkgs.lib }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "congo-cli-access-test";
 
   meta = with pkgs.lib.maintainers; {

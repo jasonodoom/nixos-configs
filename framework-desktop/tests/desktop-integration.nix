@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {}, pkgs-unstable ? pkgs, lib ? pkgs.lib }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "desktop-integration-test";
 
   meta = with pkgs.lib.maintainers; {
