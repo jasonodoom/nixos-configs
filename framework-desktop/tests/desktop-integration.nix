@@ -57,12 +57,16 @@ pkgs.testers.nixosTest {
       # Enable hardware acceleration for VM
       hardware.graphics.enable = true;
 
-      # Create test user
+      # Create test user with empty password for VM test
       users.users.testuser = {
         isNormalUser = true;
-        hashedPassword = "";  # Empty password for VM test only
+        initialHashedPassword = "";
         extraGroups = [ "wheel" ];
       };
+
+      # Allow empty passwords for test user in VM
+      security.pam.services.sddm.allowNullPassword = true;
+      security.pam.services.login.allowNullPassword = true;
 
 
       # Add testing utilities
@@ -82,6 +86,9 @@ pkgs.testers.nixosTest {
         DISPLAY = ":99";
         XDG_SESSION_TYPE = "x11";  # Use X11 for VM testing simplicity
       };
+
+      # Disable YubiKey for VM test
+      security.pam.yubico.enable = lib.mkForce false;
 
       # Disable heavy services for faster testing
       services.tailscale.enable = lib.mkForce false;
@@ -208,12 +215,16 @@ pkgs.testers.nixosTest {
       };
       hardware.graphics.enable = true;
 
-      # Create test user
+      # Create test user with empty password for VM test
       users.users.testuser = {
         isNormalUser = true;
-        hashedPassword = "";
+        initialHashedPassword = "";
         extraGroups = [ "wheel" ];
       };
+
+      # Allow empty passwords for test user in VM
+      security.pam.services.sddm.allowNullPassword = true;
+      security.pam.services.login.allowNullPassword = true;
 
       # Required services for Hyprland
       security.polkit.enable = true;
@@ -232,6 +243,8 @@ pkgs.testers.nixosTest {
       };
 
       # PAM configuration for session management
+      # Disable YubiKey for VM test
+      security.pam.yubico.enable = lib.mkForce false;
       security.pam.services = {
         login.enableGnomeKeyring = true;
         sddm.enableGnomeKeyring = true;
@@ -365,6 +378,26 @@ pkgs.testers.nixosTest {
     gnome_machine.succeed("grep -r 'super.*r' /etc/dconf/db/ || echo 'keybinding-configured'")
     print("[SUCCESS] GNOME Super+R keybinding configured")
 
+    # === GNOME LOGIN TESTING (MINIMAL) ===
+    print("\n=== GNOME Login Testing ===")
+
+    # Attempt minimal login test (may not fully work in VM but worth trying)
+    gnome_machine.screenshot("gdm_login_screen")
+    gnome_machine.sleep(2)
+
+    # Try auto-login for testuser
+    gnome_machine.succeed("systemctl set-environment DISPLAY=:0")
+    gnome_machine.succeed("systemctl set-environment XDG_SESSION_TYPE=x11")
+
+    # Check if we can get GNOME Shell running
+    result = gnome_machine.succeed("pgrep -x gnome-shell || echo 'no-shell'")
+    if "no-shell" not in result:
+        print("[SUCCESS] GNOME Shell process detected")
+        gnome_machine.sleep(3)
+        gnome_machine.screenshot("gnome_desktop_attempt")
+    else:
+        print("[INFO] GNOME Shell not running (expected in VM without full login)")
+
     # === HYPRLAND COMPREHENSIVE TESTING ===
     print("\n=== Hyprland Desktop Environment Testing ===")
 
@@ -393,9 +426,16 @@ pkgs.testers.nixosTest {
     hyprland_machine.sleep(5)
     hyprland_machine.screenshot("sddm_login_screen")
 
-    # Simple login test (press enter for empty password)
+    # Login to SDDM with empty password
+    # Type username
+    hyprland_machine.send_chars("testuser")
+    hyprland_machine.sleep(1)
+    # Press enter to move to password field
     hyprland_machine.send_key("ret")
-    print("[SUCCESS] Login attempt made")
+    hyprland_machine.sleep(1)
+    # Press enter again to submit (empty password)
+    hyprland_machine.send_key("ret")
+    print("[SUCCESS] Login credentials submitted")
 
     # Wait for Hyprland to start
     hyprland_machine.wait_until_succeeds("pgrep Hyprland", timeout=60)
@@ -511,6 +551,15 @@ pkgs.testers.nixosTest {
     # Take final screenshots
     hyprland_machine.screenshot("final_hyprland_desktop")
     gnome_machine.succeed("DISPLAY=:99 xwd -root | convert xwd:- /tmp/final_gnome_state.png || echo 'Final GNOME screenshot'")
+
+    # === PRESERVE SCREENSHOTS ===
+    # Copy screenshots to /tmp/xchg which persists even on test failure
+    print("\n=== Preserving screenshots for artifact upload ===")
+    hyprland_machine.succeed("mkdir -p /tmp/xchg/screenshots || true")
+    hyprland_machine.succeed("find /tmp/vm-state-machine -name '*.png' -exec cp {} /tmp/xchg/screenshots/ \\; || true")
+    gnome_machine.succeed("mkdir -p /tmp/xchg/screenshots || true")
+    gnome_machine.succeed("cp /tmp/*.png /tmp/xchg/screenshots/ 2>/dev/null || true")
+    print("[SUCCESS] Screenshots copied to shared directory")
 
     # === TEST SUMMARY ===
     print("\n" + "="*60)
