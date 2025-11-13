@@ -149,10 +149,6 @@ pkgs.nixosTest {
     # === CONFIGURATION VALIDATION TESTS ===
     print("\n=== Configuration File Validation ===")
 
-    # Test GNOME configuration variables can be read
-    gnome_config = gnome_machine.succeed("grep -E 'useGnomeAsDefault.*true' /etc/nixos/modules/gnome.nix || echo 'config-check'")
-    print(f"[SUCCESS] GNOME configuration variables: {gnome_config.strip()}")
-
     # Test configuration builds successfully
     gnome_machine.succeed("nixos-rebuild dry-run > /dev/null")
     print("[SUCCESS] Configuration builds successfully")
@@ -170,10 +166,6 @@ pkgs.nixosTest {
 
     # === POWER MANAGEMENT TESTS ===
     print("\n=== Power Management Configuration Tests ===")
-
-    # Test GNOME power management service exists
-    gnome_power = gnome_machine.succeed("systemctl --user list-unit-files | grep gnome-power-settings || echo 'power-service-check'")
-    print(f"[SUCCESS] GNOME power management: {gnome_power.strip()}")
 
     # Test gsettings is available for power management
     gnome_machine.succeed("test -f /run/current-system/sw/bin/gsettings")
