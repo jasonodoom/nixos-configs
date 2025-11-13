@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        host: [framework-desktop]
+        include:
+          - host: framework-desktop
+            config: perdurabo
+          - host: lenovo-thinkcentre-m710q
+            config: congo
 
     steps:
     - name: Checkout repository
@@ -56,18 +60,20 @@ jobs:
       run: |
         cd ${{ matrix.host }}
         # Use Garnix cache for faster builds
-        nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
+        nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.toplevel \
           --accept-flake-config \
           --option substituters "https://cache.garnix.io https://cache.nixos.org/" \
           --option trusted-public-keys "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
           --option max-jobs 1 \
-          --option cores 2
+          --option cores 2 \
+          --impure
         # Clean up after build to save space
         nix-collect-garbage
         echo "Disk usage after build:"
         df -h
 
     - name: Test development shells
+      if: matrix.host == 'framework-desktop'
       run: |
         cd ${{ matrix.host }}
         # Test that all dev shells can be built

@@ -1,5 +1,7 @@
+flakeDir: framework-desktop
+
 builds:
   include:
-    - "framework-desktop#nixosConfigurations.*"
-    - "framework-desktop#devShells.x86_64-linux.*"
-    - "framework-desktop#packages.x86_64-linux.*"
+    - "nixosConfigurations.*"
+    - "devShells.x86_64-linux.*"
+    - "packages.x86_64-linux.*"
