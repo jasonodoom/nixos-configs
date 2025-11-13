@@ -1,3 +1,6 @@
+# Only builds Perdurabo because Garnix supports one flakeDir per repo
+# Congo uses Cachix (I want independent flakes per machine)
+
 flakeDir: framework-desktop
 
 builds:
