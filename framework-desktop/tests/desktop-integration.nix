@@ -325,7 +325,7 @@ pkgs.nixosTest {
 
     # Test specific GNOME extensions and management tools
     gnome_machine.succeed("test -f /run/current-system/sw/bin/gnome-tweaks")
-    gnome_machine.succeed("test -f /run/current-system/sw/bin/gnome-extension-manager")
+    gnome_machine.succeed("test -f /run/current-system/sw/bin/extension-manager")
     print("[SUCCESS] GNOME Tweaks and Extension Manager available")
 
     # Test dash-to-dock extension is available
