@@ -35,11 +35,12 @@
   outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
-      inherit system;
+      system = system;
       specialArgs = {
-        inherit inputs system;
+        inherit inputs;
+        system = system;
         pkgs-unstable = import nixpkgs-unstable {
-          inherit system;
+          system = system;
         };
       };
       modules = [
@@ -104,14 +105,14 @@
   } // (flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = import nixpkgs {
-        inherit system;
+        system = system;
         config = {
           allowUnfree = true;
           allowUnsupportedSystem = true;
         };
       };
       pkgs-unstable = import nixpkgs-unstable {
-        inherit system;
+        system = system;
       };
     in
     {
