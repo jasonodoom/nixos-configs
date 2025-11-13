@@ -89,5 +89,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sleep 2
-          PR_NUMBER=$(gh pr view main --base unstable --json number -q .number)
+          PR_NUMBER=$(gh pr list --head main --base unstable --json number -q '.[0].number')
           gh pr merge "${PR_NUMBER}" --auto --merge
