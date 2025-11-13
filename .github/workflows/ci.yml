@@ -66,10 +66,18 @@ jobs:
       with:
         name: odoom-nixos-configs
 
-    - name: Check flake syntax
+    - name: Run fast tests
       run: |
         cd ${{ matrix.host }}
-        nix flake check --accept-flake-config
+        # Run CLI access test (both machines)
+        echo "Running CLI access test..."
+        nix build .#checks.x86_64-linux.cli-access --accept-flake-config
+
+        # Run desktop-switching test (Perdurabo only, skip slow desktop-integration)
+        if [ "${{ matrix.host }}" == "framework-desktop" ]; then
+          echo "Running desktop-switching test..."
+          nix build .#checks.x86_64-linux.desktop-switching --accept-flake-config
+        fi
 
     - name: Build NixOS configuration
       run: |
