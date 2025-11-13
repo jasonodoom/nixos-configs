@@ -4,6 +4,9 @@ on:
     branches: [main, unstable]
   pull_request:
     branches: [main, unstable]
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+  workflow_dispatch:      # Manual trigger
 
 jobs:
   vm-tests:
@@ -111,7 +114,7 @@ jobs:
           fi
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-artifacts-${{ matrix.config }}
@@ -136,3 +139,89 @@ jobs:
           if [ "${{ matrix.host }}" == "framework-desktop" ]; then
             echo "- Desktop switching: ${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           fi
+
+  desktop-screenshots:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31.8.2
+        with:
+          enable_kvm: false
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+            trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+      - name: Run desktop integration test
+        id: desktop-integration
+        run: |
+          cd framework-desktop
+          export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee desktop-integration-output.log
+          EXIT_CODE=$?
+          echo "EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "[PASS] Desktop integration test completed"
+          else
+            echo "[FAIL] Desktop integration test failed"
+          fi
+
+      - name: Generate screenshot summary
+        if: always()
+        run: |
+          cd framework-desktop
+          echo "## Desktop Integration Screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          found=0
+          for img in result*/screenshots/*.png result*/*.png; do
+            if [ -f "$img" ]; then
+              found=1
+              imgname=$(basename "$img")
+              echo "### $imgname" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              size=$(du -h "$img" | cut -f1)
+              echo "_Size: $size_" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              size_bytes=$(stat -c%s "$img" 2>/dev/null || stat -f%z "$img")
+              if [ "$size_bytes" -lt 1048576 ]; then
+                echo "![${imgname}](data:image/png;base64,$(base64 -w 0 "$img" 2>/dev/null || base64 "$img"))" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "_Screenshot too large for inline display_" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "No screenshots generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-integration-screenshots
+          path: |
+            framework-desktop/*.log
+            framework-desktop/result*/screenshots/
+            framework-desktop/result*/*.png
+          if-no-files-found: ignore
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## Desktop Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.desktop-integration.outputs.EXIT_CODE }}" = "0" ]; then
+            echo "[PASS] Desktop integration test completed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "[FAIL] Desktop integration test failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Tests both GNOME and Hyprland configurations with screenshots" >> $GITHUB_STEP_SUMMARY

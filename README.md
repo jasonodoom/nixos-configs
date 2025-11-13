@@ -1,6 +1,6 @@
 # NixOS Configurations
 
-[![Garnix CI](https://img.shields.io/badge/garnix-CI-blue)](https://garnix.io/jasonodoom/nixos-configs)
+[![Garnix CI](https://img.shields.io/badge/garnix-CI-blue)](https://garnix.io/repo/jasonodoom/nixos-configs)
 [![Built with Nix](https://img.shields.io/badge/Built_With-Nix-5277C3.svg?logo=nixos&labelColor=73C3D5)](https://nixos.org)
 
 A collection of NixOS system configurations for different machines.

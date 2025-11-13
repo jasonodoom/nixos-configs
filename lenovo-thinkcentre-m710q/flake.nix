@@ -98,7 +98,7 @@
     checks.x86_64-linux = let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
     in {
-      cli-access = import ./tests/luks-unlock-test.nix { inherit pkgs; };
+      cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
     };
   };
 }

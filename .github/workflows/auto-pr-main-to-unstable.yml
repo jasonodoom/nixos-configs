@@ -1,0 +1,93 @@
+name: Auto PR main to unstable
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch unstable branch
+        run: |
+          git fetch origin unstable:unstable
+
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --head main --base unstable --state open --json number --jq 'length')
+          echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if update needed
+        id: check-update
+        run: |
+          DIFF=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
+          echo "commits=$DIFF" >> $GITHUB_OUTPUT
+          if [ "$DIFF" -gt 0 ]; then
+            echo "Update needed: $DIFF commits"
+            echo "needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No update needed"
+            echo "needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.pr_exists == '0' && steps.check-update.outputs.needed == 'true'
+        run: |
+          COMMITS=$(git log unstable..main --oneline --no-decorate | head -10)
+          COMMIT_COUNT=$(git log unstable..main --oneline --no-decorate | wc -l | xargs)
+
+          cat > pr-body.md << 'EOF'
+          ## Changes from main branch
+
+          This PR merges changes from main to unstable (typically Tailscale or Dependabot updates).
+
+          ### Commits in this PR:
+          EOF
+
+          echo '```' >> pr-body.md
+          echo "$COMMITS" >> pr-body.md
+          if [ "$COMMIT_COUNT" -gt 10 ]; then
+            echo "... and $((COMMIT_COUNT - 10)) more commits" >> pr-body.md
+          fi
+          echo '```' >> pr-body.md
+
+          cat >> pr-body.md << 'EOF'
+
+          ---
+          Auto-generated PR from main branch
+          EOF
+
+          PR_URL=$(gh pr create \
+            --title "Merge main to unstable" \
+            --body "$(cat pr-body.md)" \
+            --base unstable \
+            --head main \
+            --label "automated")
+
+          echo "pr_url=${PR_URL}" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.check-pr.outputs.pr_exists == '0' && steps.check-update.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sleep 2
+          PR_NUMBER=$(gh pr view main --base unstable --json number -q .number)
+          gh pr merge "${PR_NUMBER}" --auto --merge
