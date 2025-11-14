@@ -69,8 +69,8 @@ jobs:
               --field commit_message="Auto-sync main to unstable"
 
             # Refresh local branch after API merge
-            git fetch origin unstable:unstable
-            git reset --hard unstable
+            git fetch origin unstable
+            git reset --hard origin/unstable
           else
             echo "Unstable is already up-to-date with main"
           fi

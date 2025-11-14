@@ -27,6 +27,7 @@
     imagemagick
     handbrake
     obs-studio
+    cheese
     cider  
 
     # Productivity and Office
