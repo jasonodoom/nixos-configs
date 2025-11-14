@@ -7,7 +7,7 @@
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = false;  # Run on every rebuild to update config
+      RemainAfterExit = true;
       ExecStart = "${pkgs.writeShellScript "kitty-setup" ''
         mkdir -p $HOME/.config/kitty
         cat > $HOME/.config/kitty/kitty.conf << 'EOF'

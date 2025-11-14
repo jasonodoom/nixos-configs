@@ -3,8 +3,8 @@
 pkgs.testers.nixosTest {
   name = "desktop-integration-test";
 
-  # Set test timeout to 8 minutes to stay under CI timeout
-  globalTimeout = 480;
+  # Set test timeout to 10 minutes to prevent hanging
+  globalTimeout = 600;
 
   meta = with pkgs.lib.maintainers; {
     maintainers = [ ];
@@ -556,38 +556,13 @@ pkgs.testers.nixosTest {
     gnome_machine.succeed("DISPLAY=:99 xwd -root | convert xwd:- /tmp/final_gnome_state.png || echo 'Final GNOME screenshot'")
 
     # === PRESERVE SCREENSHOTS ===
-    # Copy screenshots to result directory for GitHub Actions artifact upload
+    # Copy screenshots to /tmp/xchg which persists even on test failure
     print("\n=== Preserving screenshots for artifact upload ===")
-    import shutil
-    import os
-
-    # Ensure screenshots directory exists in result
-    os.makedirs("screenshots", exist_ok=True)
-
-    # Copy VM screenshots from test machines
-    try:
-        hyprland_machine.succeed("find /tmp/vm-state-machine -name '*.png' -exec cp {} /tmp/vm-shared-rw/ \\; || echo 'No hyprland screenshots'")
-        gnome_machine.succeed("cp /tmp/*.png /tmp/vm-shared-rw/ 2>/dev/null || echo 'No gnome screenshots'")
-
-        # Copy to local result directory
-        import glob
-        for screenshot in glob.glob("/tmp/vm-shared-rw/*.png"):
-            shutil.copy2(screenshot, "screenshots/")
-            print(f"[SUCCESS] Copied {os.path.basename(screenshot)}")
-    except Exception as e:
-        print(f"[WARNING] Screenshot preservation failed: {e}")
-
-    print("[SUCCESS] Screenshots preserved for CI artifacts")
-
-    # === EARLY EXIT TO PREVENT TIMEOUT ===
-    # Exit test early to prevent hanging during VM shutdown
-    print("\n=== Test completed successfully - exiting to avoid shutdown timeout ===")
-    print("[SUCCESS] All tests passed - terminating VMs safely")
-
-    # Force immediate test completion without waiting for clean shutdown
-    import sys
-    print("TEST COMPLETED SUCCESSFULLY")
-    sys.exit(0)
+    hyprland_machine.succeed("mkdir -p /tmp/xchg/screenshots || true")
+    hyprland_machine.succeed("find /tmp/vm-state-machine -name '*.png' -exec cp {} /tmp/xchg/screenshots/ \\; || true")
+    gnome_machine.succeed("mkdir -p /tmp/xchg/screenshots || true")
+    gnome_machine.succeed("cp /tmp/*.png /tmp/xchg/screenshots/ 2>/dev/null || true")
+    print("[SUCCESS] Screenshots copied to shared directory")
 
     # === TEST SUMMARY ===
     print("\n" + "="*60)
