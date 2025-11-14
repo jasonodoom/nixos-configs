@@ -13,9 +13,9 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
-  # LUKS encryption setup 
+  # LUKS encryption setup
   boot.initrd.luks.devices."nixos-enc" = {
-    device = "/dev/nvme0n1p2";  # Encrypted partition
+    device = "/dev/nvme1n1p2";  # Encrypted partition
     preLVM = true;              # Decrypt before LVM activation
   };
 
@@ -27,7 +27,7 @@
 
   # Boot partition (unencrypted EFI)
   fileSystems."/boot" = {
-    device = "/dev/nvme0n1p1";
+    device = "/dev/nvme1n1p1";
     fsType = "vfat";
     options = [ "fmask=0022" "dmask=0022" ];
   };
