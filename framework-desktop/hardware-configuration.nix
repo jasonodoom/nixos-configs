@@ -13,7 +13,7 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
-  # LUKS encryption setup 
+  # LUKS encryption setup
   boot.initrd.luks.devices."nixos-enc" = {
     device = "/dev/nvme0n1p2";  # Encrypted partition
     preLVM = true;              # Decrypt before LVM activation
