@@ -214,11 +214,12 @@
           ] ++ (with pkgs-unstable; [
             ansible
             ansible-lint
+            flyctl
           ]);
           shellHook = ''
             echo "☁️ DevOps development environment loaded"
             echo "Terraform version: $(terraform --version)"
-            echo "Available tools: terraform, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
+            echo "Available tools: terraform, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl, flyctl"
           '';
         };
       };
