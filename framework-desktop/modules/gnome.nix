@@ -80,18 +80,26 @@ in
           clock-format = "12h";
         };
         "org/gnome/settings-daemon/plugins/power" = {
-          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 900;
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 1800;  # 30 minutes
           sleep-inactive-ac-type = "nothing";
-          idle-dim = true;
+          idle-dim = false;  # Don't dim screen during video
           idle-brightness = lib.gvariant.mkInt32 30;
         };
         "org/gnome/desktop/session" = {
-          idle-delay = lib.gvariant.mkUint32 60;
+          idle-delay = lib.gvariant.mkUint32 600;  # 10 minutes
         };
         "org/gnome/desktop/screensaver" = {
           idle-activation-enabled = true;
           lock-enabled = true;
           lock-delay = lib.gvariant.mkUint32 0;
+        };
+
+        # Caffeine extension auto-detection settings
+        "org/gnome/shell/extensions/caffeine" = {
+          enable-fullscreen = true;      # Auto-enable for fullscreen apps
+          enable-audio-detection = true; # Auto-enable when audio is playing
+          show-indicator = true;         # Show icon in top bar
+          show-notifications = false;    # Don't spam notifications
         };
       };
     }];
@@ -143,7 +151,6 @@ in
             "user-theme@gnome-shell-extensions.gcampax.github.com"
             "dash-to-dock@micxgx.gmail.com"
             "appindicatorsupport@rgcjonas.gmail.com"
-            "caffeine@patapon.info"
             "gsconnect@andyholmes.github.io"
             "blur-my-shell@aunetx"
             "Vitals@CoreCoding.com"
@@ -175,18 +182,26 @@ in
 
         # Power management settings (desktop - don't suspend)
         "org/gnome/settings-daemon/plugins/power" = {
-          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 900;
+          sleep-inactive-ac-timeout = lib.gvariant.mkInt32 1800;  # 30 minutes
           sleep-inactive-ac-type = "nothing";
-          idle-dim = true;
+          idle-dim = false;  # Don't dim screen during video
           idle-brightness = lib.gvariant.mkInt32 30;
         };
         "org/gnome/desktop/session" = {
-          idle-delay = lib.gvariant.mkUint32 60;
+          idle-delay = lib.gvariant.mkUint32 600;  # 10 minutes
         };
         "org/gnome/desktop/screensaver" = {
           idle-activation-enabled = true;
           lock-enabled = true;
           lock-delay = lib.gvariant.mkUint32 0;
+        };
+
+        # Caffeine extension auto-detection settings
+        "org/gnome/shell/extensions/caffeine" = {
+          enable-fullscreen = true;      # Auto-enable for fullscreen apps
+          enable-audio-detection = true; # Auto-enable when audio is playing
+          show-indicator = true;         # Show icon in top bar
+          show-notifications = false;    # Don't spam notifications
         };
       };
     }];
