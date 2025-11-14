@@ -20,6 +20,8 @@
     window-padding-x = 8
     window-padding-y = 8
     window-decoration = true
+    window-width = 141
+    window-height = 34
 
     # Transparency and visual effects
     background-opacity = 0.9
@@ -27,7 +29,6 @@
 
     # Cursor configuration
     cursor-style = block
-    cursor-blink = false
 
     # Tokyo Night theme colors
     background = 1a1b26
@@ -63,7 +64,7 @@
     clipboard-write = allow
 
     # Shell integration
-    shell-integration = bash,zsh,fish
+    shell-integration = detect
     shell-integration-features = cursor,sudo,title
 
     # Scrollback
