@@ -80,6 +80,7 @@
         ./modules/tmux.nix
         ./modules/shell.nix
         ./modules/system.nix
+        ./modules/power.nix
         ./modules/network/networking.nix
         ./modules/network/tailscale.nix
         ./modules/security/security.nix

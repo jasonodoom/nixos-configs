@@ -3,6 +3,9 @@
 pkgs.testers.nixosTest {
   name = "desktop-integration-test";
 
+  # Set test timeout to 10 minutes to prevent hanging
+  globalTimeout = 600;
+
   meta = with pkgs.lib.maintainers; {
     maintainers = [ ];
   };
