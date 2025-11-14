@@ -211,6 +211,7 @@
             helm
             awscli2
             eksctl
+            flyctl
           ] ++ (with pkgs-unstable; [
             ansible
             ansible-lint
