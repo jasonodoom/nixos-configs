@@ -18,6 +18,7 @@
       MaxSessions = 2;
       MaxStartups = "2:30:5";
       Protocol = "2";
+      StreamLocalBindUnlink = true;
     };
     authorizedKeysFiles = [ ".ssh/authorized_keys" "/etc/ssh/authorized_keys.d/%u" ];
     extraConfig = ''
@@ -40,8 +41,22 @@
   security.pam.services.sudo.sshAgentAuth = lib.mkForce false;
 
   programs.ssh.startAgent = false;
+
+  # SSH configuration for GitHub deploy key access
+  programs.ssh.extraConfig = ''
+    Host github.com
+      HostName github.com
+      IdentityFile /etc/ssh/congo_deploy_key
+      IdentitiesOnly yes
+      StrictHostKeyChecking yes
+  '';
+
+  # Smart card support for YubiKey
+  services.pcscd.enable = true;
+
   programs.gnupg.agent = {
     enable = true;
+    pinentryPackage = pkgs.pinentry-curses;
     enableSSHSupport = true;
   };
 
