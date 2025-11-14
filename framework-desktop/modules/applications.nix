@@ -13,7 +13,7 @@
     weechat
     pidgin
     pidgin-otr
-    element-desktop
+    element-web
     slack
 
     # Media and Graphics
