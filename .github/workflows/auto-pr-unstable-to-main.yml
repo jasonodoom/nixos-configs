@@ -25,6 +25,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config commit.gpgsign false
+          git config tag.gpgSign false
 
       - name: Sync main into unstable first
         run: |
@@ -34,13 +36,22 @@ jobs:
           BEHIND=$(git rev-list --count unstable..main)
 
           if [ "$BEHIND" -gt 0 ]; then
-            echo "Unstable is $BEHIND commits behind main, syncing..."
-            # Merge main into unstable to keep them in sync
-            git merge main --no-edit
-            git push origin unstable
+            echo "Unstable is $BEHIND commits behind main, syncing via GitHub API..."
+            # Use GitHub API to merge main into unstable (automatically signed)
+            gh api repos/${{ github.repository }}/merges \
+              --method POST \
+              --field base=unstable \
+              --field head=main \
+              --field commit_message="Auto-sync main to unstable"
+
+            # Refresh local branch after API merge
+            git fetch origin unstable:unstable
+            git reset --hard unstable
           else
             echo "Unstable is already up-to-date with main"
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if PR already exists
         id: check-pr
