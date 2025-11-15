@@ -7,12 +7,20 @@
     adb.enable = false;
   };
 
-  # VSCode server for remote development
+  # VSCode server for Remote SSH
   services.vscode-server = {
     enable = true;
   };
 
-  # Caddy reverse proxy for VSCode server with Tailscale HTTPS
+  # Code-server for browser-based VSCode
+  services.code-server = {
+    enable = true;
+    auth = "none";  # Caddy handles authentication
+    host = "127.0.0.1";
+    port = 8080;
+  };
+
+  # Caddy reverse proxy for code-server with Tailscale HTTPS
   services.caddy = {
     enable = true;
     virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
