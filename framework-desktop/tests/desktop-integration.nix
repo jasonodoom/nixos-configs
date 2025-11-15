@@ -32,6 +32,10 @@ pkgs.testers.nixosTest {
       # Ensure GNOME is enabled for this test
       services.xserver.desktopManager.gnome.enable = lib.mkForce true;
       services.displayManager.defaultSession = lib.mkForce "gnome";
+      services.displayManager.autoLogin = {
+        enable = true;
+        user = "testuser";
+      };
 
       # Virtual framebuffer support for screenshots
       services.xserver = {
@@ -122,6 +126,10 @@ pkgs.testers.nixosTest {
       services.xserver.displayManager.gdm.enable = lib.mkForce false;
       services.displayManager.defaultSession = lib.mkForce "hyprland";
       services.displayManager.sddm.enable = lib.mkForce true;
+      services.displayManager.autoLogin = {
+        enable = true;
+        user = "testuser";
+      };
       programs.hyprland.enable = lib.mkForce true;
       programs.hyprland.withUWSM = lib.mkForce false; # VM compatibility
 
@@ -327,10 +335,14 @@ pkgs.testers.nixosTest {
     gnome_machine.succeed("test -f /run/current-system/sw/bin/firefox")
     print("[SUCCESS] Core GNOME applications installed")
 
-    # Wait a bit for GUI to stabilize
-    gnome_machine.sleep(10)
+    # Wait for GNOME Shell to actually start (auto-login session)
+    gnome_machine.wait_until_succeeds("pgrep gnome-shell", timeout=90)
+    print("[SUCCESS] GNOME Shell session running")
 
-    # Take GUI screenshots
+    # Wait for desktop to fully load
+    gnome_machine.sleep(15)
+
+    # Take GUI screenshots of logged-in desktop
     gnome_machine.screenshot("gnome_login_screen")
 
     # Test GNOME extensions directory
@@ -379,24 +391,23 @@ pkgs.testers.nixosTest {
 
     # Wait for Wayland session to be ready
     hyprland_machine.wait_for_unit("graphical.target", timeout=120)
-    hyprland_machine.wait_until_succeeds("pgrep sddm || pgrep Hyprland", timeout=60)
+    hyprland_machine.wait_until_succeeds("pgrep sddm", timeout=60)
     print("[SUCCESS] Display manager running")
 
-    # Wait for desktop to stabilize
-    hyprland_machine.sleep(10)
+    # Wait for Hyprland compositor to start (auto-login session)
+    hyprland_machine.wait_until_succeeds("pgrep Hyprland", timeout=90)
+    print("[SUCCESS] Hyprland compositor running")
 
-    # Take SDDM login screenshot
+    # Wait for waybar to start (indicates desktop is ready)
+    hyprland_machine.wait_until_succeeds("pgrep waybar", timeout=60)
+    print("[SUCCESS] Waybar running - desktop session ready")
+
+    # Wait for desktop to fully stabilize
+    hyprland_machine.sleep(15)
+
+    # Take screenshots of running Hyprland desktop
     hyprland_machine.screenshot("hyprland_sddm_login")
-
-    # Attempt automatic login or take screenshot of current state
-    try:
-        # Try to login automatically (may work with empty password)
-        hyprland_machine.send_key("ret")
-        hyprland_machine.sleep(5)
-        hyprland_machine.screenshot("hyprland_after_login")
-    except:
-        print("[INFO] Auto-login failed, taking current screen state")
-        hyprland_machine.screenshot("hyprland_login_attempt")
+    hyprland_machine.screenshot("hyprland_after_login")
 
     # Test that SDDM service starts
     result = hyprland_machine.succeed("systemctl is-active display-manager.service || echo 'sddm-not-running'")
