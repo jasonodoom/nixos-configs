@@ -47,7 +47,7 @@ pkgs.testers.nixosTest {
         graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
-        qemu.options = [ "-vga qxl" "-display none" ];
+        qemu.options = [ "-vga std" ];
       };
 
       # Enable software-only graphics for VM
@@ -196,7 +196,7 @@ pkgs.testers.nixosTest {
         graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
-        qemu.options = [ "-vga qxl" "-display none" ];
+        qemu.options = [ "-vga std" ];
       };
 
       # Ensure graphics work in VM with software rendering
