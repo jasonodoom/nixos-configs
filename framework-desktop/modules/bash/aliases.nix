@@ -20,7 +20,7 @@
     "nrb" = "doas nixos-rebuild switch";
     "nrt" = "doas nixos-rebuild test";
     "nrs" = "nixos-rebuild switch --flake .#";
-    "update-system" = ''doas nixos-rebuild switch --flake "github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo" --refresh'';
+    "update-system" = ''doas nixos-rebuild switch --flake "git+ssh://git@github.com/jasonodoom/nixos-configs.git?dir=framework-desktop#perdurabo" --refresh'';
     "ncg" = "nix-collect-garbage -d";
     "nix-clean" = "nix-collect-garbage --delete-older-than 7d && doas nix-collect-garbage -d";
 

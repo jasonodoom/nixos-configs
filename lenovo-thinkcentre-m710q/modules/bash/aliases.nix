@@ -8,7 +8,7 @@
     "ll" = "ls -la";
 
     # System rebuild from nixos-configs repo
-    "update-system" = "doas nixos-rebuild switch --flake 'github:jasonodoom/nixos-configs?dir=lenovo-thinkcentre-m710q#congo' --refresh";
+    "update-system" = "doas nixos-rebuild switch --flake 'git+ssh://git@github.com/jasonodoom/nixos-configs.git?dir=lenovo-thinkcentre-m710q#congo' --refresh";
 
     # Server monitoring
     "ports" = "netstat -tuln";
