@@ -5,13 +5,13 @@
   # Development programs
   programs = {
     adb.enable = false;
-    # direnv configuration now in shell.nix
   };
 
   # VSCode server for remote development
   services.vscode-server = {
     enable = true;
-    # Bind to Tailscale interface
+    # Bind to localhost only - Caddy handles Tailscale access
+    listenAddress = "127.0.0.1";
   };
 
   # Caddy reverse proxy for VSCode server with Tailscale HTTPS
@@ -29,9 +29,6 @@
       '';
     };
   };
-
-  # VSCode server configuration
-  services.vscode-server.enable = true;
 
   # Firewall configuration for VSCode server via Caddy
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 80 443 ];
@@ -75,7 +72,6 @@
     inetutils
     tcpdump
     nettools
-    bind
     dnsutils
 
     # USB and hardware tools
