@@ -1,6 +1,18 @@
 # Development tools and environment
 { config, pkgs, lib, ... }:
 
+let
+  # Latest code-server from GitHub
+  code-server = pkgs.code-server.overrideAttrs (oldAttrs: rec {
+    version = "4.105.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "coder";
+      repo = "code-server";
+      rev = "v${version}";
+      hash = "sha256-75k2Vugv+46oVG/Ppxdn7uWryDR4gzj4uSVFNY6YAQM=";
+    };
+  });
+in
 {
   # Development programs
   programs = {
@@ -15,6 +27,7 @@
   # Code-server for browser-based VSCode
   services.code-server = {
     enable = true;
+    package = code-server;
     auth = "none";  # Tailscale network access provides authentication
     host = "127.0.0.1";
     port = 8080;
