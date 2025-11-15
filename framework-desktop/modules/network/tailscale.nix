@@ -3,7 +3,10 @@
 
 {
   # Enable Tailscale service
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    permitCertUid = "caddy";  # Allow Caddy to fetch HTTPS certificates
+  };
 
   # Ensure Tailscale always restarts on failure
   systemd.services.tailscaled.serviceConfig = {

@@ -26,9 +26,6 @@
     virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
       extraConfig = ''
         reverse_proxy localhost:8080
-        tls {
-          get_certificate tailscale
-        }
       '';
     };
   };
