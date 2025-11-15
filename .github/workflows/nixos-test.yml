@@ -162,6 +162,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Free up disk space for desktop integration test
+        run: |
+          echo "Disk usage before cleanup:"
+          df -h
+          # Aggressive cleanup for desktop integration test
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/graalvm
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /opt/microsoft
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/share/vcpkg
+          sudo rm -rf /usr/local/share/cmake
+          sudo rm -rf /opt/az
+          sudo rm -rf /usr/share/gradle
+          sudo docker image prune --all --force
+          sudo docker system prune --all --force --volumes
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean
+          sudo apt-get clean
+          # Remove large language packs
+          sudo rm -rf /usr/share/locale
+          sudo rm -rf /usr/share/doc
+          sudo rm -rf /usr/share/man
+          echo "Disk usage after cleanup:"
+          df -h
+
       - uses: cachix/install-nix-action@v31.8.2
         with:
           enable_kvm: false
@@ -175,10 +206,29 @@ jobs:
         run: |
           cd framework-desktop
           export NIX_CONFIG="accept-flake-config = true"
+
+          # Check disk space before build
+          echo "Disk usage before desktop integration test:"
+          df -h
+
           set +e
-          nix build .#checks.x86_64-linux.desktop-integration --show-trace --accept-flake-config 2>&1 | tee desktop-integration-output.log
+          nix build .#checks.x86_64-linux.desktop-integration \
+            --show-trace \
+            --accept-flake-config \
+            --option max-jobs 1 \
+            --option cores 1 \
+            --option substitute true \
+            --option builders-use-substitutes true \
+            2>&1 | tee desktop-integration-output.log
           EXIT_CODE=$?
           echo "EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+          # Immediate cleanup after build attempt
+          nix-collect-garbage --delete-older-than 1d
+          nix store gc --max 1000000000  # Keep only 1GB in store
+
+          echo "Disk usage after build and cleanup:"
+          df -h
 
           if [ $EXIT_CODE -eq 0 ]; then
             echo "[PASS] Desktop integration test completed"
