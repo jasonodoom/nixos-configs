@@ -19,12 +19,14 @@ jobs:
   build-with-cache:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
+      max-parallel: 1  # Run builds sequentially to avoid resource contention
       matrix:
         include:
-          - host: framework-desktop
-            config: perdurabo
           - host: lenovo-thinkcentre-m710q
             config: congo
+          - host: framework-desktop
+            config: perdurabo
 
     steps:
     - name: Checkout repository
@@ -34,7 +36,7 @@ jobs:
       run: |
         echo "Disk usage before cleanup:"
         df -h
-        # Remove unnecessary packages and files
+        # More aggressive cleanup for framework-desktop builds
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /usr/local/lib/android
         sudo rm -rf /opt/ghc
@@ -44,9 +46,20 @@ jobs:
         sudo rm -rf /usr/local/share/chromium
         sudo rm -rf /usr/local/share/powershell
         sudo rm -rf /opt/microsoft
+        sudo rm -rf /usr/share/swift
+        sudo rm -rf /usr/local/share/vcpkg
+        sudo rm -rf /usr/local/share/cmake
+        sudo rm -rf /opt/az
+        sudo rm -rf /usr/share/gradle
         sudo docker image prune --all --force
+        sudo docker system prune --all --force --volumes
         sudo apt-get autoremove -y
         sudo apt-get autoclean
+        sudo apt-get clean
+        # Remove large language packs
+        sudo rm -rf /usr/share/locale
+        sudo rm -rf /usr/share/doc
+        sudo rm -rf /usr/share/man
         echo "Disk usage after cleanup:"
         df -h
 
@@ -75,15 +88,37 @@ jobs:
     - name: Build NixOS configuration
       run: |
         cd ${{ matrix.host }}
-        # Perdurabo uses Garnix cache, Congo uses Cachix (setup above)
+
+        # Check disk space before build
+        echo "Disk usage before build:"
+        df -h
+
+        # Intermediate cleanup for framework-desktop (large build)
+        if [ "${{ matrix.config }}" == "perdurabo" ]; then
+          echo "Framework desktop build - applying stricter resource limits"
+          # More restrictive resource limits for large builds
+          MAX_JOBS=1
+          CORES=1
+        else
+          MAX_JOBS=1
+          CORES=2
+        fi
+
+        # Build with resource limits and cache optimization
         nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.toplevel \
           --accept-flake-config \
-          --option max-jobs 1 \
-          --option cores 2 \
+          --option max-jobs $MAX_JOBS \
+          --option cores $CORES \
+          --option keep-going false \
+          --option substitute true \
+          --option builders-use-substitutes true \
           --impure
-        # Clean up after build to save space
-        nix-collect-garbage
-        echo "Disk usage after build:"
+
+        # Immediate cleanup after build
+        nix-collect-garbage --delete-older-than 1d
+        nix store gc --max 1000000000  # Keep only 1GB in store
+
+        echo "Disk usage after build and cleanup:"
         df -h
 
     - name: Test development shells
