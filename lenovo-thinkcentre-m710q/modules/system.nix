@@ -140,6 +140,6 @@
   system.autoUpgrade = {
     enable = true;
     allowReboot = false;
-    flake = "github:jasonodoom/nixos-configs?dir=lenovo-thinkcentre-m710q";
+    flake = "git+ssh://git@github.com/jasonodoom/nixos-configs.git?dir=lenovo-thinkcentre-m710q";
   };
 }

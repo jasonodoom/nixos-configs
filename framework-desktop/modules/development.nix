@@ -8,6 +8,41 @@
     # direnv configuration now in shell.nix
   };
 
+  # VSCode server for remote development
+  services.vscode-server = {
+    enable = true;
+    # Bind to Tailscale interface
+  };
+
+  # Nginx reverse proxy for VSCode server with WebAuthn
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+
+    virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8080";
+        proxyWebsockets = true;
+        extraConfig = ''
+          # Enable WebAuthn headers
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        '';
+      };
+
+      # Basic auth as fallback before WebAuthn setup
+      basicAuth = {
+        jason = "$2b$12$0aVf86wJXtbiJWMQ1rXuNu32atVKWPzrcLoZ4iy96PJkC8S5EywyW";
+      };
+    };
+  };
+
+  # Firewall configuration for VSCode server via nginx
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 80 443 ];
+
   # Development packages
   environment.systemPackages = with pkgs; [
     # AI assistants

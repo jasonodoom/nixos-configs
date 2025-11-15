@@ -10,6 +10,7 @@
       PermitRootLogin = "no";
       PubkeyAuthentication = true;
       KbdInteractiveAuthentication = false;
+      StreamLocalBindUnlink = true;
     };
     authorizedKeysFiles = [ ".ssh/authorized_keys" ];
     extraConfig = ''
@@ -25,10 +26,16 @@
   # Initrd SSH and Tailscale remote unlock moved to luks.nix
 
   programs.ssh.startAgent = false;
-  programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = true;
-  };
+
+  # SSH configuration for GitHub deploy key access
+  programs.ssh.extraConfig = ''
+    Host github.com
+      HostName github.com
+      IdentityFile /etc/ssh/perdurabo_deploy_key
+      IdentitiesOnly yes
+      StrictHostKeyChecking yes
+  '';
+
   # SSH client configuration from encrypted agenix secret
   # age.secrets.ssh-config = {
   #   file = ../secrets/ssh-config.age;

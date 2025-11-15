@@ -7,7 +7,7 @@
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
+      RemainAfterExit = false;  # Run on every rebuild to update config
       ExecStart = "${pkgs.writeShellScript "ghostty-setup" ''
         mkdir -p $HOME/.config/ghostty
         cat > $HOME/.config/ghostty/config << 'EOF'

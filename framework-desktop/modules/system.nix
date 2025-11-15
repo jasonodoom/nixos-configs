@@ -66,7 +66,7 @@
   system.autoUpgrade = {
     enable = true;
     allowReboot = false;
-    flake = "github:jasonodoom/nixos-configs?dir=framework-desktop";
+    flake = "git+ssh://git@github.com/jasonodoom/nixos-configs.git?dir=framework-desktop";
   };
 
   # Disable suspension and hibernation
