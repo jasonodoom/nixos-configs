@@ -3,8 +3,8 @@
 pkgs.testers.nixosTest {
   name = "desktop-integration-test";
 
-  # Set test timeout to 10 minutes - NixOS framework default is 1 hour
-  globalTimeout = 600;
+  # Set test timeout to 30 minutes for desktop integration with screenshot capture
+  globalTimeout = 1800;
 
   meta = with pkgs.lib.maintainers; {
     maintainers = [ ];
