@@ -27,11 +27,22 @@
 
   programs.ssh.startAgent = false;
 
-  # SSH configuration for GitHub deploy key access
+  # SSH configuration for GitHub access
   programs.ssh.extraConfig = ''
+    # Deploy key for system operations (nixos-rebuild, auto-upgrade, etc.)
+    Host github-deploy.com
+      HostName github.com
+      User git
+      IdentityFile /etc/ssh/perdurabo_deploy_key
+      IdentitiesOnly yes
+      StrictHostKeyChecking yes
+
+    # User access for personal operations (GPG key imports, etc.)
     Host github.com
       HostName github.com
-      IdentityFile /etc/ssh/perdurabo_deploy_key
+      User git
+      PubkeyAuthentication yes
+      IdentityFile ~/.ssh/perdurabo_id_ed25519
       IdentitiesOnly yes
       StrictHostKeyChecking yes
   '';

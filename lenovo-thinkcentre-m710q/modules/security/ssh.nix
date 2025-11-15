@@ -44,8 +44,10 @@
 
   # SSH configuration for GitHub deploy key access
   programs.ssh.extraConfig = ''
-    Host github.com
+    # Deploy key for system operations (nixos-rebuild, auto-upgrade, etc.)
+    Host github-deploy.com
       HostName github.com
+      User git
       IdentityFile /etc/ssh/congo_deploy_key
       IdentitiesOnly yes
       StrictHostKeyChecking yes
