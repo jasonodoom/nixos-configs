@@ -27,6 +27,14 @@
 
   programs.ssh.startAgent = false;
 
+  # Add GitHub to known_hosts for root (needed for deploy key operations)
+  programs.ssh.knownHosts = {
+    "github.com" = {
+      hostNames = [ "github.com" ];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+    };
+  };
+
   # SSH configuration for GitHub access
   programs.ssh.extraConfig = ''
     # Deploy key for system operations (nixos-rebuild, auto-upgrade, etc.)
