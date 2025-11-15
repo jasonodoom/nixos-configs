@@ -6,9 +6,9 @@
   services.tailscale.enable = true;
 
   # Ensure Tailscale always restarts on failure
-  systemd.services.tailscale.serviceConfig = {
-    Restart = "always";
-    RestartSec = "10s";
+  systemd.services.tailscaled.serviceConfig = {
+    Restart = lib.mkForce "always";
+    RestartSec = lib.mkForce "10s";
   };
 
   # Note: Firewall port configured in networking.nix
@@ -23,7 +23,7 @@
   #   tailscale up --ssh --advertise-exit-node --advertise-routes=192.168.1.0/24 --accept-routes
   systemd.services.tailscale-autoconnect = {
     description = "Automatic connection to Tailscale with exit node, subnet router and SSH";
-    after = [ "network-online.target" "tailscale.service" ];
+    after = [ "network-online.target" "tailscaled.service" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {

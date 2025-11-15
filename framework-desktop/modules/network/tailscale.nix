@@ -3,12 +3,34 @@
 
 {
   # Enable Tailscale service
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    permitCertUid = "caddy";  # Allow Caddy to fetch HTTPS certificates
+  };
+
+  # Automatic Tailscale certificate renewal
+  systemd.services.tailscale-cert-renewal = {
+    description = "Renew Tailscale HTTPS certificates";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.tailscale}/bin/tailscale cert perdurabo.ussuri-elevator.ts.net";
+    };
+  };
+
+  systemd.timers.tailscale-cert-renewal = {
+    description = "Renew Tailscale HTTPS certificates monthly";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "monthly";
+      Persistent = true;
+      RandomizedDelaySec = "1h";
+    };
+  };
 
   # Ensure Tailscale always restarts on failure
-  systemd.services.tailscale.serviceConfig = {
-    Restart = "always";
-    RestartSec = "10s";
+  systemd.services.tailscaled.serviceConfig = {
+    Restart = lib.mkForce "always";
+    RestartSec = lib.mkForce "10s";
   };
 
   # System packages for Tailscale management
@@ -21,7 +43,7 @@
   #   tailscale up --ssh --advertise-routes=192.168.88.0/24 --accept-routes
   systemd.services.tailscale-autoconnect = {
     description = "Automatic connection to Tailscale with subnet router and SSH";
-    after = [ "network-online.target" "tailscale.service" ];
+    after = [ "network-online.target" "tailscaled.service" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {

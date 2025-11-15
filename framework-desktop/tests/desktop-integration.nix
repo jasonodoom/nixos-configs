@@ -45,13 +45,16 @@ pkgs.testers.nixosTest {
 
       # Optimized VM configuration for GitHub free runner with graphics
       virtualisation = {
-        memorySize = 1024;  # Minimal memory for GitHub runner
-        cores = 1;          # Single core to avoid overloading runner
+        memorySize = 2048;  # Increased for GNOME Shell
+        cores = 2;          # Two cores for desktop environment
         diskSize = 2048;    # Minimal disk
         graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
-        qemu.options = [ "-vga std" ];
+        qemu.options = [
+          "-vga none"
+          "-device virtio-gpu-pci"  # Enable OpenGL via llvmpipe for GNOME Shell
+        ];
       };
 
       # Enable software-only graphics for VM
@@ -80,11 +83,13 @@ pkgs.testers.nixosTest {
         thunderbird
       ];
 
-      # Environment variables for virtual display
+      # Environment variables for virtual display and software rendering
       environment.sessionVariables = {
         DISPLAY = ":0";   # Use primary display for GUI
         XDG_SESSION_TYPE = "x11";  # Use X11 for VM testing simplicity
         LIBGL_ALWAYS_SOFTWARE = "1";  # Force software rendering
+        GALLIUM_DRIVER = "llvmpipe";  # Use llvmpipe for OpenGL
+        MESA_GL_VERSION_OVERRIDE = "3.3";  # Override OpenGL version
       };
 
       # Disable YubiKey for VM test
@@ -198,13 +203,16 @@ pkgs.testers.nixosTest {
 
       # Optimized VM configuration for GitHub free runner with graphics
       virtualisation = {
-        memorySize = 1024;  # Minimal memory for GitHub runner
-        cores = 1;          # Single core to avoid overloading runner
+        memorySize = 2048;  # Increased for GNOME Shell
+        cores = 2;          # Two cores for desktop environment
         diskSize = 2048;    # Minimal disk
         graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
-        qemu.options = [ "-vga std" ];
+        qemu.options = [
+          "-vga none"
+          "-device virtio-gpu-pci"  # Enable OpenGL via llvmpipe for GNOME Shell
+        ];
       };
 
       # Ensure graphics work in VM with software rendering
@@ -284,6 +292,8 @@ pkgs.testers.nixosTest {
         WLR_RENDERER_ALLOW_SOFTWARE = "1";
         WLR_RENDERER = "pixman";  # Force software renderer
         LIBGL_ALWAYS_SOFTWARE = "1";  # Force software OpenGL
+        GALLIUM_DRIVER = "llvmpipe";  # Use llvmpipe for OpenGL
+        MESA_GL_VERSION_OVERRIDE = "3.3";  # Override OpenGL version
         WAYLAND_DISPLAY = "wayland-1";
         QT_QPA_PLATFORM = "wayland";
         GDK_BACKEND = "wayland";
