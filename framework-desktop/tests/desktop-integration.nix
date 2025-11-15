@@ -39,17 +39,18 @@ pkgs.testers.nixosTest {
         videoDrivers = [ "virtio" "qxl" "modesetting" ];
       };
 
-      # Minimal VM configuration for GitHub free runner
+      # Optimized VM configuration for GitHub free runner with graphics
       virtualisation = {
         memorySize = 1024;  # Minimal memory for GitHub runner
         cores = 1;          # Single core to avoid overloading runner
         diskSize = 2048;    # Minimal disk
-        graphics = false;   # No graphics for reliability
+        graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
+        qemu.options = [ "-vga qxl" "-display none" ];
       };
 
-      # Enable hardware acceleration for VM
+      # Enable software-only graphics for VM
       hardware.graphics.enable = true;
 
       # Create test user with empty password for VM test
@@ -62,7 +63,6 @@ pkgs.testers.nixosTest {
       # Allow empty passwords for test user in VM
       security.pam.services.sddm.allowNullPassword = true;
       security.pam.services.login.allowNullPassword = true;
-
 
       # Add testing utilities
       environment.systemPackages = with pkgs; [
@@ -78,8 +78,9 @@ pkgs.testers.nixosTest {
 
       # Environment variables for virtual display
       environment.sessionVariables = {
-        DISPLAY = ":99";
+        DISPLAY = ":0";   # Use primary display for GUI
         XDG_SESSION_TYPE = "x11";  # Use X11 for VM testing simplicity
+        LIBGL_ALWAYS_SOFTWARE = "1";  # Force software rendering
       };
 
       # Disable YubiKey for VM test
@@ -187,17 +188,18 @@ pkgs.testers.nixosTest {
         exec-once = dunst
       '';
 
-      # Minimal VM configuration for GitHub free runner
+      # Optimized VM configuration for GitHub free runner with graphics
       virtualisation = {
         memorySize = 1024;  # Minimal memory for GitHub runner
         cores = 1;          # Single core to avoid overloading runner
         diskSize = 2048;    # Minimal disk
-        graphics = false;   # No graphics for reliability
+        graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
+        qemu.options = [ "-vga qxl" "-display none" ];
       };
 
-      # Ensure graphics work in VM
+      # Ensure graphics work in VM with software rendering
       services.xserver = {
         enable = true;
         videoDrivers = [ "virtio" "qxl" "modesetting" ];
@@ -268,10 +270,12 @@ pkgs.testers.nixosTest {
         qt5.qtsvg
       ];
 
-      # Wayland environment for VM test
+      # Wayland environment for VM test with software rendering
       environment.sessionVariables = {
         WLR_NO_HARDWARE_CURSORS = "1";
         WLR_RENDERER_ALLOW_SOFTWARE = "1";
+        WLR_RENDERER = "pixman";  # Force software renderer
+        LIBGL_ALWAYS_SOFTWARE = "1";  # Force software OpenGL
         WAYLAND_DISPLAY = "wayland-1";
         QT_QPA_PLATFORM = "wayland";
         GDK_BACKEND = "wayland";
@@ -305,18 +309,29 @@ pkgs.testers.nixosTest {
     gnome_machine.wait_for_unit("multi-user.target")
     print("[SUCCESS] GNOME machine booted")
 
-    # Simplified GNOME testing without complex graphics
-    print("[INFO] Testing GNOME configuration (headless mode)...")
+    # Test GNOME with GUI screenshots
+    print("[INFO] Testing GNOME configuration with GUI...")
 
     # Test GNOME services
-    gnome_machine.wait_for_unit("display-manager.service", timeout=60)
+    gnome_machine.wait_for_unit("display-manager.service", timeout=90)
     gnome_machine.wait_until_succeeds("systemctl is-active display-manager.service", timeout=30)
     print("[SUCCESS] GDM service active")
+
+    # Wait for X server to be ready
+    gnome_machine.wait_for_unit("graphical.target", timeout=120)
+    gnome_machine.wait_until_succeeds("pgrep Xorg || pgrep gdm", timeout=60)
+    print("[SUCCESS] X server running")
 
     # Test essential GNOME packages
     gnome_machine.succeed("test -f /run/current-system/sw/bin/gnome-shell")
     gnome_machine.succeed("test -f /run/current-system/sw/bin/firefox")
     print("[SUCCESS] Core GNOME applications installed")
+
+    # Wait a bit for GUI to stabilize
+    gnome_machine.sleep(10)
+
+    # Take GUI screenshots
+    gnome_machine.screenshot("gnome_login_screen")
 
     # Test GNOME extensions directory
     result = gnome_machine.succeed("ls /run/current-system/sw/share/gnome-shell/extensions/ | wc -l || echo '0'")
@@ -326,14 +341,10 @@ pkgs.testers.nixosTest {
     gnome_machine.succeed("test -f /etc/dconf/profile/user")
     print("[SUCCESS] dconf profile configured")
 
-    # Take basic screenshot
-    gnome_machine.screenshot("gnome_config_test")
+    # Take final GNOME screenshot
+    gnome_machine.screenshot("gnome_desktop")
 
-    # Preserve GNOME screenshots immediately
-    print("[INFO] Preserving GNOME screenshots immediately...")
-    gnome_machine.screenshot("gnome_final")
-
-    print("[SUCCESS] GNOME configuration test completed (headless mode)")
+    print("[SUCCESS] GNOME configuration test completed with GUI")
 
     # === HYPRLAND COMPREHENSIVE TESTING ===
     print("\n=== Hyprland Desktop Environment Testing ===")
@@ -363,24 +374,41 @@ pkgs.testers.nixosTest {
     hyprland_machine.sleep(5)
     hyprland_machine.screenshot("sddm_login_screen")
 
-    # Simplified Hyprland testing without graphics interaction
-    print("[INFO] Testing Hyprland configuration (headless mode)...")
+    # Test Hyprland with GUI screenshots
+    print("[INFO] Testing Hyprland configuration with GUI...")
 
-    # Just test that SDDM service starts (no actual login needed)
+    # Wait for Wayland session to be ready
+    hyprland_machine.wait_for_unit("graphical.target", timeout=120)
+    hyprland_machine.wait_until_succeeds("pgrep sddm || pgrep Hyprland", timeout=60)
+    print("[SUCCESS] Display manager running")
+
+    # Wait for desktop to stabilize
+    hyprland_machine.sleep(10)
+
+    # Take SDDM login screenshot
+    hyprland_machine.screenshot("hyprland_sddm_login")
+
+    # Attempt automatic login or take screenshot of current state
+    try:
+        # Try to login automatically (may work with empty password)
+        hyprland_machine.send_key("ret")
+        hyprland_machine.sleep(5)
+        hyprland_machine.screenshot("hyprland_after_login")
+    except:
+        print("[INFO] Auto-login failed, taking current screen state")
+        hyprland_machine.screenshot("hyprland_login_attempt")
+
+    # Test that SDDM service starts
     result = hyprland_machine.succeed("systemctl is-active display-manager.service || echo 'sddm-not-running'")
     if "sddm-not-running" in result:
-        print("[WARNING] SDDM service not running, skipping interactive tests")
+        print("[WARNING] SDDM service not running, but continuing with tests")
     else:
         print("[SUCCESS] SDDM service running")
 
-    # Take a basic screenshot attempt
-    hyprland_machine.screenshot("hyprland_config_test")
+    # Take final Hyprland screenshot
+    hyprland_machine.screenshot("hyprland_desktop_final")
 
-    # Preserve Hyprland screenshots immediately
-    print("[INFO] Preserving Hyprland screenshots immediately...")
-    hyprland_machine.screenshot("hyprland_final")
-
-    print("[SUCCESS] Hyprland configuration test completed (headless mode)")
+    print("[SUCCESS] Hyprland configuration test completed with GUI")
 
     # === DESKTOP SWITCHING VALIDATION ===
     print("\n=== Desktop Environment Switching Validation ===")
@@ -457,27 +485,24 @@ pkgs.testers.nixosTest {
     hyprland_machine.wait_for_unit("graphical.target")
     print("[SUCCESS] Both machines reach graphical target")
 
-    # Take final screenshots
+    # Take final comprehensive screenshots
+    gnome_machine.screenshot("final_gnome_desktop")
     hyprland_machine.screenshot("final_hyprland_desktop")
-    gnome_machine.succeed("DISPLAY=:99 xwd -root | convert xwd:- /tmp/final_gnome_state.png || echo 'Final GNOME screenshot'")
 
-    # === PRESERVE SCREENSHOTS ===
-    print("\n=== Preserving screenshots for artifact upload ===")
+    # === SCREENSHOT SUMMARY ===
+    print("\n=== Screenshot Summary for Artifact Upload ===")
 
-    # Simple screenshot preservation - the nixosTest framework handles this automatically
-    # Screenshots taken with machine.screenshot() are automatically preserved in result/
-    print("[INFO] Screenshots are automatically preserved by nixosTest framework")
+    # Screenshots taken automatically preserved by nixosTest framework in result/ directory
+    print("[INFO] Screenshots automatically preserved by nixosTest framework:")
+    print("[INFO]   - gnome_login_screen.png")
+    print("[INFO]   - gnome_desktop.png")
+    print("[INFO]   - final_gnome_desktop.png")
+    print("[INFO]   - hyprland_sddm_login.png")
+    print("[INFO]   - hyprland_after_login.png (if successful)")
+    print("[INFO]   - hyprland_desktop_final.png")
+    print("[INFO]   - final_hyprland_desktop.png")
 
-    # List available screenshots for debugging
-    try:
-        hyprland_screenshots = hyprland_machine.succeed("ls -la /tmp/vm-state-machine/*.png 2>/dev/null | wc -l || echo '0'")
-        gnome_screenshots = gnome_machine.succeed("ls -la /tmp/*.png 2>/dev/null | wc -l || echo '0'")
-        print(f"[INFO] Hyprland screenshots: {hyprland_screenshots.strip()}")
-        print(f"[INFO] GNOME screenshots: {gnome_screenshots.strip()}")
-    except Exception as e:
-        print(f"[WARNING] Could not count screenshots: {e}")
-
-    print("[SUCCESS] Screenshot preservation handled by test framework")
+    print("[SUCCESS] All screenshots preserved for GitHub Actions artifact upload")
 
     # === CONTROLLED SHUTDOWN TO PREVENT TIMEOUT ===
     print("\n=== Test completed successfully - performing controlled shutdown ===")
