@@ -16,12 +16,20 @@
   systemd.user.services.import-gpg-key = {
     description = "Import GPG public key from GitHub";
     wantedBy = [ "default.target" ];
-    after = [ "network-online.target" ];
+    after = [ "network-online.target" "graphical-session.target" ];
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
+      RemainAfterExit = false;  # Allow re-running for key updates
+      Restart = "on-failure";
+      RestartSec = "30s";
       ExecStart = "${pkgs.writeShellScript "import-gpg-key" ''
+        # Wait for network connectivity
+        until ${pkgs.curl}/bin/curl -s --max-time 10 https://github.com >/dev/null 2>&1; do
+          echo "Waiting for GitHub connectivity..."
+          sleep 5
+        done
+
         # Download GPG public key from GitHub for manual verification
         GPG_KEY_FILE=${
           builtins.fetchurl {
@@ -30,15 +38,33 @@
           }
         }
 
-        # Import without automatic trust
-        ${pkgs.gnupg}/bin/gpg --import --trust-model pgp "$GPG_KEY_FILE"
+        # Check if key is already imported (avoid duplicates)
+        if ! ${pkgs.gnupg}/bin/gpg --list-keys jasonodoom >/dev/null 2>&1; then
+          echo "Importing GPG public key from GitHub..."
+          ${pkgs.gnupg}/bin/gpg --import --trust-model pgp "$GPG_KEY_FILE"
+        else
+          echo "GPG key already imported, checking for updates..."
+          ${pkgs.gnupg}/bin/gpg --import --trust-model pgp "$GPG_KEY_FILE"
+        fi
 
         # Get the key ID from the imported key
         KEYID=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
 
         echo "GPG public key imported from GitHub - manual verification required"
         echo "To trust the key, run: gpg --edit-key $KEYID trust"
+        echo "Service will check for key updates on next boot"
       ''}";
+    };
+  };
+
+  # Timer to periodically check for GPG key updates
+  systemd.user.timers.import-gpg-key = {
+    description = "Check for GPG key updates from GitHub";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      RandomizedDelaySec = "1h";
+      Persistent = true;
     };
   };
 }
