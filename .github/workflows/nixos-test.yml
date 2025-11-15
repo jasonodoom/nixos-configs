@@ -216,9 +216,10 @@ jobs:
             --show-trace \
             --accept-flake-config \
             --option max-jobs 1 \
-            --option cores 1 \
+            --option cores 2 \
             --option substitute true \
             --option builders-use-substitutes true \
+            --option keep-going false \
             2>&1 | tee desktop-integration-output.log
           EXIT_CODE=$?
           echo "EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
