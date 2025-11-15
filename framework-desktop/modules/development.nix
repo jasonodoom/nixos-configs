@@ -15,7 +15,7 @@
   # Code-server for browser-based VSCode
   services.code-server = {
     enable = true;
-    auth = "none";  # Caddy handles authentication
+    auth = "none";  # Tailscale network access provides authentication
     host = "127.0.0.1";
     port = 8080;
   };
@@ -26,9 +26,6 @@
     virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
       extraConfig = ''
         reverse_proxy localhost:8080
-        basicauth {
-          jason $2b$12$0aVf86wJXtbiJWMQ1rXuNu32atVKWPzrcLoZ4iy96PJkC8S5EywyW
-        }
         tls {
           get_certificate tailscale
         }
