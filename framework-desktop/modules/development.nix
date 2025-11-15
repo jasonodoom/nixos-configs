@@ -21,6 +21,10 @@
     recommendedTlsSettings = true;
 
     virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
+      # Enable HTTPS with Tailscale certificates
+      enableACME = true;
+      forceSSL = true;
+
       locations."/" = {
         proxyPass = "http://127.0.0.1:8080";
         proxyWebsockets = true;
@@ -39,6 +43,9 @@
       };
     };
   };
+
+  # VSCode server configuration
+  services.vscode-server.enable = true;
 
   # Firewall configuration for VSCode server via nginx
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 80 443 ];
