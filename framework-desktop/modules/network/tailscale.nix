@@ -8,6 +8,25 @@
     permitCertUid = "caddy";  # Allow Caddy to fetch HTTPS certificates
   };
 
+  # Automatic Tailscale certificate renewal
+  systemd.services.tailscale-cert-renewal = {
+    description = "Renew Tailscale HTTPS certificates";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.tailscale}/bin/tailscale cert perdurabo.ussuri-elevator.ts.net";
+    };
+  };
+
+  systemd.timers.tailscale-cert-renewal = {
+    description = "Renew Tailscale HTTPS certificates monthly";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "monthly";
+      Persistent = true;
+      RandomizedDelaySec = "1h";
+    };
+  };
+
   # Ensure Tailscale always restarts on failure
   systemd.services.tailscaled.serviceConfig = {
     Restart = lib.mkForce "always";
