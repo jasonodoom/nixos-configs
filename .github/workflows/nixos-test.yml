@@ -249,16 +249,21 @@ jobs:
 
           # Debug: Show what result directories exist
           echo "=== Debugging: Looking for screenshots ==="
-          ls -la result* 2>/dev/null || echo "No result* directories found"
-          find result* -name "*.png" 2>/dev/null || echo "No PNG files found in result*"
-          find . -name "*.png" -type f 2>/dev/null || echo "No PNG files found anywhere"
+          echo "Directory structure:"
+          ls -laR result* 2>/dev/null || ls -la result 2>/dev/null || echo "No result directories found"
+          echo ""
+          echo "All PNG files found:"
+          find . -name "*.png" -type f 2>/dev/null | while read f; do
+            echo "  $f ($(du -h "$f" | cut -f1))"
+          done || echo "No PNG files found"
           echo "========================================="
 
           echo "## Desktop Integration Screenshots" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           found=0
-          for img in result*/screenshots/*.png result*/*.png result/*.png; do
+          # Look for screenshots in result directory (nixosTest output)
+          for img in $(find result -name "*.png" -type f 2>/dev/null); do
             if [ -f "$img" ]; then
               found=1
               imgname=$(basename "$img")
