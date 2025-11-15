@@ -10,8 +10,6 @@
   # VSCode server for remote development
   services.vscode-server = {
     enable = true;
-    # Bind to localhost only - Caddy handles Tailscale access
-    listenAddress = "127.0.0.1";
   };
 
   # Caddy reverse proxy for VSCode server with Tailscale HTTPS
@@ -31,7 +29,7 @@
   };
 
   # Firewall configuration for VSCode server via Caddy
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 80 443 ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 80 443 8080 ];
 
   # Development packages
   environment.systemPackages = with pkgs; [
