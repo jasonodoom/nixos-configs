@@ -109,4 +109,10 @@
     enable = true;
     binfmt = true;
   };
+
+  # Ensure desktop entries and icons are properly linked
+  environment.pathsToLink = [
+    "/share/applications"
+    "/share/icons"
+  ];
 }

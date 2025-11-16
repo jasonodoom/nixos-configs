@@ -15,9 +15,12 @@
   # Code-server for browser-based VSCode
   services.code-server = {
     enable = true;
-    auth = "none";  # Tailscale network access provides authentication
+    auth = "password";
     host = "127.0.0.1";
     port = 8080;
+    extraEnvironment = {
+      PASSWORD_FILE = config.age.secrets.code-server-password.path;
+    };
   };
 
   # Caddy reverse proxy for code-server with Tailscale HTTPS
