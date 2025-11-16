@@ -18,10 +18,10 @@
     auth = "password";
     host = "127.0.0.1";
     port = 8080;
-    extraEnvironment = {
-      PASSWORD_FILE = config.age.secrets.code-server-password.path;
-    };
   };
+
+  # Load hashed password from agenix secret
+  systemd.services.code-server.serviceConfig.EnvironmentFile = config.age.secrets.code-server-password.path;
 
   # Caddy reverse proxy for code-server with Tailscale HTTPS
   services.caddy = {
