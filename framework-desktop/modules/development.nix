@@ -20,6 +20,11 @@
     port = 8080;
   };
 
+  # Install Settings Sync extension for code-server
+  systemd.services.code-server.preStart = lib.mkAfter ''
+    ${pkgs.code-server}/bin/code-server --install-extension Shan.code-settings-sync || true
+  '';
+
   # Caddy reverse proxy for code-server with Tailscale HTTPS
   services.caddy = {
     enable = true;
