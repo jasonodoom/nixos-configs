@@ -6,7 +6,9 @@ in
 final: prev: {
   code-server =
     if (prev ? code-server) then
-      prev.code-server.overrideAttrs (oldAttrs: {
+      (prev.code-server.override {
+        nodejs = final.nodejs_22;
+      }).overrideAttrs (oldAttrs: {
         inherit version;
         src = prev.fetchFromGitHub {
           owner = "coder";
