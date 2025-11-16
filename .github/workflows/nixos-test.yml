@@ -293,10 +293,8 @@ jobs:
           name: desktop-integration-screenshots
           path: |
             framework-desktop/*.log
-            framework-desktop/result*/screenshots/
-            framework-desktop/result*/*.png
+            framework-desktop/result/screenshots/*.png
             framework-desktop/result/*.png
-            framework-desktop/**/*.png
           if-no-files-found: ignore
 
       - name: Test summary
@@ -308,6 +306,15 @@ jobs:
             echo "[PASS] Desktop integration test completed successfully" >> $GITHUB_STEP_SUMMARY
           else
             echo "[FAIL] Desktop integration test failed" >> $GITHUB_STEP_SUMMARY
+            # Check the log for specific failures
+            if grep -q "RequestedAssertionFailed\|Traceback\|timed out" framework-desktop/desktop-integration-output.log 2>/dev/null; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Error Details:**" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              grep -A 5 "RequestedAssertionFailed\|Traceback\|timed out" framework-desktop/desktop-integration-output.log | head -20 >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            fi
+            exit 1
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Tests both GNOME and Hyprland configurations with screenshots" >> $GITHUB_STEP_SUMMARY
