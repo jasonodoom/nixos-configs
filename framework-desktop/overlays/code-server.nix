@@ -17,6 +17,9 @@ final: prev: {
           fetchSubmodules = true;
           inherit hash;
         };
+        yarnCache = oldAttrs.yarnCache.overrideAttrs {
+          outputHash = "sha256-3xDinhLSZJoz7N7Z/+ttDLh82fwyunOTeSE3ULOZcHA=";
+        };
       })
     else
       prev.writeShellScriptBin "code-server" ''
