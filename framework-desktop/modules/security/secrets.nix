@@ -11,14 +11,6 @@
         group = "users";
         mode = "0400";
       };
-
-      # Code-server password
-      code-server-password = {
-        file = ../../secrets/code-server-password.age;
-        owner = "root";
-        group = "root";
-        mode = "0400";
-      };
     };
 
     # Use the system's SSH host key for decryption

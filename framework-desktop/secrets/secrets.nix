@@ -32,7 +32,4 @@ in
   # Tailscale auth key for initrd remote LUKS unlock
   # Expires: 2026-02-11
   "tailscale-initrd-key.age".publicKeys = all;
-
-  # Code-server password for Settings Sync
-  "code-server-password.age".publicKeys = all;
 }
