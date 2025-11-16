@@ -16,11 +16,9 @@
   services.code-server = {
     enable = true;
     auth = "password";
+    hashedPassword = builtins.readFile config.age.secrets.code-server-password.path;
     host = "127.0.0.1";
     port = 8080;
-    extraEnvironment = {
-      PASSWORD_FILE = config.age.secrets.code-server-password.path;
-    };
   };
 
   # Caddy reverse proxy for code-server with Tailscale HTTPS
