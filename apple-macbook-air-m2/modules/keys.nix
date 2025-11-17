@@ -1,0 +1,19 @@
+# SSH Public Keys for theophany
+{ ... }:
+
+{
+  # SSH public keys
+  users.users.jason.openssh.authorizedKeys.keys = [
+    # YubiKey
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDdTRD5etaWB3UmGiJ2cD/TVCn/asEw7c8frhAYDOhsb1bmEp7z3mG7gKFwepBaWFX3D7aXXirTTNsnKd7AsM5riQQg1tZ5qtmT+nEmpDhi1WVtFm89jc0ezyJN1SnlsCUEhQ0twn4qzR+PnjRVE1E4KTpbwTCapgMl9w4iCEQikaPWWcg9u+CRGNLaehgM7Jm5jKdVoIa258wNgvCrNZcba4LCccz1PK5j4j1uu3sr400CatIEkWe+aqiDCBIamFPXuJqZy1gb4+dqk1wKPJqn8L9WFD6j5mDarrIaHHmy7rnviPinbpLoCE3eksxAVeI1QjI8uPXyrn4GtUQNSNBMZPu2DTCZSo5bG5NbcE2Di9KSkW8SQJg0dYgZSJjssp5qkT9uFx7AnLfvIlR3+IQA45cXnM+jXCikNbGPLMenv8jjMrSke73hxr8T6rsjO2FGT3tWeiDBN5B59wgWY+bbrExOcFe2/cClYfBFzdF9d800Xg6+fN7E6gamTyrNNRL68f+sawuTDBrWggPJFFcHvQMd4zxE/ujbyCgy+11U8M5AAU/y6/Aa2XUt0jnEXgMXBpo7M3/5OWRzzyCO2RwtDWVxrJXPW9xYGvSoPAfDmdi0VNiGyldvbw4HHcHiFqftTCrNzMbR/QbjsuF4HMGI4fXddWYOFlNHbv+X+O2/kQ== cardno:5252959"
+
+    # ED25519
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQRbcTH0OZCQciQLgFXDqqqbc0383pXA/65JlZqpCyQ jason@scalene.local"
+
+    # Agenix backup
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICUc9Otz8oBlWJ1y5oc9x2dBnSJ4Zi3rzJnlAz+eEV7 jason@theophany.local"
+
+    # Router
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDs8TV9dLqV3I7bPjk6Bu8mURAbu+Zd4BeHbzoQHMyfOY9TVyPLEVXYHNcJqL8kM7kQbeLlss79Gfb9wPwuZRnAm6qmo0m9NwlJWMv5E06ZIEz0msc51pWO9Zv2DNIrR4yXVX6YZv1RMg6oVLdRcqGOHFALX2QMoQjGQlq80ddgPqr/o57GVjv4itkz51zf6mfu200wGguh8yWGcWRTFq4jBXoEBhXK163skVMgJsd+NLLm55qCkcww6MdxofpIPDneMbvp8VJhgdlsr7PicB6c1wO8qkfVLhenEdJy84zorxmDFWmRdgUx9RDwGIafHkH+rd7lCG3FdhLOXsT7urK3T8UN+3RLv7V+/G3u12r3d6mJ6GovLzSQX+eY9gg8QFMVpO+ZsuCOFXuVAmt/H5zJC8dy5JJaq3D41zGqVk5Wf6RvzNWTvcU5j4+YCLQQFXywzkDpgtWiU6hWx//ShJLpNwLf5tvWb4xqtVcwF7mV7rJ6m4y50Y2Iw8a9qlGy04kHMSDLziwmisn075qRZue6UlTDqZpQz+UlEcQqkKyR7svZQ/iRm4ImwLxyfocZjDLGxtVYb3jf/xkMxXIdP2MMukOwUezMUBgcan2wwNmtpfOVS9VCcAiv4FqngD7YsooRxHuDguUuTOnDc3XhfyeiXvOaqpptV3aQyiTBek/6Jw== jason@Mac.lan"
+  ];
+}
