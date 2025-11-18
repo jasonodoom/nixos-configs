@@ -69,8 +69,6 @@ jobs:
         if: steps.check-update.outputs.needed == 'true'
         run: |
           BRANCH_NAME="update-tailscale-${{ steps.tailscale-release.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH_NAME}"
           echo "branch=${BRANCH_NAME}" >> $GITHUB_ENV
 
@@ -100,10 +98,14 @@ jobs:
 
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
-        run: |
-          git add framework-desktop/flake.nix framework-desktop/flake.lock
-          git commit -m "Update Tailscale to ${{ steps.tailscale-release.outputs.version }}"
-          git push origin "${branch}"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update Tailscale to ${{ steps.tailscale-release.outputs.version }}"
+          branch: ${{ env.branch }}
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock'
 
       - name: Create Pull Request
         if: steps.check-update.outputs.needed == 'true'

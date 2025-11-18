@@ -15,7 +15,7 @@
   # Code-server for browser-based VSCode
   services.code-server = {
     enable = true;
-    auth = "password";
+    auth = "none";
     host = "127.0.0.1";
     port = 8080;
   };
