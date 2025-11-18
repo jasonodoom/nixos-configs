@@ -11,6 +11,15 @@
 
   # SSH client configuration for theophany
   programs.ssh.extraConfig = ''
+    # Deploy key for system operations (darwin-rebuild, etc.)
+    Host github-deploy.com
+      HostName github.com
+      User git
+      IdentityFile /etc/ssh/deploy_keys/github
+      IdentitiesOnly yes
+      StrictHostKeyChecking yes
+
+    # User access for personal operations
     Host github.com
       HostName github.com
       PubkeyAuthentication yes
