@@ -30,7 +30,7 @@
 
       # Core settings
       core = {
-        editor = "/run/current-system/sw/bin/vim";
+        editor = "/run/current-system/sw/bin/nvim";
         whitespace = "fix,-indent-with-non-tab,trailing-space,cr-at-eol";
         pager = "delta";
       };

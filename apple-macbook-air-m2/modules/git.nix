@@ -19,7 +19,7 @@
 [init]
 	defaultBranch = main
 [core]
-	editor = vim
+	editor = nvim
 	whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
 	pager = less
 [web]
@@ -72,7 +72,7 @@
 [gitflow "prefix"]
 	versiontag = v
 [sequence]
-	editor = nano
+	editor = nvim
 [alias]
 	a = add --all
 	ai = add -i
