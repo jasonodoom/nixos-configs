@@ -202,8 +202,14 @@ jobs:
       run: |
         echo "Running basic security checks..."
 
-        # Check for hardcoded passwords or secrets
-        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton\|signingkey\|token.*=.*\"token\""; then
+        # Check for private keys (should never be in repo)
+        if grep -r "BEGIN.*PRIVATE KEY" --include="*.nix" .; then
+          echo "Found private keys in repository - this is a security risk!"
+          exit 1
+        fi
+
+        # Check for hardcoded passwords or secrets (excluding SSH public keys)
+        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton\|signingkey\|token.*=.*\"token\"\|ssh-ed25519\|ssh-rsa"; then
           echo "Found potential hardcoded passwords"
           exit 1
         fi
