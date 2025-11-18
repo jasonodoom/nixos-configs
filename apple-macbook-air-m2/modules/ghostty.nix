@@ -6,12 +6,14 @@
   # After installation, you can manage the config file via this module
 
   # Create user ghostty config directory and file via activation script
-  system.activationScripts.ghostty-config.text = ''
+  system.activationScripts.postActivation.text = ''
+    echo "Setting up Ghostty config..."
     USER_HOME="/Users/${config.system.primaryUser}"
+    GHOSTTY_CONFIG_DIR="$USER_HOME/Library/Application Support/com.mitchellh.ghostty"
 
-    mkdir -p "$USER_HOME/.config/ghostty"
+    mkdir -p "$GHOSTTY_CONFIG_DIR"
 
-    cat > "$USER_HOME/.config/ghostty/config" << 'EOF'
+    cat > "$GHOSTTY_CONFIG_DIR/config" <<'GHOSTTY_EOF'
 # Font configuration
 font-family = Fira Code
 font-size = 12
@@ -70,9 +72,13 @@ shell-integration-features = cursor,sudo,title
 
 # Scrollback
 scrollback-limit = 2000
-EOF
 
-    chmod 644 "$USER_HOME/.config/ghostty/config"
-    chown ${config.system.primaryUser}:staff "$USER_HOME/.config/ghostty/config"
+# Keybindings
+keybind = shift+enter=text:\x1b\r
+GHOSTTY_EOF
+
+    chmod 644 "$GHOSTTY_CONFIG_DIR/config"
+    chown ${config.system.primaryUser}:staff "$GHOSTTY_CONFIG_DIR/config"
+    echo "Ghostty config written to $GHOSTTY_CONFIG_DIR/config"
   '';
 }

@@ -6,8 +6,9 @@
 
   # Enable Touch ID for sudo authentication
   # This allows you to use fingerprint instead of password for sudo commands
-  security.pam.services.sudo_local.touchIdAuth = true;
-
-  # YubiKey for sudo authentication
-  security.pam.services.sudo_local.u2fAuth = true;
+  # reattach enables Touch ID in tmux/screen/terminal multiplexers
+  security.pam.services.sudo_local = {
+    touchIdAuth = true;
+    reattach = true;
+  };
 }

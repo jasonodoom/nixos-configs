@@ -2,6 +2,8 @@
 
 {
   # Enable nix-darwin's built-in Homebrew management
+  # Obviously, not using brew outside of nix-darwin, but this helps manage
+  # GUI applications and Mac App Store apps declaratively.
   homebrew = {
     enable = true;
 
@@ -13,10 +15,7 @@
     };
 
     # Taps (third-party repositories)
-    taps = [
-      "homebrew/cask-versions"
-      "homebrew/cask-fonts"
-    ];
+    taps = [ ];
 
     # CLI tools via Homebrew (prefer nixpkgs when available)
     brews = [
@@ -24,7 +23,6 @@
     ];
 
     # GUI applications via Homebrew Cask
-    # These are managed declaratively - removed apps will be uninstalled on rebuild
     casks = [
       # Browsers
       "firefox"
@@ -40,14 +38,13 @@
       # Development
       "iterm2"
       "github"
-      "rancher-desktop"
       "virtualbox"
 
       # Media & Design
       "vlc"
       "obs"
-      "audacity"
-      "gimp"
+      # "audacity"  # existing version conflicts with Homebrew. Commenting for now.
+      # "gimp"      # existing version conflicts with Homebrew. Commenting for now.
 
       # Productivity
       "obsidian"
@@ -58,32 +55,40 @@
       # Utilities
       "little-snitch"
       "micro-snitch"
-      "keka"
       "stats"
-      "tailscale"
+      "tailscale-app"
       "transmission"
-      "wireshark"
+      "wireshark-app"
 
       # Terminal
       "ghostty"
 
       # AI/ML
-      "ollama"
+      "ollama-app"
       "rewind"
-
-      # Misc
-      "mqtt-explorer"
     ];
 
-    # Then add apps here in format: "App Name" = app_id;
-    # Example: "Xcode" = 497799835;
+    # Mac App Store apps 
+    # mas list output can be used to find app IDs
     masApps = {
-      # Run 'mas list' after rebuild to see your installed apps and their IDs
+      "GarageBand" = 682658836;
+      "iMovie" = 408981434;
+      "Keka" = 470158793;
+      "Keynote" = 409183694;
+      "Manico" = 724472954;
+      "MQTT Explorer" = 1455214828;
+      "Numbers" = 409203825;
+      "OP-Z" = 1098190457;
+      "Pages" = 409201541;
+      "Scrobbles for Last.fm" = 1344679160;
+      "Shazam" = 897118787;
+      "WireGuard" = 1451685025;
+      # "Xcode" = 497799835;
+      "Yubico Authenticator" = 1497506650;
     };
   };
 
-  # Note: Homebrew is installed to /opt/homebrew on Apple Silicon
-  # The following environment variables are automatically set by nix-darwin:
+  # Homebrew is installed to /opt/homebrew  and the following environment variables are set by nix-darwin:
   # - HOMEBREW_PREFIX=/opt/homebrew
   # - PATH includes /opt/homebrew/bin
 }

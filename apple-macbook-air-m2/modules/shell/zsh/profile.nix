@@ -23,7 +23,11 @@
     export LESS='-sCMR'
     export MORE='-c'
     export GPG_TTY=$(tty)
-    export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket 2>/dev/null || echo "")
+    # Only set SSH_AUTH_SOCK if gpgconf is available and agent socket exists
+    if command -v gpgconf >/dev/null 2>&1; then
+      AGENT_SOCK=$(gpgconf --list-dirs agent-ssh-socket 2>/dev/null)
+      [[ -S "$AGENT_SOCK" ]] && export SSH_AUTH_SOCK="$AGENT_SOCK"
+    fi
     export KEYID='0x68CCAF80768A91A5'
 
     # System information
@@ -41,30 +45,39 @@
     export CLICOLOR=1
     export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
 
-    # System information on login
-    if [[ -o interactive ]]; then
-      echo -e "\nYou are logged on \033[1;31m$(hostname)\033[0m"
-      echo -e "\n\033[1;31mAdditional information:\033[0m"; uname -a
-      echo -e "\n\033[1;31mUsers logged on:\033[0m"; w -h | cut -d " " -f1 | sort | uniq
-      echo -e "\n\033[1;31mCurrent date:\033[0m"; date
-      echo -e "\n\033[1;31mMachine stats:\033[0m"; uptime
-      echo -e "\n\033[1;31mDiskspace:\033[0m"; df -h / 2>/dev/null | tail -1
-      echo
+    # System information on login with selective caching
+    if [[ -o login ]] && [[ -o interactive ]]; then
+      CACHE_FILE="$HOME/.zsh_sysinfo_cache"
+      CACHE_TTL=3600  # 1 hour for rarely-changing data
 
-      # Session status if available
-      echo -e "\033[1;31mSessions:\033[0m"
-      if command -v screen >/dev/null 2>&1; then
-        screen_count=$(screen -ls 2>/dev/null | grep -c "Detached\|Attached" || echo "0")
-        echo "  Screen: $screen_count sessions"
-      fi
-      if command -v tmux >/dev/null 2>&1; then
-        tmux_count=$(tmux list-sessions 2>/dev/null | wc -l || echo "0")
-        echo "  Tmux: $tmux_count sessions"
+      # Cache only static/slow-changing data (hostname, disk)
+      if [[ ! -f "$CACHE_FILE" ]]; then
+        {
+          echo "HOSTNAME=$(hostname)"
+          echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+        } > "$CACHE_FILE"
+      else
+        # Check cache age using touch comparison
+        NOW=$(date +%s)
+        FILE_TIME=$(stat -f "%m" "$CACHE_FILE" 2>/dev/null)
+        # Ensure FILE_TIME is numeric, default to 0 if not
+        [[ "$FILE_TIME" =~ ^[0-9]+$ ]] || FILE_TIME=0
+        CACHE_AGE=$((NOW - FILE_TIME))
+        if [[ $CACHE_AGE -gt $CACHE_TTL ]]; then
+          {
+            echo "HOSTNAME=$(hostname)"
+            echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+          } > "$CACHE_FILE"
+        fi
       fi
 
-      echo -e "\n\033[1;31mThe Date & Time is:\033[0m"
-      date
-      echo
+      # Load cached values and fetch fresh dynamic data
+      source "$CACHE_FILE" 2>/dev/null
+      USERS=$(w -h | cut -d ' ' -f1 | sort | uniq | tr '\n' ' ')
+      UPTIME=$(uptime | sed 's/.*up /up /')
+
+      echo -e "\n\033[1;31m$HOSTNAME\033[0m | $(date '+%Y-%m-%d %H:%M:%S') | $UPTIME"
+      echo -e "\033[1;31mUsers:\033[0m $USERS | \033[1;31mDisk:\033[0m $DISK\n"
     fi
   '';
 }
