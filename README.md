@@ -11,10 +11,16 @@ A collection of NixOS system configurations for different machines.
 
 - **Location**: `./framework-desktop/`
 - **Description**: Pure NixOS configuration with Hyprland, LUKS encryption and isolated development shells
-- **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs/framework-desktop#perdurabo`
+- **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs?dir=framework-desktop#perdurabo`
 
 ### Lenovo ThinkCentre M710q (Congo)
 
 - **Location**: `./lenovo-thinkcentre-m710q/`
 - **Description**: Server configuration with LUKS remote unlock via Tailscale, OpenBao, Pi-hole and log aggregation
-- **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs/lenovo-thinkcentre-m710q#congo`
+- **Build**: `sudo nixos-rebuild switch --flake github:jasonodoom/nixos-configs?dir=lenovo-thinkcentre-m710q#congo`
+
+### Apple MacBook Air M2 (Theophany)
+
+- **Location**: `./apple-macbook-air-m2/`
+- **Description**: nix-darwin configuration with Homebrew app management and agenix
+- **Build**: `sudo darwin-rebuild switch --flake github:jasonodoom/nixos-configs?dir=apple-macbook-air-m2#theophany`
