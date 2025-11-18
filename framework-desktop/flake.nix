@@ -1,13 +1,14 @@
 {
-  description = "NixOS configuration for Framework Desktop with Hyprland";
+  description = "NixOS configuration for Framework Desktop";
 
-  # Garnix CI cache configuration
   nixConfig = {
     substituters = [
+      "https://install.determinate.systems"
       "https://cache.nixos.org/"
       "https://cache.garnix.io"
     ];
     trusted-public-keys = [
+      "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
     ];
@@ -32,12 +33,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, vscode-server, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, vscode-server, determinate, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -66,6 +69,9 @@
 
         # VSCode server for remote development
         vscode-server.nixosModules.default
+
+        # Determinate Nix for enterprise features
+        determinate.nixosModules.default
 
         ./modules/applications.nix
         ./modules/audio.nix

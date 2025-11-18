@@ -1,0 +1,43 @@
+name: Update Flake Lock
+
+on:
+  workflow_dispatch:
+    inputs:
+      flake:
+        description: 'Flake to update (leave empty for all)'
+        required: false
+        type: choice
+        options:
+          - all
+          - lenovo-thinkcentre-m710q
+          - framework-desktop
+          - apple-macbook-air-m2
+        default: all
+  schedule:
+    - cron: "0 0 * * 0"  # Weekly on Sunday at midnight UTC
+
+jobs:
+  update-flake-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Update flake locks
+        uses: DeterminateSystems/update-flake-lock@v24
+        with:
+          pr-title: "Update flake.lock"
+          pr-labels: |
+            dependencies
+            automated
+          pr-body: |
+            Automated flake.lock update.
+          commit-msg: "Update flake.lock"
+          path-to-flake-dir: ${{ github.event.inputs.flake == 'all' && 'lenovo-thinkcentre-m710q
+            framework-desktop
+            apple-macbook-air-m2' || github.event.inputs.flake || 'lenovo-thinkcentre-m710q
+            framework-desktop
+            apple-macbook-air-m2' }}

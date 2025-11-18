@@ -20,8 +20,10 @@
     port = 8080;
   };
 
-  # Load hashed password from agenix secret
-  systemd.services.code-server.serviceConfig.EnvironmentFile = config.age.secrets.code-server-password.path;
+  # Install Settings Sync extension for code-server
+  systemd.services.code-server.preStart = lib.mkAfter ''
+    ${pkgs.code-server}/bin/code-server --install-extension Shan.code-settings-sync || true
+  '';
 
   # Caddy reverse proxy for code-server with Tailscale HTTPS
   services.caddy = {

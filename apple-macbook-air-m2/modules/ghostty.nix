@@ -1,16 +1,19 @@
 { config, pkgs, lib, ... }:
 
 {
-  # Create user ghostty config directory and file
-  systemd.user.services.ghostty-config = {
-    description = "Create ghostty user config";
-    wantedBy = [ "default.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = false;  # Run on every rebuild to update config
-      ExecStart = "${pkgs.writeShellScript "ghostty-setup" ''
-        mkdir -p $HOME/.config/ghostty
-        cat > $HOME/.config/ghostty/config << 'EOF'
+  # Note: Ghostty is currently marked as broken on macOS in nixpkgs
+  # Install using official signed binaries from: https://ghostty.org
+  # After installation, you can manage the config file via this module
+
+  # Create user ghostty config directory and file via activation script
+  system.activationScripts.postActivation.text = ''
+    echo "Setting up Ghostty config..."
+    USER_HOME="/Users/${config.system.primaryUser}"
+    GHOSTTY_CONFIG_DIR="$USER_HOME/Library/Application Support/com.mitchellh.ghostty"
+
+    mkdir -p "$GHOSTTY_CONFIG_DIR"
+
+    cat > "$GHOSTTY_CONFIG_DIR/config" <<'GHOSTTY_EOF'
 # Font configuration
 font-family = Fira Code
 font-size = 12
@@ -72,9 +75,10 @@ scrollback-limit = 2000
 
 # Keybindings
 keybind = shift+enter=text:\x1b\r
-EOF
-        chmod 644 $HOME/.config/ghostty/config
-      ''}";
-    };
-  };
+GHOSTTY_EOF
+
+    chmod 644 "$GHOSTTY_CONFIG_DIR/config"
+    chown ${config.system.primaryUser}:staff "$GHOSTTY_CONFIG_DIR/config"
+    echo "Ghostty config written to $GHOSTTY_CONFIG_DIR/config"
+  '';
 }
