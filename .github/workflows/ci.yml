@@ -17,22 +17,28 @@ on:
 
 jobs:
   build-with-cache:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      max-parallel: 1  # Run builds sequentially to avoid resource contention
+      max-parallel: 3
       matrix:
         include:
           - host: lenovo-thinkcentre-m710q
             config: congo
+            os: ubuntu-latest
           - host: framework-desktop
             config: perdurabo
+            os: ubuntu-latest
+          - host: apple-macbook-air-m2
+            config: theophany
+            os: macos-14
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
 
     - name: Free up disk space
+      if: matrix.os == 'ubuntu-latest'
       run: |
         echo "Disk usage before cleanup:"
         df -h
@@ -63,7 +69,8 @@ jobs:
         echo "Disk usage after cleanup:"
         df -h
 
-    - name: Install Nix with cache configuration
+    - name: Install Nix with cache configuration (Linux)
+      if: matrix.os == 'ubuntu-latest'
       uses: DeterminateSystems/nix-installer-action@v21
       with:
         source-tag: "v3.12.1"
@@ -73,6 +80,17 @@ jobs:
           substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
           trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
+    - name: Install Nix with cache configuration (macOS)
+      if: matrix.os == 'macos-14'
+      uses: DeterminateSystems/nix-installer-action@v21
+      with:
+        source-tag: "v3.12.1"
+        extra-conf: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          extra-trusted-substituters = https://cache.flakehub.com https://install.determinate.systems https://nix-community.cachix.org https://cache.nixos.org/
+          extra-trusted-public-keys = cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
     - name: Setup Cachix for Congo builds
       if: matrix.config == 'congo'
       uses: cachix/cachix-action@v16
@@ -80,12 +98,18 @@ jobs:
         name: odoom-nixos-configs
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
+    - name: Check flake health
+      uses: DeterminateSystems/flake-checker-action@v9
+      with:
+        flake-lock-path: ${{ matrix.host }}/flake.lock
+
     - name: Check flake syntax
       run: |
         cd ${{ matrix.host }}
         nix flake check --accept-flake-config --no-build
 
     - name: Build NixOS configuration
+      if: matrix.os == 'ubuntu-latest'
       run: |
         cd ${{ matrix.host }}
 
@@ -120,6 +144,17 @@ jobs:
 
         echo "Disk usage after build and cleanup:"
         df -h
+
+    - name: Build nix-darwin configuration
+      if: matrix.os == 'macos-14'
+      run: |
+        cd ${{ matrix.host }}
+
+        # Build darwin configuration
+        nix build .#darwinConfigurations.${{ matrix.config }}.system \
+          --accept-flake-config \
+          --option substitute true \
+          --option builders-use-substitutes true
 
     - name: Test development shells
       if: matrix.host == 'framework-desktop'
