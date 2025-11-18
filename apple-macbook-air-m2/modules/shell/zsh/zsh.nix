@@ -25,9 +25,6 @@
 
       # Load oh-my-zsh
       source $ZSH/oh-my-zsh.sh
-
-      # Enable direnv
-      eval "$(${pkgs.direnv}/bin/direnv hook zsh)"
     '';
   };
 

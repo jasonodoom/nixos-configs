@@ -26,7 +26,7 @@
     alias dgo='nix-env --delete-generations old'
     alias gcn='nix-collect-garbage --delete-older-than 1s'
     alias nix_clean='nix-collect-garbage --delete-older-than 1s && nix-collect-garbage -d'
-    alias drs='noglob sudo darwin-rebuild switch --flake github:jasonodoom/nixos-configs?dir=apple-macbook-air-m2#theophany'
+    alias drs='noglob sudo darwin-rebuild switch --flake git+ssh://github-deploy.com/jasonodoom/nixos-configs?dir=apple-macbook-air-m2#theophany'
     alias drsl='noglob sudo darwin-rebuild switch --flake .#theophany'
     alias nix='noglob nix'
     alias darwin-rebuild='noglob darwin-rebuild'
