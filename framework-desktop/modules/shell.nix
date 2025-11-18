@@ -15,7 +15,7 @@
   environment = {
     # Global environment variables
     variables = {
-      EDITOR = "vim";
+      EDITOR = "nvim";
       LANG = "en_US.UTF-8";
       GPG_TTY = "$(tty)";
 

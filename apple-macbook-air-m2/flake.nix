@@ -45,6 +45,7 @@
           ./modules/shell/tmux.nix
           # Apps & System
           ./modules/git.nix
+          ./modules/neovim.nix
           ./modules/ghostty.nix
           ./modules/determinate-nix-update.nix
           ./modules/homebrew.nix
@@ -115,6 +116,7 @@
         # Environment variables
         environment.variables = {
           HOMEBREW_NO_ANALYTICS = "1";
+          EDITOR = "nvim";
         };
 
         # macOS system defaults
