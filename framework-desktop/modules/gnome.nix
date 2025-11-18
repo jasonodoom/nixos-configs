@@ -169,7 +169,7 @@ in
 
         "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
           binding = "<Super>r";
-          command = "GDK_BACKEND=x11 rofi -show drun";
+          command = "rofi -show drun";
           name = "Launch Rofi";
         };
 
@@ -230,7 +230,7 @@ in
     gnome-tweaks
     dconf-editor
     gnome-extension-manager
-    rofi  # Application launcher for Super+R keybinding
+    rofi-wayland  # Application launcher for Super+R keybinding
 
     # GNOME media applications
     lollypop  # Music player
