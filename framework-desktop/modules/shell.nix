@@ -5,7 +5,10 @@
   # Shell programs
   programs = {
     # Direnv for development environments
-    direnv.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
   };
 
   # Environment configuration

@@ -69,6 +69,9 @@ shell-integration-features = cursor,sudo,title
 
 # Scrollback
 scrollback-limit = 2000
+
+# Keybindings
+keybind = shift+enter=text:\x1b\r
 EOF
         chmod 644 $HOME/.config/ghostty/config
       ''}";
