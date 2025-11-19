@@ -56,6 +56,7 @@
       "little-snitch"
       "micro-snitch"
       "stats"
+      "tailscale-app"
       "transmission"
       "wireshark-app"
 
