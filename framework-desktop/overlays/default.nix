@@ -7,5 +7,4 @@ final: prev: {
 
   # Use Tailscale from GitHub flake
   tailscale = inputs.tailscale.packages.${final.stdenv.hostPlatform.system}.default;
-  tailscale-systray = inputs.tailscale.packages.${final.stdenv.hostPlatform.system}.tailscale-systray;
 }

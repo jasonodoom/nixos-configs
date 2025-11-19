@@ -36,8 +36,26 @@
   # System packages for Tailscale management
   environment.systemPackages = with pkgs; [
     tailscale
-    tailscale-systray
+    wl-clipboard  # Required for clipboard support in Tailscale systray
   ];
+
+  # Enable GNOME AppIndicator extension for Tailscale systray
+  services.xserver.desktopManager.gnome.extraGSettingsOverrides = ''
+    [org.gnome.shell]
+    enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com']
+  '';
+
+  # Tailscale systray user service (runs as user, not root)
+  systemd.user.services.tailscale-systray = lib.mkIf config.services.xserver.desktopManager.gnome.enable {
+    description = "Tailscale system tray";
+    wantedBy = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" "tailscaled.service" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.tailscale}/bin/tailscale systray";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+  };
 
   # Configure as Tailscale subnet router with SSH
   # Note: Initial authentication requires manual run of:
