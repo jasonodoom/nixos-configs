@@ -20,20 +20,16 @@ jobs:
           # Keep Tailscale workflow targeting main so security updates aren't blocked
           ref: main
 
-      - name: Free up disk space
-        run: |
-          # Remove unnecessary software to free up ~30GB
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h
+      - name: Maximize build space for Nix
+        uses: wimpysworld/nothing-but-nix@main
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31
+        uses: DeterminateSystems/nix-installer-action@v21
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
+          source-tag: "v3.12.1"
+          extra-conf: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Get latest Tailscale release
         id: tailscale-release
@@ -85,9 +81,13 @@ jobs:
       - name: Update flake.nix files with new version
         if: steps.check-update.outputs.needed == 'true'
         run: |
-          # Update framework-desktop
+          # Update framework-desktop (Perdurabo)
           sed -i 's|url = "github:tailscale/tailscale/[^"]*"|url = "github:tailscale/tailscale/${{ steps.tailscale-release.outputs.version }}"|g' framework-desktop/flake.nix
           git diff framework-desktop/flake.nix
+
+          # Update lenovo-thinkcentre-m710q (Congo)
+          sed -i 's|url = "github:tailscale/tailscale/[^"]*"|url = "github:tailscale/tailscale/${{ steps.tailscale-release.outputs.version }}"|g' lenovo-thinkcentre-m710q/flake.nix
+          git diff lenovo-thinkcentre-m710q/flake.nix
 
       - name: Update flake locks
         if: steps.check-update.outputs.needed == 'true'
@@ -95,23 +95,35 @@ jobs:
           cd framework-desktop
           nix flake update tailscale
 
+          cd ../lenovo-thinkcentre-m710q
+          nix flake update tailscale
+
       - name: Build Perdurabo configuration
         if: steps.check-update.outputs.needed == 'true'
         run: |
           cd framework-desktop
-          nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel --show-trace
+          # Build with max-jobs=0 to force using substitutes only (no local building)
+          # This saves significant disk space by avoiding local compilation
+          nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
+            --show-trace \
+            --max-jobs 0 \
+            --cores 0
 
       - name: Clean up after Perdurabo build
         if: steps.check-update.outputs.needed == 'true'
         run: |
           nix-collect-garbage -d
+          nix store gc
           df -h
 
       - name: Build Congo configuration
         if: steps.check-update.outputs.needed == 'true'
         run: |
           cd lenovo-thinkcentre-m710q
-          nix build .#nixosConfigurations.congo.config.system.build.toplevel --show-trace
+          nix build .#nixosConfigurations.congo.config.system.build.toplevel \
+            --show-trace \
+            --max-jobs 0 \
+            --cores 0
 
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
@@ -122,7 +134,7 @@ jobs:
           commit_user_name: github-actions[bot]
           commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
           commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock'
+          file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock lenovo-thinkcentre-m710q/flake.nix lenovo-thinkcentre-m710q/flake.lock'
 
       - name: Create Pull Request
         if: steps.check-update.outputs.needed == 'true'
@@ -146,9 +158,9 @@ jobs:
             --body "${SECURITY_WARNING}Automated update of Tailscale from ${{ steps.current-version.outputs.version }} to ${{ steps.tailscale-release.outputs.version }}.
 
           ## Changes
-          - Updated Tailscale flake input to ${{ steps.tailscale-release.outputs.version }}
-          - Ran \`nix flake update tailscale\`
-          - Build tests passed for both Perdurabo and Congo
+          - Updated Tailscale flake input to ${{ steps.tailscale-release.outputs.version }} for both Perdurabo and Congo
+          - Ran \`nix flake update tailscale\` in framework-desktop and lenovo-thinkcentre-m710q
+          - Build tests passed for both configurations
 
           ## Release Notes
           $(cat /tmp/changelog.txt)
