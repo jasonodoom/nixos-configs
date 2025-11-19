@@ -159,7 +159,7 @@ jobs:
             echo "- Desktop switching: ${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-  darwin-test:
+  vm-test-theophany:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v5
