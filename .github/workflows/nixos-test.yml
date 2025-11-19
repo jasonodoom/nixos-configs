@@ -197,7 +197,7 @@ jobs:
         run: |
           cd apple-macbook-air-m2
           set +e
-          darwin-rebuild switch --flake .#theophany 2>&1 | tee darwin-activate-output.log
+          ./result/sw/bin/darwin-rebuild switch --flake .#theophany 2>&1 | tee darwin-activate-output.log
           ACTIVATE_EXIT_CODE=$?
           echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
 
