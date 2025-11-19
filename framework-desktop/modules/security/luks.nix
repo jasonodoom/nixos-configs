@@ -10,11 +10,12 @@
     # Enable systemd in initrd (required for Tailscale)
     systemd.enable = true;
 
-    # Add commands needed for display-ip script
+    # Add commands needed for display-ip script and auto-reboot
     systemd.extraBin = {
       ip = "${pkgs.iproute2}/bin/ip";
       sed = "${pkgs.gnused}/bin/sed";
       head = "${pkgs.coreutils}/bin/head";
+      sleep = "${pkgs.coreutils}/bin/sleep";
     };
 
     # SSH host key management for initrd
