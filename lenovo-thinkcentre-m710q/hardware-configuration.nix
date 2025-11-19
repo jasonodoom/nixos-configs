@@ -26,6 +26,20 @@
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
+  # Check and repair boot partition health before activation
+  system.activationScripts.check-boot-health = lib.stringAfter [ "specialfs" ] ''
+    echo "Checking /boot filesystem health..."
+    BOOT_DEV=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /boot)
+    if ${pkgs.dosfstools}/bin/fsck.vfat -n "$BOOT_DEV" 2>&1 | grep -q "Dirty bit\|differences between boot sector"; then
+      echo "WARNING: /boot filesystem has issues. Attempting repair..."
+      ${pkgs.dosfstools}/bin/fsck.vfat -a "$BOOT_DEV" || true
+      ${pkgs.dosfstools}/bin/fsck.vfat -a -b "$BOOT_DEV" || true
+      echo "Boot filesystem repaired."
+    else
+      echo "/boot filesystem is healthy."
+    fi
+  '';
+
   swapDevices = [
     { device = "/swapfile"; size = 10240; }
   ];

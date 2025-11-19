@@ -32,6 +32,19 @@
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
+  # Check and repair boot partition health before activation
+  system.activationScripts.check-boot-health = lib.stringAfter [ "specialfs" ] ''
+    echo "Checking /boot filesystem health..."
+    if ${pkgs.dosfstools}/bin/fsck.vfat -n /dev/nvme1n1p1 2>&1 | grep -q "Dirty bit\|differences between boot sector"; then
+      echo "WARNING: /boot filesystem has issues. Attempting repair..."
+      ${pkgs.dosfstools}/bin/fsck.vfat -a /dev/nvme1n1p1 || true
+      ${pkgs.dosfstools}/bin/fsck.vfat -a -b /dev/nvme1n1p1 || true
+      echo "Boot filesystem repaired."
+    else
+      echo "/boot filesystem is healthy."
+    fi
+  '';
+
   # Swap (LVM logical volume)
   swapDevices = [
     { device = "/dev/mapper/nixos--vg-swap"; }
