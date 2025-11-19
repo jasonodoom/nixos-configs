@@ -202,7 +202,7 @@ jobs:
         run: |
           cd ${{ matrix.host }}
           set +e
-          ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
+          sudo ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
           ACTIVATE_EXIT_CODE=$?
           echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
 
