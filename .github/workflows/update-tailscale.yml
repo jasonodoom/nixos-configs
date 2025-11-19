@@ -20,6 +20,16 @@ jobs:
           # Keep Tailscale workflow targeting main so security updates aren't blocked
           ref: main
 
+      - name: Free up disk space
+        run: |
+          # Remove unnecessary software to free up ~30GB
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
@@ -90,6 +100,12 @@ jobs:
         run: |
           cd framework-desktop
           nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel --show-trace
+
+      - name: Clean up after Perdurabo build
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          nix-collect-garbage -d
+          df -h
 
       - name: Build Congo configuration
         if: steps.check-update.outputs.needed == 'true'
