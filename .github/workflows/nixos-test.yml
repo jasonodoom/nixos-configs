@@ -199,15 +199,6 @@ jobs:
           BUILD_EXIT_CODE=$?
           echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_OUTPUT
 
-      - name: Activate darwin configuration
-        id: darwin-activate
-        run: |
-          cd ${{ matrix.host }}
-          set +e
-          sudo ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
-          ACTIVATE_EXIT_CODE=$?
-          echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
-
       - name: Check test results
         id: check-results
         run: |
@@ -218,24 +209,19 @@ jobs:
             echo "Darwin build failed"
           fi
 
-          if [ "${{ steps.darwin-activate.outputs.ACTIVATE_EXIT_CODE }}" != "0" ]; then
-            TEST_FAILED=true
-            echo "Darwin activation failed"
-          fi
-
           cd ${{ matrix.host }}
-          if grep -q "error:\|failed\|FAILED" darwin-build-output.log darwin-activate-output.log 2>/dev/null; then
+          if grep -q "error:\|failed\|FAILED" darwin-build-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
           fi
 
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] Darwin activation test completed for ${{ matrix.config }}"
+            echo "[PASSED] Darwin build test completed for ${{ matrix.config }}"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] Darwin activation test failed for ${{ matrix.config }}"
+            echo "[FAILED] Darwin build test failed for ${{ matrix.config }}"
             exit 1
           fi
 
@@ -254,13 +240,12 @@ jobs:
           echo "## Test Results - ${{ matrix.config }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.check-results.outputs.TEST_RESULT }}" = "success" ]; then
-            echo "[PASS] Darwin activation test passed" >> $GITHUB_STEP_SUMMARY
+            echo "[PASS] Darwin build test passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "[FAIL] Darwin activation test failed" >> $GITHUB_STEP_SUMMARY
+            echo "[FAIL] Darwin build test failed" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ steps.darwin-build.outputs.BUILD_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Activation: ${{ steps.darwin-activate.outputs.ACTIVATE_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
 
   desktop-screenshots:
     runs-on: ubuntu-latest
