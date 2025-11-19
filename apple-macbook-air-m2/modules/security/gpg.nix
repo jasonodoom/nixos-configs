@@ -10,6 +10,7 @@
 
   # Create GPG agent config file
   system.activationScripts.gpg-agent-config.text = ''
+    echo "Setting up GPG agent config..."
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.gnupg"
     cat > "$USER_HOME/.gnupg/gpg-agent.conf" <<EOF
@@ -19,10 +20,12 @@ max-cache-ttl 120
 EOF
     chmod 600 "$USER_HOME/.gnupg/gpg-agent.conf"
     chown ${config.system.primaryUser}:staff "$USER_HOME/.gnupg/gpg-agent.conf"
+    echo "GPG agent config written to $USER_HOME/.gnupg/gpg-agent.conf"
   '';
 
   # Create GPG config file
   system.activationScripts.gpg-config.text = ''
+    echo "Setting up GPG config..."
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.gnupg"
     cat > "$USER_HOME/.gnupg/gpg.conf" <<'EOF'
@@ -47,6 +50,7 @@ require-cross-certification
 EOF
     chmod 600 "$USER_HOME/.gnupg/gpg.conf"
     chown ${config.system.primaryUser}:staff "$USER_HOME/.gnupg/gpg.conf"
+    echo "GPG config written to $USER_HOME/.gnupg/gpg.conf"
   '';
 
   # Import GPG public key from GitHub with hash verification
