@@ -36,6 +36,7 @@
   # System packages for Tailscale management
   environment.systemPackages = with pkgs; [
     tailscale
+    tailscale-systray
   ];
 
   # Configure as Tailscale subnet router with SSH
