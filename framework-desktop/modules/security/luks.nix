@@ -41,10 +41,13 @@
 
       serviceConfig = {
         Type = "notify";
+        ExecStartPre = "/bin/sh -c 'echo \"[INITRD] Starting Tailscale at $(date)\" | tee -a /run/initrd.log'";
         ExecStartPre = "/bin/mkdir -p /var/lib/tailscale";
         ExecStart = "${pkgs.tailscale}/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock";
-        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --auth-key=$(cat /etc/tailscale/auth-key) --hostname=perdurabo-initrd'";
+        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --auth-key=$(cat /etc/tailscale/auth-key) --hostname=perdurabo-initrd && echo \"[INITRD] Tailscale connected at $(date)\" | tee -a /run/initrd.log'";
         Restart = "on-failure";
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
       };
     };
 
@@ -84,8 +87,10 @@
         StandardError = "journal+console";
       };
       script = ''
+        echo "[INITRD] Display-IP service starting at $(date)" | tee -a /run/initrd.log
         sleep 5
         IP=$(ip -4 addr show enp191s0 | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
+        echo "[INITRD] Network IP detected: $IP" | tee -a /run/initrd.log
         if [ -n "$IP" ]; then
           MSG="
           ========================================
@@ -97,6 +102,9 @@
           echo "$MSG"
           echo "$MSG" > /dev/tty1 2>/dev/null || true
           echo "$MSG" > /dev/console 2>/dev/null || true
+          echo "[INITRD] Banner displayed at $(date)" | tee -a /run/initrd.log
+        else
+          echo "[INITRD] ERROR: No IP address detected" | tee -a /run/initrd.log
         fi
       '';
     };
@@ -214,6 +222,27 @@ EOF
       echo "Initrd SSH host key already exists, reusing it"
     fi
   '';
+
+  # Save initrd log for debugging after boot
+  systemd.services.save-initrd-log = {
+    description = "Save initrd debug log after boot";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "local-fs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      if [ -f /run/initrd.log ]; then
+        mkdir -p /var/log/initrd
+        cp /run/initrd.log /var/log/initrd/last-boot.log
+        echo "Initrd log saved to /var/log/initrd/last-boot.log"
+        echo "View with: cat /var/log/initrd/last-boot.log"
+      else
+        echo "No initrd log found at /run/initrd.log"
+      fi
+    '';
+  };
 
   # Validate initrd SSH configuration after boot
   systemd.services.test-initrd-ssh = {
