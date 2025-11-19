@@ -19,13 +19,23 @@
       IdentitiesOnly yes
       StrictHostKeyChecking yes
 
-    # User access for personal operations
     Host github.com
       HostName github.com
       PubkeyAuthentication yes
       IdentityFile ~/.ssh/id_rsa_yubikey.pub
       IdentitiesOnly yes
       User git
+
+    Host perdurabo
+      HostName perdurabo
+      IdentityFile ~/.ssh/id_ed25519
+      IdentitiesOnly yes
+
+    Host congo
+      HostName congo
+      User amy
+      IdentityFile ~/.ssh/id_ed25519
+      IdentitiesOnly yes
 
     Host *
       Protocol 2
