@@ -175,14 +175,15 @@ EOF
       };
     };
 
-    # Kernel modules for initrd
+    # Additional kernel modules for initrd
     # Network: Tailscale and ethernet drivers
     # Console/Keyboard: for local password entry
-    availableKernelModules = [
+    # Note: Using ++ to append, not override hardware-configuration.nix modules
+    availableKernelModules = config.boot.initrd.availableKernelModules ++ [
       # Network
       "r8169" "e1000e" "igb" "tun"
       # Keyboard/Console for local LUKS unlock
-      "atkbd" "i8042" "usbhid" "hid_generic"
+      "atkbd" "i8042"
     ];
 
     # Force LUKS support in initrd
