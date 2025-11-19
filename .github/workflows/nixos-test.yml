@@ -13,7 +13,7 @@ permissions:
   actions: write
 
 jobs:
-  vm-tests:
+  vm-tests-nixos:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -26,23 +26,25 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: cachix/install-nix-action@v31
+      - uses: DeterminateSystems/nix-installer-action@v21
         if: matrix.config == 'perdurabo'
         with:
-          enable_kvm: false
-          extra_nix_config: |
+          source-tag: "v3.12.1"
+          extra-conf: |
             experimental-features = nix-command flakes
-            substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
-            trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            extra-trusted-substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+            extra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
-      - uses: cachix/install-nix-action@v31
+      - uses: DeterminateSystems/nix-installer-action@v21
         if: matrix.config == 'congo'
         with:
-          enable_kvm: false
-          extra_nix_config: |
+          source-tag: "v3.12.1"
+          extra-conf: |
             experimental-features = nix-command flakes
-            substituters = https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
-            trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            extra-trusted-substituters = https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+            extra-trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
       - name: Build system configuration
         id: system-build
@@ -202,7 +204,7 @@ jobs:
         run: |
           cd ${{ matrix.host }}
           set +e
-          ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
+          sudo ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
           ACTIVATE_EXIT_CODE=$?
           echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
 
