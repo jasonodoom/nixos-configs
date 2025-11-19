@@ -53,6 +53,12 @@
       IdentityFile ~/.ssh/perdurabo_id_ed25519
       IdentitiesOnly yes
       StrictHostKeyChecking yes
+
+    Host congo
+      HostName congo
+      User amy
+      IdentityFile ~/.ssh/perdurabo_id_ed25519
+      IdentitiesOnly yes
   '';
 
   # SSH client configuration from encrypted agenix secret

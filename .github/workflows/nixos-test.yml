@@ -169,8 +169,13 @@ jobs:
             echo "- Desktop switching: ${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-  vm-test-theophany:
+  vm-tests-darwin:
     runs-on: macos-14
+    strategy:
+      matrix:
+        include:
+          - host: apple-macbook-air-m2
+            config: theophany
     steps:
       - uses: actions/checkout@v5
 
@@ -186,18 +191,18 @@ jobs:
       - name: Build darwin configuration
         id: darwin-build
         run: |
-          cd apple-macbook-air-m2
+          cd ${{ matrix.host }}
           set +e
-          nix build .#darwinConfigurations.theophany.system --show-trace --accept-flake-config 2>&1 | tee darwin-build-output.log
+          nix build .#darwinConfigurations.${{ matrix.config }}.system --show-trace --accept-flake-config 2>&1 | tee darwin-build-output.log
           BUILD_EXIT_CODE=$?
           echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_OUTPUT
 
       - name: Activate darwin configuration
         id: darwin-activate
         run: |
-          cd apple-macbook-air-m2
+          cd ${{ matrix.host }}
           set +e
-          ./result/sw/bin/darwin-rebuild switch --flake .#theophany 2>&1 | tee darwin-activate-output.log
+          ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
           ACTIVATE_EXIT_CODE=$?
           echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
 
@@ -216,7 +221,7 @@ jobs:
             echo "Darwin activation failed"
           fi
 
-          cd apple-macbook-air-m2
+          cd ${{ matrix.host }}
           if grep -q "error:\|failed\|FAILED" darwin-build-output.log darwin-activate-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
@@ -224,11 +229,11 @@ jobs:
 
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] Darwin activation test completed for theophany"
+            echo "[PASSED] Darwin activation test completed for ${{ matrix.config }}"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] Darwin activation test failed for theophany"
+            echo "[FAILED] Darwin activation test failed for ${{ matrix.config }}"
             exit 1
           fi
 
@@ -236,15 +241,15 @@ jobs:
         uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: test-artifacts-theophany
+          name: test-artifacts-${{ matrix.config }}
           path: |
-            apple-macbook-air-m2/*.log
+            ${{ matrix.host }}/*.log
           if-no-files-found: ignore
 
       - name: Test summary
         if: always()
         run: |
-          echo "## Test Results - theophany" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results - ${{ matrix.config }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.check-results.outputs.TEST_RESULT }}" = "success" ]; then
             echo "[PASS] Darwin activation test passed" >> $GITHUB_STEP_SUMMARY
