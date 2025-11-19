@@ -34,6 +34,12 @@ jobs:
             substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
             trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
+      - uses: cachix/cachix-action@v15
+        if: matrix.config == 'congo'
+        with:
+          name: odoom-nixos-configs
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
       - name: Build system configuration
         id: system-build
         run: |
@@ -170,6 +176,11 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: odoom-nixos-configs
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Build darwin configuration
         id: darwin-build
