@@ -163,7 +163,7 @@ EOF
     systemd.paths.systemd-ask-password-console.wantedBy = [ "sysinit.target" ];
     systemd.services.systemd-ask-password-wall.wantedBy = [ "multi-user.target" ];
 
-    # Auto-reboot after 10 minutes if LUKS is not unlocked
+    # Auto-reboot after 12 minutes if LUKS is not unlocked
     systemd.services.initrd-timeout-reboot = {
       description = "Reboot if LUKS unlock times out";
       wantedBy = [ "initrd.target" ];
@@ -171,7 +171,7 @@ EOF
       conflicts = [ "cryptsetup.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.coreutils}/bin/sleep 600 && ${pkgs.systemd}/bin/systemctl reboot";
+        ExecStart = "${pkgs.coreutils}/bin/sleep 720 && ${pkgs.systemd}/bin/systemctl reboot";
       };
     };
 

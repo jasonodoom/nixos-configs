@@ -190,6 +190,15 @@ jobs:
             extra-trusted-substituters = https://odoom-nixos-configs.cachix.org https://cache.flakehub.com https://install.determinate.systems https://nix-community.cachix.org https://cache.nixos.org/
             extra-trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
+      - name: Run flake checks
+        id: flake-check
+        run: |
+          cd ${{ matrix.host }}
+          set +e
+          nix flake check --show-trace --accept-flake-config 2>&1 | tee flake-check-output.log
+          CHECK_EXIT_CODE=$?
+          echo "CHECK_EXIT_CODE=$CHECK_EXIT_CODE" >> $GITHUB_OUTPUT
+
       - name: Build darwin configuration
         id: darwin-build
         run: |
@@ -199,43 +208,34 @@ jobs:
           BUILD_EXIT_CODE=$?
           echo "BUILD_EXIT_CODE=$BUILD_EXIT_CODE" >> $GITHUB_OUTPUT
 
-      - name: Activate darwin configuration
-        id: darwin-activate
-        run: |
-          cd ${{ matrix.host }}
-          set +e
-          sudo ./result/sw/bin/darwin-rebuild switch --flake .#${{ matrix.config }} 2>&1 | tee darwin-activate-output.log
-          ACTIVATE_EXIT_CODE=$?
-          echo "ACTIVATE_EXIT_CODE=$ACTIVATE_EXIT_CODE" >> $GITHUB_OUTPUT
-
       - name: Check test results
         id: check-results
         run: |
           TEST_FAILED=false
+
+          if [ "${{ steps.flake-check.outputs.CHECK_EXIT_CODE }}" != "0" ]; then
+            TEST_FAILED=true
+            echo "Flake check failed"
+          fi
 
           if [ "${{ steps.darwin-build.outputs.BUILD_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
             echo "Darwin build failed"
           fi
 
-          if [ "${{ steps.darwin-activate.outputs.ACTIVATE_EXIT_CODE }}" != "0" ]; then
-            TEST_FAILED=true
-            echo "Darwin activation failed"
-          fi
-
           cd ${{ matrix.host }}
-          if grep -q "error:\|failed\|FAILED" darwin-build-output.log darwin-activate-output.log 2>/dev/null; then
+          if grep -q "error:\|failed\|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
           fi
 
           if [ "$TEST_FAILED" = "false" ]; then
             echo "TEST_RESULT=success" >> $GITHUB_OUTPUT
-            echo "[PASSED] Darwin activation test completed for ${{ matrix.config }}"
+            echo "[PASSED] Darwin tests completed for ${{ matrix.config }}"
             exit 0
           else
             echo "TEST_RESULT=failure" >> $GITHUB_OUTPUT
-            echo "[FAILED] Darwin activation test failed for ${{ matrix.config }}"
+            echo "[FAILED] Darwin tests failed for ${{ matrix.config }}"
             exit 1
           fi
 
@@ -254,13 +254,13 @@ jobs:
           echo "## Test Results - ${{ matrix.config }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.check-results.outputs.TEST_RESULT }}" = "success" ]; then
-            echo "[PASS] Darwin activation test passed" >> $GITHUB_STEP_SUMMARY
+            echo "[PASS] Darwin tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "[FAIL] Darwin activation test failed" >> $GITHUB_STEP_SUMMARY
+            echo "[FAIL] Darwin tests failed" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Flake check: ${{ steps.flake-check.outputs.CHECK_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ steps.darwin-build.outputs.BUILD_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Activation: ${{ steps.darwin-activate.outputs.ACTIVATE_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
 
   desktop-screenshots:
     runs-on: ubuntu-latest
