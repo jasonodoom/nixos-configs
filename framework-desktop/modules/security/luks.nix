@@ -152,6 +152,18 @@ EOF
     systemd.paths.systemd-ask-password-console.wantedBy = [ "sysinit.target" ];
     systemd.services.systemd-ask-password-wall.wantedBy = [ "multi-user.target" ];
 
+    # Auto-reboot after 10 minutes if LUKS is not unlocked
+    systemd.services.initrd-timeout-reboot = {
+      description = "Reboot if LUKS unlock times out";
+      wantedBy = [ "initrd.target" ];
+      before = [ "cryptsetup.target" ];
+      conflicts = [ "cryptsetup.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.coreutils}/bin/sleep 600 && ${pkgs.systemd}/bin/systemctl reboot";
+      };
+    };
+
     # Kernel modules for initrd
     # Network: Tailscale and ethernet drivers
     # Console/Keyboard: for local password entry
