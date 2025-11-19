@@ -41,8 +41,10 @@
 
       serviceConfig = {
         Type = "notify";
-        ExecStartPre = "/bin/sh -c 'echo \"[INITRD] Starting Tailscale at $(date)\" | tee -a /run/initrd.log'";
-        ExecStartPre = "/bin/mkdir -p /var/lib/tailscale";
+        ExecStartPre = [
+          "/bin/sh -c 'echo \"[INITRD] Starting Tailscale at $(date)\" | tee -a /run/initrd.log'"
+          "/bin/mkdir -p /var/lib/tailscale"
+        ];
         ExecStart = "${pkgs.tailscale}/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock";
         ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --auth-key=$(cat /etc/tailscale/auth-key) --hostname=perdurabo-initrd && echo \"[INITRD] Tailscale connected at $(date)\" | tee -a /run/initrd.log'";
         Restart = "on-failure";
