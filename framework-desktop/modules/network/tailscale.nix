@@ -6,6 +6,7 @@
   services.tailscale = {
     enable = true;
     permitCertUid = "caddy";  # Allow Caddy to fetch HTTPS certificates
+    extraSetFlags = [ "--operator=jason" ];  # Allow jason to control Tailscale
   };
 
   # Automatic Tailscale certificate renewal
