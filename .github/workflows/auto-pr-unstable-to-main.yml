@@ -51,7 +51,7 @@ jobs:
           PR_EXISTS=$(gh pr list --head unstable --base main --state open --json number --jq 'length')
           echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
       - name: Sync main into unstable (only if PR needed and no existing PR)
         if: steps.check-commits.outputs.needs_pr == 'true' && steps.check-pr.outputs.pr_exists == '0'
@@ -75,7 +75,7 @@ jobs:
             echo "Unstable is already up-to-date with main"
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
       - name: Create Pull Request
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
@@ -121,12 +121,12 @@ jobs:
             --head unstable \
             --label "automated"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
       - name: Enable auto-merge
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           sleep 2
           PR_NUMBER=$(gh pr list --head unstable --base main --json number -q '.[0].number')

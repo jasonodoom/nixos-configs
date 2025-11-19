@@ -9,6 +9,7 @@
       Type = "oneshot";
       RemainAfterExit = false;  # Run on every rebuild to update config
       ExecStart = "${pkgs.writeShellScript "kitty-setup" ''
+        echo "Setting up Kitty config..."
         mkdir -p $HOME/.config/kitty
         cat > $HOME/.config/kitty/kitty.conf << 'EOF'
 font_family Fira Code
@@ -87,6 +88,7 @@ color7 #a9b1d6
 color15 #c0caf5
 EOF
         chmod 644 $HOME/.config/kitty/kitty.conf
+        echo "Kitty config written to $HOME/.config/kitty/kitty.conf"
       ''}";
     };
   };

@@ -47,12 +47,14 @@ jobs:
             echo "security=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check current version in flake
+      - name: Check current version in flakes
         id: current-version
         run: |
-          CURRENT_VERSION=$(grep -oP 'url = "github:tailscale/tailscale/\K[^"]+' framework-desktop/flake.nix || echo "none")
-          echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "Current version in flake: ${CURRENT_VERSION}"
+          PERDURABO_VERSION=$(grep -oP 'url = "github:tailscale/tailscale/\K[^"]+' framework-desktop/flake.nix || echo "none")
+          THEOPHANY_VERSION=$(grep -oP 'url = "github:tailscale/tailscale/\K[^"]+' apple-macbook-air-m2/flake.nix || echo "none")
+          echo "version=${PERDURABO_VERSION}" >> $GITHUB_OUTPUT
+          echo "Perdurabo version: ${PERDURABO_VERSION}"
+          echo "Theophany version: ${THEOPHANY_VERSION}"
 
       - name: Check if update needed
         id: check-update
@@ -72,16 +74,21 @@ jobs:
           git checkout -b "${BRANCH_NAME}"
           echo "branch=${BRANCH_NAME}" >> $GITHUB_ENV
 
-      - name: Update flake.nix with new version
+      - name: Update flake.nix files with new version
         if: steps.check-update.outputs.needed == 'true'
         run: |
+          # Update framework-desktop
           sed -i 's|url = "github:tailscale/tailscale/[^"]*"|url = "github:tailscale/tailscale/${{ steps.tailscale-release.outputs.version }}"|g' framework-desktop/flake.nix
-          git diff framework-desktop/flake.nix
+          # Update apple-macbook-air-m2
+          sed -i 's|url = "github:tailscale/tailscale/[^"]*"|url = "github:tailscale/tailscale/${{ steps.tailscale-release.outputs.version }}"|g' apple-macbook-air-m2/flake.nix
+          git diff framework-desktop/flake.nix apple-macbook-air-m2/flake.nix
 
-      - name: Update flake lock
+      - name: Update flake locks
         if: steps.check-update.outputs.needed == 'true'
         run: |
           cd framework-desktop
+          nix flake update tailscale
+          cd ../apple-macbook-air-m2
           nix flake update tailscale
 
       - name: Build Perdurabo configuration
@@ -96,6 +103,12 @@ jobs:
           cd lenovo-thinkcentre-m710q
           nix build .#nixosConfigurations.congo.config.system.build.toplevel --show-trace
 
+      - name: Build Theophany configuration
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          cd apple-macbook-air-m2
+          nix build .#darwinConfigurations.theophany.system --show-trace
+
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -105,7 +118,7 @@ jobs:
           commit_user_name: github-actions[bot]
           commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
           commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock'
+          file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock apple-macbook-air-m2/flake.nix apple-macbook-air-m2/flake.lock'
 
       - name: Create Pull Request
         if: steps.check-update.outputs.needed == 'true'
@@ -154,7 +167,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.check-update.outputs.needed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           # Wait for PR to be created
           sleep 2

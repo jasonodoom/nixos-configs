@@ -4,6 +4,7 @@
 {
   # Git configuration managed via nix-darwin
   system.activationScripts.git-config.text = ''
+    echo "Setting up Git config..."
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME"
 
@@ -284,5 +285,6 @@ EOF
 
     chown ${config.system.primaryUser}:staff "$USER_HOME/.gitconfig"
     chmod 644 "$USER_HOME/.gitconfig"
+    echo "Git config written to $USER_HOME/.gitconfig"
   '';
 }

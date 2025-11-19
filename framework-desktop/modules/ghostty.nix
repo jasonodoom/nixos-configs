@@ -9,6 +9,7 @@
       Type = "oneshot";
       RemainAfterExit = false;  # Run on every rebuild to update config
       ExecStart = "${pkgs.writeShellScript "ghostty-setup" ''
+        echo "Setting up Ghostty config..."
         mkdir -p $HOME/.config/ghostty
         cat > $HOME/.config/ghostty/config << 'EOF'
 # Font configuration
@@ -74,6 +75,7 @@ scrollback-limit = 2000
 keybind = shift+enter=text:\x1b\r
 EOF
         chmod 644 $HOME/.config/ghostty/config
+        echo "Ghostty config written to $HOME/.config/ghostty/config"
       ''}";
     };
   };

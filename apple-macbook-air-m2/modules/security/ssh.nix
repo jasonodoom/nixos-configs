@@ -15,7 +15,7 @@
     Host github-deploy.com
       HostName github.com
       User git
-      IdentityFile /etc/ssh/deploy_keys/github
+      IdentityFile /etc/ssh/theophany_deploy_key
       IdentitiesOnly yes
       StrictHostKeyChecking yes
 
