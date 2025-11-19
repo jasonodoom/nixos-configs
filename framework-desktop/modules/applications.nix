@@ -28,7 +28,6 @@
     handbrake
     obs-studio
     cheese
-    cider-2
 
     # Productivity and Office
     transmission_4-qt
