@@ -3,11 +3,13 @@
 
 {
   # Git configuration managed via nix-darwin
-  system.activationScripts.git-config.text = ''
+  system.activationScripts.postActivation.text = ''
     echo "Setting up Git config..."
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME"
 
+    # Force overwrite existing gitconfig
+    rm -f "$USER_HOME/.gitconfig"
     cat > "$USER_HOME/.gitconfig" <<'EOF'
 [user]
 	name = Jason Odoom
