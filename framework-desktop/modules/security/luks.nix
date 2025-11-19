@@ -178,8 +178,8 @@ EOF
     # Additional kernel modules for initrd
     # Network: Tailscale and ethernet drivers
     # Console/Keyboard: for local password entry
-    # Note: Using ++ to append, not override hardware-configuration.nix modules
-    availableKernelModules = config.boot.initrd.availableKernelModules ++ [
+    # Note: Using mkAfter to append to hardware-configuration.nix modules
+    availableKernelModules = lib.mkAfter [
       # Network
       "r8169" "e1000e" "igb" "tun"
       # Keyboard/Console for local LUKS unlock
