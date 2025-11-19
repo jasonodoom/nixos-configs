@@ -25,14 +25,21 @@
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.darwin.follows = "nix-darwin";
       };
+      tailscale = {
+        url = "github:tailscale/tailscale/v1.90.6";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
     };
 
-    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix }:
+    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix, tailscale }:
     let
       configuration = { pkgs, ... }: {
         # Import modules
         imports = [
           agenix.darwinModules.default
+          # Network
+          ./modules/network/network.nix
+          ./modules/network/tailscale.nix
           # Security
           ./modules/security/pam.nix
           ./modules/security/ssh.nix
@@ -106,13 +113,6 @@
         # Set primary user for system defaults
         system.primaryUser = "jason";
 
-        # Networking and hostname
-        networking = {
-          hostName = "theophany";
-          computerName = "theophany";
-          localHostName = "theophany";
-        };
-
         # Environment variables
         environment.variables = {
           HOMEBREW_NO_ANALYTICS = "1";
@@ -171,7 +171,7 @@
 
         # Overlays
         nixpkgs.overlays = [
-          (import ./overlays)
+          (import ./overlays { inherit inputs; })
           # Skip fish tests in direnv to avoid building fish from source
           # fish 4.2.1 is currently broken in nixpkgs
           # https://github.com/NixOS/nixpkgs/issues/461406
