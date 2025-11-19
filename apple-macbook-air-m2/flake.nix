@@ -25,13 +25,9 @@
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.darwin.follows = "nix-darwin";
       };
-      tailscale = {
-        url = "github:tailscale/tailscale/v1.90.6";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
     };
 
-    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix, tailscale }:
+    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix }:
     let
       configuration = { pkgs, ... }: {
         # Import modules
@@ -39,7 +35,6 @@
           agenix.darwinModules.default
           # Network
           ./modules/network/network.nix
-          ./modules/network/tailscale.nix
           # Security
           ./modules/security/pam.nix
           ./modules/security/ssh.nix

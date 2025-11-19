@@ -36,7 +36,6 @@
     "slack"
 
     # Media
-    "cider"
 
     # Productivity
     "obsidian"
