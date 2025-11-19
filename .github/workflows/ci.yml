@@ -1,13 +1,9 @@
 name: NixOS Configuration CI
 
 # Cache strategy:
-# - Perdurabo (framework-desktop): Uses Garnix cache (configured via garnix.yaml)
-# - Congo (lenovo-thinkcentre-m710q): Uses Cachix (push from GitHub Actions)
-#
-# Why not use Garnix for both?
-# Garnix only supports one flakeDir per repo and we maintain independent flakes
-# per machine instead of a root flake. Cachix allows us to push from CI for Congo
-# while Garnix continues to build and cache Perdurabo automatically.
+# - Perdurabo: Pushes to Garnix (automatic via garnix.yaml), pulls from garnix + cachix + nixos.org
+# - Congo: Pushes to Cachix, pulls from cachix + nixos.org
+# - Theophany: Pushes to Cachix, pulls from cachix + other configured caches
 
 on:
   push:
@@ -69,8 +65,8 @@ jobs:
         echo "Disk usage after cleanup:"
         df -h
 
-    - name: Install Nix with cache configuration (Linux)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Install Nix with cache configuration (Perdurabo)
+      if: matrix.config == 'perdurabo'
       uses: DeterminateSystems/nix-installer-action@v21
       with:
         source-tag: "v3.12.1"
@@ -80,6 +76,17 @@ jobs:
           substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
           trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
+    - name: Install Nix with cache configuration (Congo)
+      if: matrix.config == 'congo'
+      uses: DeterminateSystems/nix-installer-action@v21
+      with:
+        source-tag: "v3.12.1"
+        extra-conf: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+          trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
     - name: Install Nix with cache configuration (macOS)
       if: matrix.os == 'macos-14'
       uses: DeterminateSystems/nix-installer-action@v21
@@ -88,11 +95,11 @@ jobs:
         extra-conf: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-          extra-trusted-substituters = https://cache.flakehub.com https://install.determinate.systems https://nix-community.cachix.org https://cache.nixos.org/
-          extra-trusted-public-keys = cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          extra-trusted-substituters = https://odoom-nixos-configs.cachix.org https://cache.flakehub.com https://install.determinate.systems https://nix-community.cachix.org https://cache.nixos.org/
+          extra-trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
-    - name: Setup Cachix for Congo and Theophany builds
-      if: matrix.config == 'congo' || matrix.config == 'theophany'
+    - name: Setup Cachix
+      if: matrix.config != 'perdurabo'
       uses: cachix/cachix-action@v16
       with:
         name: odoom-nixos-configs
