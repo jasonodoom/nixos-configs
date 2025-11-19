@@ -13,7 +13,7 @@ permissions:
   actions: write
 
 jobs:
-  vm-tests:
+  vm-tests-nixos:
     runs-on: ubuntu-latest
     strategy:
       matrix:
