@@ -186,5 +186,10 @@
 
       # Expose the package set for convenience
       darwinPackages = self.darwinConfigurations."theophany".pkgs;
+
+      # Flake checks - validates configuration builds successfully
+      checks.aarch64-darwin = {
+        darwin-config = self.darwinConfigurations."theophany".system;
+      };
     };
   }
