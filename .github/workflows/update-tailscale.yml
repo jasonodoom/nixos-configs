@@ -93,10 +93,10 @@ jobs:
         if: steps.check-update.outputs.needed == 'true'
         run: |
           cd framework-desktop
-          nix flake update tailscale
+          nix flake update tailscale --accept-flake-config
 
           cd ../lenovo-thinkcentre-m710q
-          nix flake update tailscale
+          nix flake update tailscale --accept-flake-config
 
       - name: Build Perdurabo configuration
         if: steps.check-update.outputs.needed == 'true'
