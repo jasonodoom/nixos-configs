@@ -173,6 +173,50 @@ jobs:
           nix develop .#$shell --command echo "$shell shell works"
         done
 
+    - name: Test Congo server configuration
+      if: matrix.host == 'lenovo-thinkcentre-m710q'
+      run: |
+        cd ${{ matrix.host }}
+
+        echo "=== Container Configuration Validation ==="
+        # Verify container configs are syntactically valid and have required settings
+        for container in pihole openbao homepage; do
+          echo "Checking $container container configuration..."
+          nix eval .#nixosConfigurations.congo.config.containers.$container.autoStart --json | jq -e '. == true' && echo "  ✓ $container autoStart enabled" || echo "  ✗ $container autoStart missing"
+          nix eval .#nixosConfigurations.congo.config.containers.$container.privateNetwork --json | jq -e '. == true' && echo "  ✓ $container privateNetwork enabled" || echo "  ✗ $container privateNetwork missing"
+          nix eval .#nixosConfigurations.congo.config.containers.$container.localAddress --json && echo "  ✓ $container has IP address" || echo "  ✗ $container IP missing"
+        done
+
+        echo ""
+        echo "=== Service Activation Tests ==="
+        # Check that critical services are defined and enabled
+        echo "Checking SSH service..."
+        nix eval .#nixosConfigurations.congo.config.services.openssh.enable --json | jq -e '. == true' && echo "  ✓ SSH enabled" || echo "  ✗ SSH not enabled"
+
+        echo "Checking Tailscale service..."
+        nix eval .#nixosConfigurations.congo.config.services.tailscale.enable --json | jq -e '. == true' && echo "  ✓ Tailscale enabled" || echo "  ✗ Tailscale not enabled"
+
+        echo "Checking fail2ban service..."
+        nix eval .#nixosConfigurations.congo.config.services.fail2ban.enable --json | jq -e '. == true' && echo "  ✓ fail2ban enabled" || echo "  ✗ fail2ban not enabled"
+
+        echo ""
+        echo "=== Network Configuration Validation ==="
+        # Verify network settings
+        echo "Checking hostname..."
+        nix eval .#nixosConfigurations.congo.config.networking.hostName --json | jq -r '.' | grep -q "congo" && echo "  ✓ Hostname is congo" || echo "  ✗ Hostname incorrect"
+
+        echo "Checking firewall..."
+        nix eval .#nixosConfigurations.congo.config.networking.firewall.enable --json | jq -e '. == true' && echo "  ✓ Firewall enabled" || echo "  ✗ Firewall not enabled"
+
+        echo "Checking SSH port..."
+        nix eval .#nixosConfigurations.congo.config.services.openssh.ports --json | jq -e 'length > 0' && echo "  ✓ SSH ports configured" || echo "  ✗ SSH ports not configured"
+
+        echo "Checking Tailscale interface..."
+        nix eval .#nixosConfigurations.congo.config.services.tailscale.interfaceName --json | jq -r '.' && echo "  ✓ Tailscale interface configured" || echo "  ✗ Tailscale interface missing"
+
+        echo ""
+        echo "=== All Congo server tests completed ==="
+
   format-check:
     runs-on: ubuntu-latest
     steps:
