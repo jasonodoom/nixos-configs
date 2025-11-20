@@ -42,8 +42,12 @@ jobs:
           echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
           echo "Latest Tailscale version: ${LATEST_VERSION}"
 
-          # Save changelog to file for PR body
-          echo "$CHANGELOG" > /tmp/changelog.txt
+          # Save changelog using multiline output
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
           # Check for security-related release
           if [ -n "$SECURITY_CHECK" ]; then
@@ -163,7 +167,7 @@ jobs:
           - Build tests passed for both configurations
 
           ## Release Notes
-          $(cat /tmp/changelog.txt)
+          ${{ steps.tailscale-release.outputs.changelog }}
 
           ---
           This PR was automatically created by the update-tailscale workflow and will auto-merge after approval." \
@@ -185,7 +189,7 @@ jobs:
           # Wait for PR to be created
           sleep 2
           PR_NUMBER=$(gh pr view "${branch}" --json number -q .number)
-          gh pr merge "${PR_NUMBER}" --auto --squash
+          gh pr merge "${PR_NUMBER}" --auto --squash -d
 
       - name: Notify on failure
         if: failure()
