@@ -139,7 +139,7 @@ jobs:
       - name: Create Pull Request
         if: steps.check-update.outputs.needed == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
           SECURITY_LABEL=""
           SECURITY_WARNING=""
@@ -183,7 +183,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.check-update.outputs.needed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
           # Wait for PR to be created
           sleep 2
@@ -193,7 +193,7 @@ jobs:
       - name: Notify on failure
         if: failure()
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
           gh issue create \
             --title "[FAIL] Tailscale update workflow failed" \
