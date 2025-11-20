@@ -189,7 +189,7 @@ jobs:
           # Wait for PR to be created
           sleep 2
           PR_NUMBER=$(gh pr view "${branch}" --json number -q .number)
-          gh pr merge "${PR_NUMBER}" --auto --squash
+          gh pr merge "${PR_NUMBER}" --auto --squash -d
 
       - name: Notify on failure
         if: failure()
