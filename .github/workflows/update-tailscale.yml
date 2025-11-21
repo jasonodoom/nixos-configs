@@ -131,7 +131,7 @@ jobs:
 
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update Tailscale to ${{ steps.tailscale-release.outputs.version }}"
           branch: ${{ env.branch }}
