@@ -19,6 +19,12 @@ on:
 jobs:
   update-flake-lock:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flake:
+          - lenovo-thinkcentre-m710q
+          - framework-desktop
+          - apple-macbook-air-m2
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -26,23 +32,20 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
 
-      - name: Update flake locks
+      - name: Update flake lock for ${{ matrix.flake }}
+        if: github.event.inputs.flake == 'all' || github.event.inputs.flake == matrix.flake || github.event.inputs.flake == ''
         uses: DeterminateSystems/update-flake-lock@v24
         with:
           token: ${{ secrets.GH_BOT_TOKEN }}
-          pr-title: "Update flake.lock"
+          pr-title: "Update flake.lock for ${{ matrix.flake }}"
           pr-labels: |
             dependencies
             automated
           pr-body: |
-            Automated flake.lock update.
-          commit-msg: "Update flake.lock"
+            Automated flake.lock update for ${{ matrix.flake }}.
+          commit-msg: "Update flake.lock for ${{ matrix.flake }}"
           git-author-name: github-actions[bot]
           git-author-email: 41898282+github-actions[bot]@users.noreply.github.com
           git-committer-name: github-actions[bot]
           git-committer-email: 41898282+github-actions[bot]@users.noreply.github.com
-          path-to-flake-dir: ${{ github.event.inputs.flake == 'all' && 'lenovo-thinkcentre-m710q
-            framework-desktop
-            apple-macbook-air-m2' || github.event.inputs.flake || 'lenovo-thinkcentre-m710q
-            framework-desktop
-            apple-macbook-air-m2' }}
+          path-to-flake-dir: ${{ matrix.flake }}
