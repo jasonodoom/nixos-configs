@@ -398,6 +398,16 @@ pkgs.testers.nixosTest {
     # Take GUI screenshots of logged-in desktop
     gnome_machine.screenshot("gnome_login_screen")
 
+    # Test launching Firefox (adapted from nixpkgs/nixos/tests/firefox.nix)
+    print("[INFO] Testing Firefox application launch...")
+    gnome_machine.execute(
+        "su - testuser -c 'DISPLAY=:0 firefox about:blank' >&2 &"
+    )
+    gnome_machine.wait_for_window("Firefox")
+    gnome_machine.sleep(5)
+    gnome_machine.screenshot("gnome_firefox_launched")
+    print("[SUCCESS] Firefox launched successfully")
+
     # Test GNOME extensions directory
     result = gnome_machine.succeed("ls /run/current-system/sw/share/gnome-shell/extensions/ | wc -l || echo '0'")
     print(f"[SUCCESS] GNOME extensions available: {result.strip()}")
