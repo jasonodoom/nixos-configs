@@ -37,6 +37,23 @@ pkgs.testers.nixosTest {
         user = "testuser";
       };
 
+      # Enable unsafe mode for GNOME Shell (needed for test introspection via D-Bus)
+      # Based on official NixOS GNOME test: https://github.com/NixOS/nixpkgs/blob/master/nixos/tests/gnome.nix
+      # Unsafe mode is required because the test uses gdbus to call org.gnome.Shell.Eval
+      # to execute JavaScript commands in GNOME Shell which is an internal API
+      systemd.user.services."org.gnome.Shell@wayland" = {
+        serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${pkgs.gnome-shell}/bin/gnome-shell --unsafe-mode"
+        ];
+      };
+      systemd.user.services."org.gnome.Shell@x11" = {
+        serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${pkgs.gnome-shell}/bin/gnome-shell --unsafe-mode"
+        ];
+      };
+
       # Virtual framebuffer support for screenshots
       services.xserver = {
         enable = true;
@@ -347,13 +364,49 @@ pkgs.testers.nixosTest {
 
     # Wait for GNOME Shell to actually start (auto-login session)
     gnome_machine.wait_until_succeeds("pgrep gnome-shell", timeout=90)
-    print("[SUCCESS] GNOME Shell session running")
+    print("[SUCCESS] GNOME Shell process running")
 
-    # Wait for desktop to fully load
-    gnome_machine.sleep(15)
+    # Helper function to eval JavaScript in GNOME Shell (requires unsafe mode)
+    # Method from official NixOS GNOME test
+    def gnome_eval(code):
+        return gnome_machine.succeed(
+            f"su - testuser -c 'gdbus call --session --dest org.gnome.Shell "
+            f"--object-path /org/gnome/Shell --method org.gnome.Shell.Eval "
+            f"\"{code}\"'"
+        )
+
+    # Wait for GNOME Shell to finish starting up using JavaScript evaluation
+    # Official NixOS test method: checks Main.layoutManager._startingUp until false
+    print("[INFO] Waiting for GNOME Shell startup to complete...")
+    with gnome_machine.nested("Waiting for GNOME Shell"):
+        for i in range(120):
+            try:
+                result = gnome_eval("Main.layoutManager._startingUp")
+                if result.startswith("(false,"):
+                    break
+            except Exception:
+                pass
+            gnome_machine.sleep(1)
+        else:
+            raise Exception("GNOME Shell startup timed out after 120 seconds")
+
+    print("[SUCCESS] GNOME Shell startup completed")
+
+    # Wait a bit more for desktop to stabilize
+    gnome_machine.sleep(10)
 
     # Take GUI screenshots of logged-in desktop
     gnome_machine.screenshot("gnome_login_screen")
+
+    # Test launching Firefox (adapted from nixpkgs/nixos/tests/firefox.nix)
+    print("[INFO] Testing Firefox application launch...")
+    gnome_machine.execute(
+        "su - testuser -c 'DISPLAY=:0 firefox about:blank' >&2 &"
+    )
+    gnome_machine.wait_for_window("Firefox")
+    gnome_machine.sleep(5)
+    gnome_machine.screenshot("gnome_firefox_launched")
+    print("[SUCCESS] Firefox launched successfully")
 
     # Test GNOME extensions directory
     result = gnome_machine.succeed("ls /run/current-system/sw/share/gnome-shell/extensions/ | wc -l || echo '0'")
