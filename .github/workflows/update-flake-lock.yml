@@ -27,7 +27,7 @@ jobs:
           - apple-macbook-air-m2
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21

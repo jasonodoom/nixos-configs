@@ -24,7 +24,7 @@ jobs:
             config: congo
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: DeterminateSystems/nix-installer-action@v21
         if: matrix.config == 'perdurabo'
@@ -179,7 +179,7 @@ jobs:
           - host: apple-macbook-air-m2
             config: theophany
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: DeterminateSystems/nix-installer-action@v21
         with:
@@ -267,7 +267,7 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Free up disk space for desktop integration test
         run: |
