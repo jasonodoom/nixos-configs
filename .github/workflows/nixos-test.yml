@@ -300,7 +300,7 @@ jobs:
           echo "Disk usage after cleanup:"
           df -h
 
-      - uses: cachix/install-nix-action@v31.8.2
+      - uses: cachix/install-nix-action@v31.8.4
         with:
           enable_kvm: false
           extra_nix_config: |
