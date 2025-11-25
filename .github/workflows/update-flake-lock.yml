@@ -27,14 +27,14 @@ jobs:
           - apple-macbook-air-m2
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
 
       - name: Update flake lock for ${{ matrix.flake }}
         if: github.event.inputs.flake == 'all' || github.event.inputs.flake == matrix.flake || github.event.inputs.flake == ''
-        uses: DeterminateSystems/update-flake-lock@v24
+        uses: DeterminateSystems/update-flake-lock@v27
         with:
           token: ${{ secrets.GH_BOT_TOKEN }}
           pr-title: "Update flake.lock for ${{ matrix.flake }}"

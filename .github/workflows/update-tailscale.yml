@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Keep Tailscale workflow targeting main so security updates aren't blocked
           ref: main
@@ -131,7 +131,7 @@ jobs:
 
       - name: Commit and push changes
         if: steps.check-update.outputs.needed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update Tailscale to ${{ steps.tailscale-release.outputs.version }}"
           branch: ${{ env.branch }}
