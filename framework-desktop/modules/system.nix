@@ -68,7 +68,7 @@
     operation = "switch";
     allowReboot = false;
     flake = "git+ssh://git@github-deploy.com/jasonodoom/nixos-configs.git?dir=framework-desktop&ref=main";
-    flags = [ "--no-write-lock-file" ];
+    flags = [ "--no-write-lock-file" "--refresh" ];
   };
 
   # Disable suspension and hibernation
