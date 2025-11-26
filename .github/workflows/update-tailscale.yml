@@ -170,7 +170,7 @@ jobs:
           ${{ steps.tailscale-release.outputs.changelog }}
 
           ---
-          This PR was automatically created by the update-tailscale workflow and will auto-merge after approval." \
+          This PR was automatically created by the [update-tailscale workflow](https://github.com/${{ github.repository }}/blob/main/.github/workflows/update-tailscale.yml) and will auto-merge after approval." \
             --base main \
             --head "${branch}" \
             --label "dependencies" \
