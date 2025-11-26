@@ -170,7 +170,7 @@ jobs:
         # Test that all dev shells can be built
         for shell in go python node rust devops; do
           echo "Testing $shell development shell..."
-          nix develop .#$shell --command echo "$shell shell works"
+          nix develop .#$shell --accept-flake-config --command echo "$shell shell works"
         done
 
     - name: Test Congo server configuration
