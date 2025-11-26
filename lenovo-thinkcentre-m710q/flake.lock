@@ -397,16 +397,16 @@
         "systems": "systems_3"
       },
       "locked": {
-        "lastModified": 1763490690,
-        "narHash": "sha256-opZ0EsHGBXE+ZGUKuxu8+RH7aA9RXJ08BuHpqDuKX60=",
+        "lastModified": 1764087136,
+        "narHash": "sha256-gfpjP1i9077VR/sDclnz+QXJcCffuS0i33m75zo91kM=",
         "owner": "tailscale",
         "repo": "tailscale",
-        "rev": "ccf4f3c7ce53f977d7bffc80734a927964a0a890",
+        "rev": "66826a496b678495bfe70225b261288edcb26edf",
         "type": "github"
       },
       "original": {
         "owner": "tailscale",
-        "ref": "v1.90.8",
+        "ref": "v1.90.9",
         "repo": "tailscale",
         "type": "github"
       }
