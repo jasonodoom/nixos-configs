@@ -142,6 +142,6 @@
     operation = "switch";
     allowReboot = false;
     flake = "git+ssh://git@github-deploy.com/jasonodoom/nixos-configs.git?dir=lenovo-thinkcentre-m710q&ref=main";
-    flags = [ "--no-write-lock-file" "--refresh" ];
+    flags = [ "--no-write-lock-file" ];
   };
 }
