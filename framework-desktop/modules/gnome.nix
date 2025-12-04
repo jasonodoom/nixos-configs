@@ -11,17 +11,16 @@ in
   # Services configuration
   services = {
     # Enable X server (always available)
-    xserver = {
-      enable = lib.mkDefault true;
-      desktopManager.gnome.enable = useGnomeAsDefault;
+    xserver.enable = lib.mkDefault true;
 
-      # Use GDM display manager when GNOME is enabled
-      displayManager.gdm = lib.mkIf useGnomeAsDefault {
-        enable = true;
-        wayland = useWayland;
-        # Disable automatic login to force manual entry
-        autoSuspend = false;
-      };
+    desktopManager.gnome.enable = useGnomeAsDefault;
+
+    # Use GDM display manager when GNOME is enabled
+    displayManager.gdm = lib.mkIf useGnomeAsDefault {
+      enable = true;
+      wayland = useWayland;
+      # Disable automatic login to force manual entry
+      autoSuspend = false;
     };
 
     # Set GNOME as default session only when enabled
@@ -214,52 +213,53 @@ in
   };
 
   # Install GNOME packages only when GNOME is enabled
-  environment.systemPackages = lib.optionals useGnomeAsDefault (with pkgs; [
-    # GNOME Extensions
-    gnomeExtensions.just-perfection
-    gnomeExtensions.dash-to-dock
-    gnomeExtensions.appindicator
-    gnomeExtensions.caffeine
-    gnomeExtensions.user-themes
-    gnomeExtensions.gsconnect
-    gnomeExtensions.blur-my-shell
-    gnomeExtensions.vitals
-    gnomeExtensions.clipboard-indicator
+  environment.systemPackages =
+    lib.optionals useGnomeAsDefault [
+      # GNOME Extensions
+      pkgs.gnomeExtensions.just-perfection
+      pkgs.gnomeExtensions.dash-to-dock
+      pkgs.gnomeExtensions.appindicator
+      pkgs.gnomeExtensions.caffeine
+      pkgs.gnomeExtensions.user-themes
+      pkgs.gnomeExtensions.gsconnect
+      pkgs.gnomeExtensions.blur-my-shell
+      pkgs.gnomeExtensions.vitals
+      pkgs.gnomeExtensions.clipboard-indicator
 
-    # GNOME apps and utilities
-    gnome-tweaks
-    dconf-editor
-    gnome-extension-manager
-    rofi-wayland  # Application launcher for Super+R keybinding
+      # GNOME apps and utilities
+      pkgs.gnome-tweaks
+      pkgs.dconf-editor
+      pkgs.gnome-extension-manager
+      pkgs.rofi-wayland  # Application launcher for Super+R keybinding
+      pkgs.file-roller  # Archive manager
 
-    # GNOME media applications
-    lollypop  # Music player
-    eog  # Eye of GNOME image viewer
+      # GNOME media applications
+      pkgs.lollypop  # Music player
+      pkgs.eog  # Eye of GNOME image viewer
 
-    # Terminal applications
-    gnome-terminal
+      # Terminal applications
+      pkgs.gnome-terminal
 
-    # Wallpapers (shared across desktop environments)
-    (pkgs.stdenv.mkDerivation {
-      name = "nixos-wallpapers";
-      src = ../wallpapers;
-      installPhase = ''
-        mkdir -p $out/share/backgrounds/nixos
-        cp *.png $out/share/backgrounds/nixos/
-      '';
-    })
-  ]) ++ (with pkgs; [
-    # Development tools (always available regardless of DE)
-    vscode
-    git
-  ]);
+      # Wallpapers (shared across desktop environments)
+      (pkgs.stdenv.mkDerivation {
+        name = "nixos-wallpapers";
+        src = ../wallpapers;
+        installPhase = ''
+          mkdir -p $out/share/backgrounds/nixos
+          cp *.png $out/share/backgrounds/nixos/
+        '';
+      })
+    ] ++ [
+      # Development tools (always available regardless of DE)
+      pkgs.vscode
+      pkgs.git
+    ];
 
   # dconf settings already configured above in main programs.dconf block
 
   # GNOME-specific system configuration (only when GNOME is enabled)
   programs.gnome-disks.enable = lib.mkDefault useGnomeAsDefault;
   programs.seahorse.enable = lib.mkDefault useGnomeAsDefault;  # Passwords and Keys
-  programs.file-roller.enable = lib.mkDefault useGnomeAsDefault;  # Archive manager
 
   # XDG portals for GNOME (only when GNOME is enabled)
   xdg.portal = lib.mkIf useGnomeAsDefault {

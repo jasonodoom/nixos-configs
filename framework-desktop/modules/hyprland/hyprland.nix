@@ -21,7 +21,7 @@ in
   # Enable Hyprland from unstable for latest version and plugin compatibility
   # Only enable if GNOME is not the default desktop
   programs.hyprland = {
-    enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
+    enable = lib.mkDefault (!config.services.desktopManager.gnome.enable);
     package = pkgs-unstable.hyprland;
     withUWSM = true;  # Universal Wayland Session Manager (recommended)
     xwayland.enable = true;  # Enable XWayland for X11 app compatibility
@@ -46,7 +46,7 @@ in
   };
 
   # Create a wrapper that forces the config path - only when GNOME is not enabled
-  systemd.user.services.hyprland-config = lib.mkIf (!config.services.xserver.desktopManager.gnome.enable) {
+  systemd.user.services.hyprland-config = lib.mkIf (!config.services.desktopManager.gnome.enable) {
     description = "Hyprland config symlink";
     wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
@@ -57,7 +57,7 @@ in
 
   # SDDM theme configuration is now handled by themes.nix
   # Set default session based on UWSM configuration - only when GNOME is not enabled
-  services.displayManager.defaultSession = lib.mkIf (!config.services.xserver.desktopManager.gnome.enable)
+  services.displayManager.defaultSession = lib.mkIf (!config.services.desktopManager.gnome.enable)
     (if config.programs.hyprland.withUWSM then "hyprland-uwsm" else "hyprland");
 
 
@@ -676,7 +676,7 @@ in
   ];
 
   # Systemd user service for hypridle - only when GNOME is not enabled
-  systemd.user.services.hypridle = lib.mkIf (!config.services.xserver.desktopManager.gnome.enable) {
+  systemd.user.services.hypridle = lib.mkIf (!config.services.desktopManager.gnome.enable) {
     description = "Hypridle idle management for Hyprland";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
@@ -693,7 +693,7 @@ in
   services = {
     dbus.enable = lib.mkDefault true;
     gnome.gnome-keyring.enable = true;
-    upower.enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
+    upower.enable = lib.mkDefault (!config.services.desktopManager.gnome.enable);
   };
 
   # Disable duplicate applets (nwg-panel handles these)
