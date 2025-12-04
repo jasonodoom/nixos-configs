@@ -9,8 +9,9 @@
     alias ll='ls -ltra'
     alias weather='curl wttr.in'
     alias password='openssl rand -base64 32'
-    alias killgpg='gpgconf --kill gpg-agent'
-    alias fixssh='chmod 700 ~/.ssh && chmod 644 ~/.ssh/authorized_keys && chmod 600 ~/.ssh/*_rsa ~/.ssh/*_ed25519'
+    alias killgpg='gpgconf --kill all && gpg-agent --daemon'
+    alias fixssh='chmod 700 ~/.ssh && chmod 644 ~/.ssh/authorized_keys && chmod 600 ~/.ssh/*_rsa ~/.ssh/*_ed25519 2>/dev/null; gpgconf --kill all; gpg-connect-agent updatestartuptty /bye'
+    alias fixgpg='gpgconf --kill all && gpg-connect-agent updatestartuptty /bye && ssh-add -L'
 
     # File operations
     alias 100mb='dd if=/dev/zero of=100mb.file bs=100 count=1024000'

@@ -23,12 +23,14 @@
       agenix = {
         url = "github:ryantm/agenix";
         inputs.nixpkgs.follows = "nixpkgs";
-        inputs.darwin.follows = "nix-darwin";
       };
     };
 
-    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix }:
+    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix, ... }:
     let
+      overlays = [
+        (import ./overlays { inherit inputs; })
+      ];
       configuration = { pkgs, ... }: {
         # Import modules
         imports = [
@@ -101,7 +103,6 @@
           ansible-lint
           pass
           go
-          codex
           agenix.packages."${pkgs.stdenv.hostPlatform.system}".default
         ];
 
@@ -165,17 +166,7 @@
         nixpkgs.config.allowUnfree = true;
 
         # Overlays
-        nixpkgs.overlays = [
-          (import ./overlays { inherit inputs; })
-          # Skip fish tests in direnv to avoid building fish from source
-          # fish 4.2.1 is currently broken in nixpkgs
-          # https://github.com/NixOS/nixpkgs/issues/461406
-          (final: prev: {
-            direnv = prev.direnv.overrideAttrs (old: {
-              doCheck = false;
-            });
-          })
-        ];
+        nixpkgs.overlays = overlays;
       };
     in
     {
