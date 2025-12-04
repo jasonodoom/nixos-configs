@@ -36,7 +36,7 @@ jobs:
 
       - name: Update flake lock for ${{ matrix.flake }}
         if: github.event.inputs.flake == 'all' || github.event.inputs.flake == matrix.flake || github.event.inputs.flake == ''
-        uses: DeterminateSystems/update-flake-lock@v27
+        uses: DeterminateSystems/update-flake-lock@v28
         with:
           token: ${{ secrets.GH_BOT_TOKEN }}
           pr-title: "Update flake.lock for ${{ matrix.flake }}"
