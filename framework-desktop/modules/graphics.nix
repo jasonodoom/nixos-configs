@@ -19,13 +19,12 @@
       vulkan-tools
 
       # AMD-specific packages for Framework Desktop's Radeon 8060S
-      amdvlk                  # AMD's open-source Vulkan driver
+      # RADV is now the default Vulkan driver (amdvlk was deprecated/removed)
       rocmPackages.clr.icd    # ROCm support for GPGPU computing workloads
     ];
 
     extraPackages32 = with pkgs; [
       # 32-bit drivers for gaming/legacy apps
-      driversi686Linux.amdvlk
       driversi686Linux.mesa
     ];
   };

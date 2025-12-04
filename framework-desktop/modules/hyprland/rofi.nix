@@ -131,7 +131,7 @@
 
   # Ensure rofi packages are available
   environment.systemPackages = with pkgs; [
-    rofi-wayland
+    rofi
     rofimoji
     rofi-calc           # Calculator for rofi
     rofi-top            # System process viewer

@@ -42,13 +42,13 @@
   ];
 
   # Enable GNOME AppIndicator extension for Tailscale systray
-  services.xserver.desktopManager.gnome.extraGSettingsOverrides = ''
+  services.desktopManager.gnome.extraGSettingsOverrides = ''
     [org.gnome.shell]
     enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com']
   '';
 
   # Tailscale systray user service (runs as user, not root)
-  systemd.user.services.tailscale-systray = lib.mkIf config.services.xserver.desktopManager.gnome.enable {
+  systemd.user.services.tailscale-systray = lib.mkIf config.services.desktopManager.gnome.enable {
     description = "Tailscale system tray";
     wantedBy = [ "graphical-session.target" ];
     after = [ "graphical-session.target" "tailscaled.service" ];

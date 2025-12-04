@@ -12,7 +12,7 @@
     thunderbird
     weechat
     pidgin
-    pidgin-otr
+    pidginPackages.pidgin-otr
     element-desktop
     slack
 

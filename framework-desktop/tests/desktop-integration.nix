@@ -30,7 +30,7 @@ pkgs.testers.nixosTest {
       system.stateVersion = "25.05";
 
       # Ensure GNOME is enabled for this test
-      services.xserver.desktopManager.gnome.enable = lib.mkForce true;
+      services.desktopManager.gnome.enable = lib.mkForce true;
       services.displayManager.defaultSession = lib.mkForce "gnome";
       services.displayManager.autoLogin = {
         enable = true;
@@ -144,8 +144,8 @@ pkgs.testers.nixosTest {
       system.stateVersion = "25.05";
 
       # Force Hyprland configuration (simulate switching)
-      services.xserver.desktopManager.gnome.enable = lib.mkForce false;
-      services.xserver.displayManager.gdm.enable = lib.mkForce false;
+      services.desktopManager.gnome.enable = lib.mkForce false;
+      services.displayManager.gdm.enable = lib.mkForce false;
       services.displayManager.defaultSession = lib.mkForce "hyprland";
       services.displayManager.sddm.enable = lib.mkForce true;
       services.displayManager.autoLogin = {
@@ -263,7 +263,7 @@ pkgs.testers.nixosTest {
       services = {
         dbus.enable = true;
         gnome.gnome-keyring.enable = true;
-        upower.enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
+        upower.enable = lib.mkDefault (!config.services.desktopManager.gnome.enable);
       };
 
       # PAM configuration for session management
@@ -295,12 +295,10 @@ pkgs.testers.nixosTest {
         socat
 
         # Qt packages for SDDM
-        libsForQt5.breeze-qt5
-        libsForQt5.breeze-icons
-        libsForQt5.breeze-gtk
-        qt5.qtgraphicaleffects
-        qt5.qtquickcontrols2
-        qt5.qtsvg
+        kdePackages.breeze
+        kdePackages.breeze-icons
+        kdePackages.breeze-gtk
+        qt6.qtsvg
       ];
 
       # Wayland environment for VM test with software rendering
