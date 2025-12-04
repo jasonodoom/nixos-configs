@@ -6,7 +6,7 @@
   fonts.packages = with pkgs; [
     # System fonts
     noto-fonts
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     liberation_ttf
     dejavu_fonts
     open-sans
@@ -15,7 +15,7 @@
     # Modern UI fonts
     inter  # Modern sans-serif for ultimate theme
     source-sans-pro  # Similar to SF Pro
-    ubuntu_font_family  # Good fallback for system UI fonts
+    ubuntu-classic  # Good fallback for system UI fonts
 
     # Development fonts
     fira-code

@@ -665,9 +665,9 @@ in
     waybar             # Modern status bar
 
     # SDDM themes and icons (kept for theme compatibility)
-    libsForQt5.breeze-qt5
-    libsForQt5.breeze-icons
-    libsForQt5.breeze-gtk
+    kdePackages.breeze
+    kdePackages.breeze-icons
+    kdePackages.breeze-gtk
 
     # Qt5 compatibility for SDDM astronaut theme
     qt5.qtgraphicaleffects

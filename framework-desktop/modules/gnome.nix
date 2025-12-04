@@ -168,7 +168,7 @@ in
 
         "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
           binding = "<Super>r";
-          command = "rofi-wayland -show drun";
+          command = "rofi -show drun";
           name = "Launch Rofi";
         };
 
@@ -230,7 +230,7 @@ in
       pkgs.gnome-tweaks
       pkgs.dconf-editor
       pkgs.gnome-extension-manager
-      pkgs.rofi-wayland  # Application launcher for Super+R keybinding
+      pkgs.rofi  # Application launcher for Super+R keybinding
       pkgs.file-roller  # Archive manager
 
       # GNOME media applications

@@ -82,7 +82,6 @@
   # Logind configuration for desktop
   services.logind.settings = {
     Login = {
-      HandlePowerKey = "poweroff";
       IdleAction = "lock";
     };
   };
