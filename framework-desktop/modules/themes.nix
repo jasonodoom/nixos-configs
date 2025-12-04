@@ -122,10 +122,8 @@ in {
       displayManager.sddm = {
       enable = lib.mkDefault (!config.services.desktopManager.gnome.enable);
 
-      # Use Qt5 SDDM for astronaut themes
-      package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")
-                then pkgs.libsForQt5.sddm  # Qt5 SDDM for astronaut themes
-                else pkgs.libsForQt5.sddm); # Default to Qt5 SDDM
+      # Use Qt6 SDDM (libsForQt5.sddm was removed)
+      package = lib.mkForce pkgs.kdePackages.sddm;
 
       wayland.enable = true;  # Enable Wayland support for SDDM
       theme = selectedTheme.name;

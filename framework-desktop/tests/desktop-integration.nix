@@ -295,12 +295,10 @@ pkgs.testers.nixosTest {
         socat
 
         # Qt packages for SDDM
-        libsForQt5.breeze-qt5
-        libsForQt5.breeze-icons
-        libsForQt5.breeze-gtk
-        qt5.qtgraphicaleffects
-        qt5.qtquickcontrols2
-        qt5.qtsvg
+        kdePackages.breeze
+        kdePackages.breeze-icons
+        kdePackages.breeze-gtk
+        qt6.qtsvg
       ];
 
       # Wayland environment for VM test with software rendering
