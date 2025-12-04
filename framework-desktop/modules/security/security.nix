@@ -20,7 +20,6 @@
   # https://nixos.wiki/wiki/Yubikey
   services.udev.packages = with pkgs; [
     yubikey-personalization  # Required for YubiKey udev rules
-    android-udev-rules
   ];
 
   services.udev.extraRules = ''
@@ -150,7 +149,6 @@
     yubikey-manager
     yubioath-flutter       # Replacement for deprecated yubikey-manager-qt
     yubikey-personalization
-    yubikey-personalization-gui
     yubico-pam
 
     # GPG tools

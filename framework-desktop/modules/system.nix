@@ -80,10 +80,11 @@
   };
 
   # Logind configuration for desktop
-  services.logind.extraConfig = ''
-    HandlePowerKey=poweroff
-    IdleAction=lock
-  '';
+  services.logind.settings = {
+    Login = {
+      IdleAction = "lock";
+    };
+  };
 
   # Power management - minimal for desktop workstation
   powerManagement.enable = false;

@@ -120,7 +120,7 @@ in {
       upower.enable = lib.mkDefault true;
 
       displayManager.sddm = {
-      enable = lib.mkDefault (!config.services.xserver.desktopManager.gnome.enable);
+      enable = lib.mkDefault (!config.services.desktopManager.gnome.enable);
 
       # Use Qt5 SDDM for astronaut themes
       package = lib.mkForce (if (cfg == "astronaut-default" || cfg == "astronaut-hacker")

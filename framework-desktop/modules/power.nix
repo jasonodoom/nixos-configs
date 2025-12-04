@@ -3,11 +3,13 @@
 
 {
   # Configure systemd-logind power button behavior for desktop
-  services.logind = {
-    # Let GNOME handle the power button instead of systemd
-    powerKey = "ignore";
-    # Long press for emergency shutdown
-    powerKeyLongPress = "poweroff";
+  services.logind.settings = {
+    Login = {
+      # Let GNOME handle the power button instead of systemd
+      HandlePowerKey = "ignore";
+      # Long press for emergency shutdown
+      HandlePowerKeyLongPress = "poweroff";
+    };
   };
 
   # Configure GNOME to show power dialog when power button is pressed
