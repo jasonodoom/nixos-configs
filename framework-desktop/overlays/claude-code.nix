@@ -1,4 +1,4 @@
-# Claude Code overlay
+# Claude Code overlay - pinned to 2.0.58
 let
   version = "2.0.58";
   hash = "sha256-TkO9ZEte2gLFsS0eQAZK2uZsJUvfgL6TV+VFnD6YGEg=";
