@@ -300,7 +300,7 @@ jobs:
 
       - name: Commit and push changes
         if: steps.targets.outputs.needed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update Claude Code to ${{ steps.version-info.outputs.target }}"
           branch: ${{ env.branch }}
