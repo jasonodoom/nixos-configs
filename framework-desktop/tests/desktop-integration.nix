@@ -31,7 +31,6 @@ pkgs.testers.nixosTest {
 
       # Ensure GNOME is enabled for this test
       services.desktopManager.gnome.enable = lib.mkForce true;
-      services.displayManager.defaultSession = lib.mkForce "gnome";
       services.displayManager.autoLogin = {
         enable = true;
         user = "testuser";
@@ -57,20 +56,24 @@ pkgs.testers.nixosTest {
       # Virtual framebuffer support for screenshots
       services.xserver = {
         enable = true;
-        videoDrivers = [ "virtio" "qxl" "modesetting" ];
+        videoDrivers = [ "modesetting" ];
       };
 
-      # Optimized VM configuration for GitHub free runner with graphics
+      # Use X11 session for VM stability (Wayland can crash in CI VMs)
+      # When gdm.wayland=false, GNOME automatically runs on X11
+      services.displayManager.gdm.wayland = lib.mkForce false;
+
+      # Optimized VM configuration for GitHub Actions runner
       virtualisation = {
-        memorySize = 2048;  # Increased for GNOME Shell
-        cores = 2;          # Two cores for desktop environment
-        diskSize = 2048;    # Minimal disk
+        memorySize = 3072;  # GNOME needs more memory
+        cores = 2;
+        diskSize = 2048;
         graphics = true;    # Enable graphics for GUI screenshots
         useBootLoader = false;
         useEFIBoot = false;
+        # Use standard VGA for better VM compatibility
         qemu.options = [
-          "-vga none"
-          "-device virtio-gpu-pci"  # Enable OpenGL via llvmpipe for GNOME Shell
+          "-vga std"
         ];
       };
 
@@ -85,14 +88,13 @@ pkgs.testers.nixosTest {
       };
 
       # Allow empty passwords for test user in VM
-      security.pam.services.sddm.allowNullPassword = true;
+      security.pam.services.gdm.allowNullPassword = true;
+      security.pam.services.gdm-autologin.allowNullPassword = true;
       security.pam.services.login.allowNullPassword = true;
 
       # Add testing utilities
       environment.systemPackages = with pkgs; [
-        xvfb-run          # Virtual framebuffer
-        grim              # Screenshot utility
-        slurp             # Screen selection
+        scrot             # Screenshot utility (X11)
         imagemagick       # Image processing
         gnome-shell
         gnome-terminal
@@ -100,10 +102,10 @@ pkgs.testers.nixosTest {
         thunderbird
       ];
 
-      # Environment variables for virtual display and software rendering
-      environment.sessionVariables = {
-        DISPLAY = ":0";   # Use primary display for GUI
-        XDG_SESSION_TYPE = "x11";  # Use X11 for VM testing simplicity
+      # Environment variables for X11 and software rendering
+      environment.sessionVariables = lib.mkForce {
+        XDG_SESSION_TYPE = "x11";
+        GDK_BACKEND = "x11";
         LIBGL_ALWAYS_SOFTWARE = "1";  # Force software rendering
         GALLIUM_DRIVER = "llvmpipe";  # Use llvmpipe for OpenGL
         MESA_GL_VERSION_OVERRIDE = "3.3";  # Override OpenGL version
@@ -396,12 +398,12 @@ pkgs.testers.nixosTest {
     # Take GUI screenshots of logged-in desktop
     gnome_machine.screenshot("gnome_login_screen")
 
-    # Test launching Firefox (adapted from nixpkgs/nixos/tests/firefox.nix)
+    # Test launching Firefox (X11 session)
     print("[INFO] Testing Firefox application launch...")
     gnome_machine.execute(
         "su - testuser -c 'DISPLAY=:0 firefox about:blank' >&2 &"
     )
-    gnome_machine.wait_for_window("Firefox")
+    gnome_machine.wait_for_window("Firefox", timeout=60)
     gnome_machine.sleep(5)
     gnome_machine.screenshot("gnome_firefox_launched")
     print("[SUCCESS] Firefox launched successfully")
