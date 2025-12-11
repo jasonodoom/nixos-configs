@@ -75,15 +75,39 @@ jobs:
             echo "needed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create update branch
+      - name: Check if PR already exists
         if: steps.check-update.outputs.needed == 'true'
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
           BRANCH_NAME="update-tailscale-${{ steps.tailscale-release.outputs.version }}"
+          # Check if an open PR already exists for this version
+          EXISTING_PR=$(gh pr list --head "${BRANCH_NAME}" --state open --json number -q '.[0].number' || echo "")
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #${EXISTING_PR} already exists for ${BRANCH_NAME}, skipping"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing PR found for ${BRANCH_NAME}"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create update branch
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
+        run: |
+          BRANCH_NAME="update-tailscale-${{ steps.tailscale-release.outputs.version }}"
+          # Fetch remote branches
+          git fetch origin
+          # Check if branch exists remotely and delete it (stale from failed run)
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "Deleting stale remote branch ${BRANCH_NAME}"
+            git push origin --delete "${BRANCH_NAME}" || true
+          fi
           git checkout -b "${BRANCH_NAME}"
           echo "branch=${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: Update flake.nix files with new version
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
           # Update framework-desktop (Perdurabo)
           sed -i 's|url = "github:tailscale/tailscale/[^"]*"|url = "github:tailscale/tailscale/${{ steps.tailscale-release.outputs.version }}"|g' framework-desktop/flake.nix
@@ -94,7 +118,7 @@ jobs:
           git diff lenovo-thinkcentre-m710q/flake.nix
 
       - name: Update flake locks
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
           cd framework-desktop
           nix flake update tailscale --accept-flake-config
@@ -103,7 +127,7 @@ jobs:
           nix flake update tailscale --accept-flake-config
 
       - name: Build Perdurabo configuration
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
           cd framework-desktop
           nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
@@ -113,14 +137,14 @@ jobs:
             --cores 1
 
       - name: Clean up after Perdurabo build
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
           nix-collect-garbage -d
           nix store gc
           df -h
 
       - name: Build Congo configuration
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
           cd lenovo-thinkcentre-m710q
           nix build .#nixosConfigurations.congo.config.system.build.toplevel \
@@ -130,7 +154,7 @@ jobs:
             --cores 1
 
       - name: Commit and push changes
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update Tailscale to ${{ steps.tailscale-release.outputs.version }}"
@@ -141,7 +165,7 @@ jobs:
           file_pattern: 'framework-desktop/flake.nix framework-desktop/flake.lock lenovo-thinkcentre-m710q/flake.nix lenovo-thinkcentre-m710q/flake.lock'
 
       - name: Create Pull Request
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
@@ -182,7 +206,7 @@ jobs:
           echo "pr_url=${PR_URL}" >> $GITHUB_OUTPUT
 
       - name: Enable auto-merge
-        if: steps.check-update.outputs.needed == 'true'
+        if: steps.check-update.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
