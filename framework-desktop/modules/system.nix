@@ -67,7 +67,7 @@
     enable = true;
     operation = "switch";
     allowReboot = false;
-    flake = "git+ssh://git@github-deploy.com/jasonodoom/nixos-configs.git?dir=framework-desktop&ref=main";
+    flake = "git+ssh://git@github-deploy.com/jasonodoom/nixos-configs.git?dir=framework-desktop%26ref=main";
     flags = [ "--no-write-lock-file" ];
   };
 
