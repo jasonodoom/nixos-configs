@@ -118,7 +118,8 @@ jobs:
           git add */flake.lock
           git commit -m "chore: update flake.lock files"
 
-          # Push to unstable branch
+          # Pull any new changes and rebase before pushing
+          git pull --rebase origin unstable || true
           git push origin unstable
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
