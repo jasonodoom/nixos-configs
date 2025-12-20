@@ -86,26 +86,38 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update flake.lock files if needed
+      - name: Check if flake.nix changed
         if: steps.check-commits.outputs.needs_pr == 'true' && steps.check-pr.outputs.pr_exists == '0'
+        id: check-flake-changes
+        run: |
+          # Check if any flake.nix files changed in commits being merged
+          if git diff --name-only main..unstable | grep -q "flake.nix"; then
+            echo "flake_changed=true" >> $GITHUB_OUTPUT
+            echo "flake.nix changed in commits"
+          else
+            echo "flake_changed=false" >> $GITHUB_OUTPUT
+            echo "No flake.nix changes"
+          fi
+
+      - name: Update flake.lock files if needed
+        if: steps.check-flake-changes.outputs.flake_changed == 'true'
         id: update-locks
         run: |
           UPDATED=false
 
           for host_dir in framework-desktop lenovo-thinkcentre-m710q apple-macbook-air-m2; do
             if [ -f "$host_dir/flake.nix" ]; then
-              echo "Checking $host_dir flake.lock..."
-              cd "$host_dir"
+              # Only update if this specific flake.nix changed
+              if git diff --name-only main..unstable | grep -q "$host_dir/flake.nix"; then
+                echo "Updating $host_dir flake.lock..."
+                cd "$host_dir"
+                nix flake update --accept-flake-config 2>/dev/null || true
+                cd ..
 
-              # Run nix flake update to ensure lock file is current
-              nix flake update --accept-flake-config 2>/dev/null || true
-
-              cd ..
-
-              # Check if flake.lock changed
-              if ! git diff --quiet "$host_dir/flake.lock" 2>/dev/null; then
-                echo "  Updated: $host_dir/flake.lock"
-                UPDATED=true
+                if ! git diff --quiet "$host_dir/flake.lock" 2>/dev/null; then
+                  echo "  Updated: $host_dir/flake.lock"
+                  UPDATED=true
+                fi
               fi
             fi
           done
@@ -127,6 +139,12 @@ jobs:
       - name: Create Pull Request
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
         run: |
+          # Double-check PR doesn't exist (race condition guard)
+          if gh pr list --head unstable --base main --state open --json number --jq 'length' | grep -q '^[1-9]'; then
+            echo "PR already exists, skipping creation"
+            exit 0
+          fi
+
           # Get the commits that are in unstable but not in main
           COMMITS=$(git log main..unstable --oneline --no-decorate | head -10)
 
