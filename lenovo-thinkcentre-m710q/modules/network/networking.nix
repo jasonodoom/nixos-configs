@@ -114,6 +114,14 @@
     '';
   };
 
+  # Ensure NetworkManager restarts on failure
+  systemd.services.NetworkManager = {
+    serviceConfig = {
+      Restart = lib.mkForce "on-failure";
+      RestartSec = "5s";
+    };
+  };
+
   # Container NAT networking - remove bridge attachment for NAT to work
   systemd.services.container-nat-fix = {
     description = "Ensure container interfaces not attached to bridge for NAT";
