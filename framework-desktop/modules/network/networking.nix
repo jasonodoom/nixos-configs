@@ -56,4 +56,12 @@
 
   # SSH configuration moved to security.nix to avoid duplication
   # Tailscale configuration moved to tailscale.nix
+
+  # Ensure NetworkManager restarts on failure
+  systemd.services.NetworkManager = {
+    serviceConfig = {
+      Restart = lib.mkForce "on-failure";
+      RestartSec = "5s";
+    };
+  };
 }
