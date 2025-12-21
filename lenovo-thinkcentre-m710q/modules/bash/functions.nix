@@ -79,5 +79,56 @@
       echo "Done. Remaining banned IPs:"
       doas fail2ban-client status sshd | grep "Banned IP"
     }
+
+    # VM disk storage directory
+    VM_DISK_DIR="$HOME/.vm-disks"
+
+    # Build NixOS Calamares ISO
+    build-iso() {
+      local de="''${1:-gnome}"
+      local nixpkgs_path="''${2:-.}"
+
+      if [[ "$de" != "gnome" && "$de" != "plasma" ]]; then
+        echo "Usage: build-iso [gnome|plasma] [nixpkgs-path]"
+        return 1
+      fi
+
+      local config="nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares-''${de}.nix"
+      [[ "$de" == "plasma" ]] && config="nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares-plasma6.nix"
+
+      echo "Building $de ISO from $nixpkgs_path..."
+      nix-build '<nixpkgs/nixos>' \
+        -A config.system.build.isoImage \
+        -I nixos-config="$config" \
+        -I nixpkgs="$nixpkgs_path"
+    }
+
+    # Test ISO in QEMU (ephemeral - changes discarded on shutdown)
+    test-iso() {
+      local iso="$1"
+
+      if [[ -z "$iso" ]]; then
+        echo "Usage: test-iso <iso-path>"
+        echo "       test-iso result/iso/*.iso"
+        return 1
+      fi
+
+      mkdir -p "$VM_DISK_DIR"
+      local disk="$VM_DISK_DIR/test-disk.qcow2"
+
+      if [[ ! -f "$disk" ]]; then
+        echo "Creating 20G disk: $disk"
+        qemu-img create -f qcow2 "$disk" 20G
+      fi
+
+      echo "Starting QEMU (ephemeral mode - changes discarded on shutdown)"
+      echo "Connect from theophany: open vnc://perdurabo:5901"
+      qemu-system-x86_64 -enable-kvm -m 4G \
+        -drive file="$disk",format=qcow2 \
+        -cdrom "$iso" \
+        -boot d \
+        -vnc :1 \
+        -snapshot
+    }
   '';
 }
