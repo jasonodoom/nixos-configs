@@ -39,6 +39,7 @@
       "iterm2"
       "github"
       "virtualbox"
+      "tigervnc-viewer"
 
       # Media & Design
       "vlc"
