@@ -103,13 +103,22 @@
         -I nixpkgs="$nixpkgs_path"
     }
 
-    # Test ISO in QEMU (ephemeral - changes discarded on shutdown)
+    # Test ISO in QEMU
     test-iso() {
-      local iso="$1"
+      local persistent=false
+      local iso=""
+
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          -p|--persistent) persistent=true; shift ;;
+          *) iso="$1"; shift ;;
+        esac
+      done
 
       if [[ -z "$iso" ]]; then
-        echo "Usage: test-iso <iso-path>"
-        echo "       test-iso result/iso/*.iso"
+        echo "Usage: test-iso [-p] <iso-path>"
+        echo "       test-iso result/iso/*.iso        # ephemeral (default)"
+        echo "       test-iso -p result/iso/*.iso     # persistent (install & reboot)"
         return 1
       fi
 
@@ -121,14 +130,24 @@
         qemu-img create -f qcow2 "$disk" 20G
       fi
 
-      echo "Starting QEMU (ephemeral mode - changes discarded on shutdown)"
       echo "Connect from theophany: open vnc://perdurabo:5901"
-      qemu-system-x86_64 -enable-kvm -m 4G \
-        -drive file="$disk",format=qcow2 \
-        -cdrom "$iso" \
-        -boot d \
-        -vnc :1 \
-        -snapshot
+
+      if [[ "$persistent" == true ]]; then
+        echo "Starting QEMU (persistent mode - changes saved)"
+        qemu-system-x86_64 -enable-kvm -m 4G \
+          -drive file="$disk",format=qcow2 \
+          -cdrom "$iso" \
+          -boot d \
+          -vnc :1
+      else
+        echo "Starting QEMU (ephemeral mode - changes discarded on shutdown)"
+        qemu-system-x86_64 -enable-kvm -m 4G \
+          -drive file="$disk",format=qcow2 \
+          -cdrom "$iso" \
+          -boot d \
+          -vnc :1 \
+          -snapshot
+      fi
     }
   '';
 }
