@@ -166,24 +166,48 @@
     # Test ISO in QEMU
     test-iso() {
       local persistent=false
+      local boot_disk=false
       local iso=""
 
       while [[ $# -gt 0 ]]; do
         case "$1" in
           -p|--persistent) persistent=true; shift ;;
+          -b|--boot) boot_disk=true; shift ;;
           *) iso="$1"; shift ;;
         esac
       done
 
-      if [[ -z "$iso" ]]; then
-        echo "Usage: test-iso [-p] <iso-path>"
-        echo "       test-iso result/iso/*.iso        # ephemeral (default)"
-        echo "       test-iso -p result/iso/*.iso     # persistent (install & reboot)"
-        return 1
-      fi
-
       mkdir -p "$VM_DISK_DIR"
       local disk="$VM_DISK_DIR/test-disk.qcow2"
+
+      # Boot from installed disk (post-installation)
+      if [[ "$boot_disk" == true ]]; then
+        if [[ ! -f "$disk" ]]; then
+          echo "Error: No disk found at $disk. Run installation first."
+          return 1
+        fi
+        echo "Connect from theophany: open vnc://perdurabo:5901"
+        echo "Starting QEMU (booting from installed disk)"
+        qemu-system-x86_64 -enable-kvm -m 4G \
+          -drive file="$disk",format=qcow2 \
+          -vnc :1
+        return 0
+      fi
+
+      if [[ -z "$iso" ]]; then
+        echo "Usage: test-iso [-p] <iso-path>    # boot ISO for installation"
+        echo "       test-iso -b                  # boot from installed disk"
+        echo ""
+        echo "Options:"
+        echo "  -p, --persistent   Save changes to disk (for installation)"
+        echo "  -b, --boot         Boot from disk (after installation)"
+        echo ""
+        echo "Examples:"
+        echo "  test-iso result/iso/*.iso         # ephemeral test"
+        echo "  test-iso -p result/iso/*.iso      # install to disk"
+        echo "  test-iso -b                       # boot installed system"
+        return 1
+      fi
 
       if [[ ! -f "$disk" ]]; then
         echo "Creating 20G disk: $disk"
@@ -194,6 +218,7 @@
 
       if [[ "$persistent" == true ]]; then
         echo "Starting QEMU (persistent mode - changes saved)"
+        echo "After installation, run: test-iso -b"
         qemu-system-x86_64 -enable-kvm -m 4G \
           -drive file="$disk",format=qcow2 \
           -cdrom "$iso" \
