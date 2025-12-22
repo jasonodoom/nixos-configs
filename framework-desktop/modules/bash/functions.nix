@@ -140,6 +140,76 @@
       ps aux | grep -v grep | grep --color=always "$1"
     }
 
+    # VM disk storage directory
+    VM_DISK_DIR="$HOME/.vm-disks"
+
+    # Build NixOS Calamares ISO
+    build-iso() {
+      local de="''${1:-gnome}"
+      local nixpkgs_path="''${2:-.}"
+
+      if [[ "$de" != "gnome" && "$de" != "plasma" ]]; then
+        echo "Usage: build-iso [gnome|plasma] [nixpkgs-path]"
+        return 1
+      fi
+
+      local config="nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares-''${de}.nix"
+      [[ "$de" == "plasma" ]] && config="nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares-plasma6.nix"
+
+      echo "Building $de ISO from $nixpkgs_path..."
+      nix-build '<nixpkgs/nixos>' \
+        -A config.system.build.isoImage \
+        -I nixos-config="$config" \
+        -I nixpkgs="$nixpkgs_path"
+    }
+
+    # Test ISO in QEMU
+    test-iso() {
+      local persistent=false
+      local iso=""
+
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          -p|--persistent) persistent=true; shift ;;
+          *) iso="$1"; shift ;;
+        esac
+      done
+
+      if [[ -z "$iso" ]]; then
+        echo "Usage: test-iso [-p] <iso-path>"
+        echo "       test-iso result/iso/*.iso        # ephemeral (default)"
+        echo "       test-iso -p result/iso/*.iso     # persistent (install & reboot)"
+        return 1
+      fi
+
+      mkdir -p "$VM_DISK_DIR"
+      local disk="$VM_DISK_DIR/test-disk.qcow2"
+
+      if [[ ! -f "$disk" ]]; then
+        echo "Creating 20G disk: $disk"
+        qemu-img create -f qcow2 "$disk" 20G
+      fi
+
+      echo "Connect from theophany: open vnc://perdurabo:5901"
+
+      if [[ "$persistent" == true ]]; then
+        echo "Starting QEMU (persistent mode - changes saved)"
+        qemu-system-x86_64 -enable-kvm -m 4G \
+          -drive file="$disk",format=qcow2 \
+          -cdrom "$iso" \
+          -boot d \
+          -vnc :1
+      else
+        echo "Starting QEMU (ephemeral mode - changes discarded on shutdown)"
+        qemu-system-x86_64 -enable-kvm -m 4G \
+          -drive file="$disk",format=qcow2 \
+          -cdrom "$iso" \
+          -boot d \
+          -vnc :1 \
+          -snapshot
+      fi
+    }
+
     # Command correction function
     command_not_found_handle() {
       local cmd="$1"
