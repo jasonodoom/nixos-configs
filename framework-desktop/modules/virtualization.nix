@@ -9,7 +9,14 @@
   };
 
   # Libvirt for QEMU/KVM
-  virtualisation.libvirtd.enable = true;
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu = {
+      package = pkgs.qemu_kvm;
+      ovmf.enable = true;
+      ovmf.packages = [ pkgs.OVMFFull.fd ];
+    };
+  };
 
   # VirtualBox (
   virtualisation.virtualbox.host = {
@@ -17,7 +24,7 @@
     enableExtensionPack = false;
   };
 
-  # Flatpak 
+  # Flatpak
   services.flatpak.enable = false;
 
   # Virtualization packages
