@@ -8,7 +8,7 @@
     liveRestore = false;
   };
 
-  # Libvirt for QEMU/KVM
+  # Libvirt for QEMU/KVM (OVMF/UEFI available by default)
   virtualisation.libvirtd.enable = true;
 
   # VirtualBox (
@@ -17,7 +17,7 @@
     enableExtensionPack = false;
   };
 
-  # Flatpak 
+  # Flatpak
   services.flatpak.enable = false;
 
   # Virtualization packages
