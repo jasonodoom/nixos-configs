@@ -8,15 +8,8 @@
     liveRestore = false;
   };
 
-  # Libvirt for QEMU/KVM
-  virtualisation.libvirtd = {
-    enable = true;
-    qemu = {
-      package = pkgs.qemu_kvm;
-      ovmf.enable = true;
-      ovmf.packages = [ pkgs.OVMFFull.fd ];
-    };
-  };
+  # Libvirt for QEMU/KVM (OVMF/UEFI available by default)
+  virtualisation.libvirtd.enable = true;
 
   # VirtualBox (
   virtualisation.virtualbox.host = {
