@@ -167,18 +167,40 @@
     test-iso() {
       local persistent=false
       local boot_disk=false
+      local efi_mode=false
       local iso=""
 
       while [[ $# -gt 0 ]]; do
         case "$1" in
           -p|--persistent) persistent=true; shift ;;
           -b|--boot) boot_disk=true; shift ;;
+          -e|--efi) efi_mode=true; shift ;;
           *) iso="$1"; shift ;;
         esac
       done
 
       mkdir -p "$VM_DISK_DIR"
       local disk="$VM_DISK_DIR/test-disk.qcow2"
+      local efi_disk="$VM_DISK_DIR/test-disk-efi.qcow2"
+      local ovmf_code="/run/libvirt/nix-ovmf/OVMF_CODE.fd"
+      local ovmf_vars="$VM_DISK_DIR/OVMF_VARS.fd"
+
+      # Use EFI disk if in EFI mode
+      [[ "$efi_mode" == true ]] && disk="$efi_disk"
+
+      # EFI firmware args
+      local efi_args=""
+      if [[ "$efi_mode" == true ]]; then
+        if [[ ! -f "$ovmf_code" ]]; then
+          echo "Error: OVMF not found at $ovmf_code"
+          echo "Make sure libvirtd is running: systemctl start libvirtd"
+          return 1
+        fi
+        if [[ ! -f "$ovmf_vars" ]]; then
+          cp /run/libvirt/nix-ovmf/OVMF_VARS.fd "$ovmf_vars"
+        fi
+        efi_args="-drive if=pflash,format=raw,readonly=on,file=$ovmf_code -drive if=pflash,format=raw,file=$ovmf_vars"
+      fi
 
       # Boot from installed disk (post-installation)
       if [[ "$boot_disk" == true ]]; then
@@ -187,25 +209,30 @@
           return 1
         fi
         echo "Connect from theophany: open vnc://perdurabo:5901"
-        echo "Starting QEMU (booting from installed disk)"
+        echo "Starting QEMU (booting from installed disk, EFI=$efi_mode)"
         qemu-system-x86_64 -enable-kvm -m 4G \
+          $efi_args \
           -drive file="$disk",format=qcow2 \
           -vnc :1
         return 0
       fi
 
       if [[ -z "$iso" ]]; then
-        echo "Usage: test-iso [-p] <iso-path>    # boot ISO for installation"
-        echo "       test-iso -b                  # boot from installed disk"
+        echo "Usage: test-iso [-p] [-e] <iso-path>  # boot ISO for installation"
+        echo "       test-iso [-e] -b                # boot from installed disk"
         echo ""
         echo "Options:"
         echo "  -p, --persistent   Save changes to disk (for installation)"
         echo "  -b, --boot         Boot from disk (after installation)"
+        echo "  -e, --efi          Use UEFI firmware (default: BIOS)"
         echo ""
         echo "Examples:"
-        echo "  test-iso result/iso/*.iso         # ephemeral test"
-        echo "  test-iso -p result/iso/*.iso      # install to disk"
-        echo "  test-iso -b                       # boot installed system"
+        echo "  test-iso result/iso/*.iso           # BIOS ephemeral test"
+        echo "  test-iso -e result/iso/*.iso        # EFI ephemeral test"
+        echo "  test-iso -p result/iso/*.iso        # BIOS install to disk"
+        echo "  test-iso -e -p result/iso/*.iso     # EFI install to disk"
+        echo "  test-iso -b                         # boot BIOS installed system"
+        echo "  test-iso -e -b                      # boot EFI installed system"
         return 1
       fi
 
@@ -217,16 +244,18 @@
       echo "Connect from theophany: open vnc://perdurabo:5901"
 
       if [[ "$persistent" == true ]]; then
-        echo "Starting QEMU (persistent mode - changes saved)"
-        echo "After installation, run: test-iso -b"
+        echo "Starting QEMU (persistent mode, EFI=$efi_mode)"
+        echo "After installation, run: test-iso $([[ "$efi_mode" == true ]] && echo '-e ') -b"
         qemu-system-x86_64 -enable-kvm -m 4G \
+          $efi_args \
           -drive file="$disk",format=qcow2 \
           -cdrom "$iso" \
           -boot d \
           -vnc :1
       else
-        echo "Starting QEMU (ephemeral mode - changes discarded on shutdown)"
+        echo "Starting QEMU (ephemeral mode, EFI=$efi_mode)"
         qemu-system-x86_64 -enable-kvm -m 4G \
+          $efi_args \
           -drive file="$disk",format=qcow2 \
           -cdrom "$iso" \
           -boot d \
