@@ -182,8 +182,9 @@
       mkdir -p "$VM_DISK_DIR"
       local disk="$VM_DISK_DIR/test-disk.qcow2"
       local efi_disk="$VM_DISK_DIR/test-disk-efi.qcow2"
-      local ovmf_code="/run/libvirt/nix-ovmf/OVMF_CODE.fd"
-      local ovmf_vars="$VM_DISK_DIR/OVMF_VARS.fd"
+      local ovmf_code="/run/libvirt/nix-ovmf/edk2-x86_64-code.fd"
+      local ovmf_vars_src="/run/libvirt/nix-ovmf/edk2-i386-vars.fd"
+      local ovmf_vars="$VM_DISK_DIR/edk2-vars.fd"
 
       # Use EFI disk if in EFI mode
       [[ "$efi_mode" == true ]] && disk="$efi_disk"
@@ -193,11 +194,11 @@
       if [[ "$efi_mode" == true ]]; then
         if [[ ! -f "$ovmf_code" ]]; then
           echo "Error: OVMF not found at $ovmf_code"
-          echo "Make sure libvirtd is running: systemctl start libvirtd"
+          echo "Make sure libvirtd is enabled in your NixOS config"
           return 1
         fi
         if [[ ! -f "$ovmf_vars" ]]; then
-          cp /run/libvirt/nix-ovmf/OVMF_VARS.fd "$ovmf_vars"
+          cp "$ovmf_vars_src" "$ovmf_vars"
         fi
         efi_args="-drive if=pflash,format=raw,readonly=on,file=$ovmf_code -drive if=pflash,format=raw,file=$ovmf_vars"
       fi
