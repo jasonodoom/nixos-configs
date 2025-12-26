@@ -199,6 +199,7 @@
         fi
         if [[ ! -f "$ovmf_vars" ]]; then
           cp "$ovmf_vars_src" "$ovmf_vars"
+          chmod 644 "$ovmf_vars"
         fi
         efi_args="-drive if=pflash,format=raw,readonly=on,file=$ovmf_code -drive if=pflash,format=raw,file=$ovmf_vars"
       fi
