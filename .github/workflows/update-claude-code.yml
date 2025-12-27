@@ -23,6 +23,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   update-claude-code:
@@ -246,6 +247,13 @@ jobs:
 
           echo "Updated perdurabo overlay to ${VERSION}"
 
+      - name: Stage files for Nix flake visibility
+        if: steps.targets.outputs.needed == 'true'
+        run: |
+          # Nix flakes require files to be tracked by Git
+          git add -N apple-macbook-air-m2/overlays/claude-code*.nix apple-macbook-air-m2/overlays/claude-code-*-package-lock.json 2>/dev/null || true
+          git add -N framework-desktop/overlays/claude-code*.nix framework-desktop/overlays/claude-code-*-package-lock.json 2>/dev/null || true
+
       - name: Build theophany configuration
         if: steps.targets.outputs.needed == 'true' && steps.targets.outputs.update_theophany == 'true'
         run: |
@@ -375,3 +383,21 @@ jobs:
             echo "### Verification" >> $GITHUB_STEP_SUMMARY
             echo "Build and \`claude --version\` verification passed for all updated targets." >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Create issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Claude Code update workflow failed" \
+            --body "The automated Claude Code update workflow failed.
+
+          **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          **Target Version:** ${{ steps.version-info.outputs.target }}
+          **Triggered by:** ${{ github.event_name }}
+
+          Please check the workflow logs for details." \
+            --label "bug" \
+            --label "automated" \
+            --assignee jasonodoom
