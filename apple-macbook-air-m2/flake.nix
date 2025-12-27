@@ -52,6 +52,7 @@
           ./modules/neovim.nix
           ./modules/ghostty.nix
           ./modules/determinate-nix-update.nix
+          ./modules/darwin-auto-update.nix
           ./modules/homebrew.nix
           ./modules/dock.nix
           ./modules/firefox.nix
