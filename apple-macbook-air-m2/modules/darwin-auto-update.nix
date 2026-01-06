@@ -11,7 +11,7 @@
       LOG_FILE="/var/log/darwin-auto-update.log"
       REPO_URL="https://github.com/jasonodoom/nixos-configs.git"
       REPO_DIR="/var/lib/darwin-config"
-      BRANCH="unstable"
+      BRANCH="main"
 
       log() {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
