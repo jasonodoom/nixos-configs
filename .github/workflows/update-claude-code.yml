@@ -248,7 +248,7 @@ jobs:
 
       - name: Upload updated repo
         if: steps.targets.outputs.needed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: updated-repo
           path: |
