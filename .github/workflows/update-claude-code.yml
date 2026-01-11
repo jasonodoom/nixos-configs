@@ -310,6 +310,9 @@ jobs:
     if: needs.prepare.outputs.needed == 'true' && needs.prepare.outputs.update_perdurabo == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize disk space for Nix
+        uses: wimpysworld/nothing-but-nix@main
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
