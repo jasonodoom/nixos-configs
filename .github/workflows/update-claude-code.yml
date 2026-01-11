@@ -266,7 +266,7 @@ jobs:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
@@ -319,7 +319,7 @@ jobs:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
@@ -374,7 +374,7 @@ jobs:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
