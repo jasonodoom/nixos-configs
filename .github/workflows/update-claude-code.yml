@@ -248,7 +248,7 @@ jobs:
 
       - name: Upload updated repo
         if: steps.targets.outputs.needed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: updated-repo
           path: |
@@ -266,7 +266,7 @@ jobs:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
@@ -310,13 +310,16 @@ jobs:
     if: needs.prepare.outputs.needed == 'true' && needs.prepare.outputs.update_perdurabo == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Maximize disk space for Nix
+        uses: wimpysworld/nothing-but-nix@main
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
@@ -371,7 +374,7 @@ jobs:
           ref: unstable
 
       - name: Download updated overlays
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: updated-repo
 
