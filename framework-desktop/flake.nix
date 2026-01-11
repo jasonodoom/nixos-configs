@@ -24,7 +24,7 @@
     };
 
     tailscale = {
-      url = "github:tailscale/tailscale/v1.92.3";
+      url = "github:tailscale/tailscale/v1.92.5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
