@@ -93,6 +93,7 @@
 
     # Development utilities
     mob
+    nixpkgs-review
   ];
 
   # Environment variables
