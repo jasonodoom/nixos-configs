@@ -92,6 +92,7 @@
           shellcheck
           tmux
           nixfmt-rfc-style
+          nixpkgs-review
           wrangler  
           nodejs_20
           ncdu
