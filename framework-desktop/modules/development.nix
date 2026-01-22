@@ -94,6 +94,7 @@
     # Development utilities
     mob
     nixpkgs-review
+    npins
   ];
 
   # Environment variables

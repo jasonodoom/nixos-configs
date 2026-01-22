@@ -12,6 +12,7 @@
       auto-optimise-store = true;
       sandbox = true;
       builders-use-substitutes = true;
+      trusted-users = [ "root" "jason" ];
       substituters = [
         "https://cache.nixos.org/"
         "https://cache.garnix.io"
@@ -37,6 +38,7 @@
       efi.canTouchEfiVariables = true;
     };
     kernelPackages = pkgs.linuxPackages_latest;
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
   };
 
   # Basic nixpkgs configuration
