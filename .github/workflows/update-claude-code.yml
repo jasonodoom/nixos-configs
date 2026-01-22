@@ -348,7 +348,19 @@ jobs:
           VERSION="${{ needs.prepare.outputs.target }}"
           cd framework-desktop
 
-          INSTALLED_VERSION=$(nix build .#nixosConfigurations.perdurabo.pkgs.claude-code --accept-flake-config --no-link --print-out-paths | xargs -I{} {}/bin/claude --version 2>/dev/null | head -1)
+          # Build claude-code and get the store path
+          STORE_PATH=$(nix build .#nixosConfigurations.perdurabo.pkgs.claude-code --accept-flake-config --no-link --print-out-paths)
+          echo "Store path: ${STORE_PATH}"
+
+          # Check if the binary exists and get version
+          if [ -x "${STORE_PATH}/bin/claude" ]; then
+            INSTALLED_VERSION=$("${STORE_PATH}/bin/claude" --version 2>&1 | head -1)
+          else
+            echo "ERROR: claude binary not found at ${STORE_PATH}/bin/claude"
+            ls -la "${STORE_PATH}/bin/" || true
+            exit 1
+          fi
+
           echo "Installed version: ${INSTALLED_VERSION}"
           echo "Expected version: ${VERSION}"
 
