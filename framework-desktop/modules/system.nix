@@ -12,6 +12,7 @@
       auto-optimise-store = true;
       sandbox = true;
       builders-use-substitutes = true;
+      trusted-users = [ "root" "jason" ];
       substituters = [
         "https://cache.nixos.org/"
         "https://cache.garnix.io"
