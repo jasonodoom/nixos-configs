@@ -38,6 +38,7 @@
       efi.canTouchEfiVariables = true;
     };
     kernelPackages = pkgs.linuxPackages_latest;
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
   };
 
   # Basic nixpkgs configuration
