@@ -1,28 +1,28 @@
-# Claude Code overlay
-  let
-    version = "2.0.58";
-    hash = "sha256-TkO9ZEte2gLFsS0eQAZK2uZsJUvfgL6TV+VFnD6YGEg=";
-    npmDepsHash = "sha256-XOIuOQUJ0HB86pwuUnrv0B121lO9em9XG1DAK0/L4js=";
-  in
-  final: prev: {
-    claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
-      inherit version;
+# Claude Code overlay - pinned to 2.1.17
+let
+  version = "2.1.17";
+  hash = "sha256-Tug122dgT/TpTeEpBQx38O948CxLf59VOfsDF+Dde6w=";
+  npmDepsHash = "sha256-aUqPXF5L78wZ34pNRvpEJi6l2wl15Og1yCEvVoeV0tE=";
+in
+final: prev: {
+  claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
+    inherit version;
+    src = prev.fetchurl {
+      url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
+      inherit hash;
+    };
+    postPatch = ''
+      cp ${./claude-code-2.1.17-package-lock.json} package-lock.json
+    '';
+    npmDeps = prev.fetchNpmDeps {
       src = prev.fetchurl {
         url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
         inherit hash;
       };
       postPatch = ''
-        cp ${./claude-code-2.0.58-package-lock.json} package-lock.json
+        cp ${./claude-code-2.1.17-package-lock.json} package-lock.json
       '';
-      npmDeps = prev.fetchNpmDeps {
-        src = prev.fetchurl {
-          url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-          inherit hash;
-        };
-        postPatch = ''
-          cp ${./claude-code-2.0.58-package-lock.json} package-lock.json
-        '';
-        hash = npmDepsHash;
-      };
-    });
-  }
+      hash = npmDepsHash;
+    };
+  });
+}
