@@ -84,6 +84,7 @@
         ./modules/ghostty.nix
         ./modules/git.nix
         ./modules/neovim.nix
+        ./modules/ollama.nix
         ./modules/gnome.nix
         ./modules/kitty.nix
         ./modules/graphics.nix

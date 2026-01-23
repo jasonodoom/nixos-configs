@@ -37,7 +37,6 @@
     obsidian
 
     # AI/ML Tools
-    ollama
 
     # Hardware and Electronics
     arduino

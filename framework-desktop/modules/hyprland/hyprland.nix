@@ -10,7 +10,7 @@ with lib; let
       hyprexpo
       hyprfocus
       hyprbars
-      hyprspace
+      # hyprspace  # disabled: broken with hyprland 0.53+ (nixpkgs#443989)
     ];
   };
 in
@@ -213,7 +213,7 @@ in
     exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprexpo.so"
     exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprfocus.so"
     exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprbars.so"
-    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"  # disabled: broken with hyprland 0.53+
 
     # Auto-restore previous session on login (if session file exists)
     exec-once = [ -f ~/.config/hypr/session.json ] && sleep 3 && hyprctl dispatch restoresession ~/.config/hypr/session.json
