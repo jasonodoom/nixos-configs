@@ -17,7 +17,7 @@
     script = ''
       set -euo pipefail
 
-      REPO_URL="git@github-deploy.com:jasonodoom/nixos-configs.git"
+      REPO_URL="https://github.com/jasonodoom/nixos-configs.git"
       WORK_DIR=$(mktemp -d)
       TRUSTED_KEY="jasonodoom"
       HOSTNAME="congo"
