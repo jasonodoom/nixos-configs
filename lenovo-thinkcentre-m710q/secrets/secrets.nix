@@ -34,6 +34,9 @@ in
   # Expires: 2026-02-10
   "tailscale-initrd-key.age".publicKeys = all;
 
+  # GitHub token for creating issues on auto-upgrade failures
+  "gh-token.age".publicKeys = all;
+
   # Temporarily disabled - will be enabled when needed
   # # SSH client configuration
   # "ssh-config.age".publicKeys = all;

@@ -30,6 +30,12 @@
         file = ../../secrets/tailscale-initrd-key.age;
         mode = "0400";
       };
+
+      # GitHub token for creating issues on auto-upgrade failures
+      gh-token = {
+        file = ../../secrets/gh-token.age;
+        mode = "0400";
+      };
     };
 
     # Use the system's SSH host key for decryption
