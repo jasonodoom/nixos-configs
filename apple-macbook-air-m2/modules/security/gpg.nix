@@ -78,7 +78,11 @@ EOF
     KEYID=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
     echo "$KEYID:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
 
-    echo "GPG public key imported and trusted"
+    # Import GitHub web-flow signing key for merge commits
+    echo "Importing GitHub web-flow signing key..."
+    ${pkgs.curl}/bin/curl -s https://github.com/web-flow.gpg | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import 2>/dev/null || true
+
+    echo "GPG public keys imported and trusted"
   '';
 
   environment.systemPackages = with pkgs; [
