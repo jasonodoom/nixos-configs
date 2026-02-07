@@ -80,9 +80,15 @@ EOF
       echo "$FINGERPRINT:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
     fi
 
-    # Import GitHub web-flow signing key for merge commits
+    # Import GitHub web-flow signing key for merge commits and set trust
     echo "Importing GitHub web-flow signing key..."
     ${pkgs.curl}/bin/curl -s https://github.com/web-flow.gpg | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import 2>/dev/null || true
+
+    # Set ultimate trust for GitHub's signing key
+    GH_FINGERPRINT=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons --fingerprint "GitHub <noreply@github.com>" 2>/dev/null | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+    if [ -n "$GH_FINGERPRINT" ]; then
+      echo "$GH_FINGERPRINT:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    fi
 
     echo "GPG public keys imported and trusted"
   '';

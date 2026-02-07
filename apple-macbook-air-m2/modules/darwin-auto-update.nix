@@ -72,7 +72,7 @@ $log_content
       log "Verifying commit signature..."
       VERIFY_DIR=$(mktemp -d)
       chown jason:staff "$VERIFY_DIR"
-      VERIFY_OUTPUT=$(su - jason -c "${pkgs.git}/bin/git clone --depth 1 '$REPO_URL' '$VERIFY_DIR/repo' 2>/dev/null && ${pkgs.git}/bin/git -C '$VERIFY_DIR/repo' verify-commit HEAD 2>&1" || true)
+      VERIFY_OUTPUT=$(su - jason -c "${pkgs.git}/bin/git clone --depth 1 --branch '$BRANCH' '$REPO_URL' '$VERIFY_DIR/repo' 2>/dev/null && ${pkgs.git}/bin/git -C '$VERIFY_DIR/repo' verify-commit HEAD 2>&1" || true)
       rm -rf "$VERIFY_DIR"
       if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
         log "ERROR: Commit not signed by jasonodoom - aborting update"

@@ -32,9 +32,17 @@
         echo "$FINGERPRINT:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
       fi
 
-      # Import GitHub web-flow signing key for merge commits
+      # Import GitHub web-flow signing key for merge commits and set trust
       echo "Importing GitHub web-flow signing key..."
       ${pkgs.curl}/bin/curl -s https://github.com/web-flow.gpg | ${pkgs.gnupg}/bin/gpg --import 2>/dev/null || true
+
+      # Set ultimate trust for GitHub's signing key
+      GH_FINGERPRINT=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons --fingerprint "GitHub <noreply@github.com>" 2>/dev/null | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+      if [ -n "$GH_FINGERPRINT" ]; then
+        echo "$GH_FINGERPRINT:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
+      fi
+
+      echo "GPG public keys imported and trusted"
     '';
   };
 
