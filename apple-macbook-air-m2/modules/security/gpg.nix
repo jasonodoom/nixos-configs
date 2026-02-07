@@ -74,9 +74,11 @@ EOF
       sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import --trust-model pgp "$GPG_KEY_FILE"
     fi
 
-    # Get the key ID and set ultimate trust for signature verification
-    KEYID=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
-    echo "$KEYID:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    # Get fingerprint and set ultimate trust for signature verification
+    FINGERPRINT=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons --fingerprint jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+    if [ -n "$FINGERPRINT" ]; then
+      echo "$FINGERPRINT:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    fi
 
     # Import GitHub web-flow signing key for merge commits
     echo "Importing GitHub web-flow signing key..."

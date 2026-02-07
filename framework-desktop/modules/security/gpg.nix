@@ -47,9 +47,11 @@
           ${pkgs.gnupg}/bin/gpg --import --trust-model pgp "$GPG_KEY_FILE"
         fi
 
-        # Get the key ID and set ultimate trust for signature verification
-        KEYID=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
-        echo "$KEYID:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
+        # Get fingerprint and set ultimate trust for signature verification
+        FINGERPRINT=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons --fingerprint jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+        if [ -n "$FINGERPRINT" ]; then
+          echo "$FINGERPRINT:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
+        fi
 
         # Import GitHub web-flow signing key for merge commits
         echo "Importing GitHub web-flow signing key..."
