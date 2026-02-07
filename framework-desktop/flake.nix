@@ -109,6 +109,7 @@
         ./modules/user-config.nix
         ./modules/virtualization.nix
         ./modules/vscode.nix
+        ./modules/services/verify-commits.nix
       ];
     };
   in

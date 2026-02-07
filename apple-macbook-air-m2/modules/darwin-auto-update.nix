@@ -17,6 +17,33 @@
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
       }
 
+      create_failure_issue() {
+        local log_content="$1"
+        local commit="$2"
+
+        log "Creating GitHub issue for update failure"
+
+        su - jason -c "
+          ${pkgs.gh}/bin/gh issue create \
+            --repo jasonodoom/nixos-configs \
+            --title 'darwin-auto-update failed on theophany ($(date +%Y-%m-%d))' \
+            --body \"The scheduled darwin-auto-update failed on theophany.
+
+**Commit:** $commit
+**Time:** $(date)
+
+<details>
+<summary>Build log (last 100 lines)</summary>
+
+\\\`\\\`\\\`
+$log_content
+\\\`\\\`\\\`
+
+</details>\" \
+            --assignee jasonodoom
+        "
+      }
+
       # Check if on AC power
       if ! /usr/bin/pmset -g ps | grep -q "AC Power"; then
         log "Not on AC power, skipping update"
@@ -38,15 +65,33 @@
         cd "$REPO_DIR"
       fi
 
-      log "Current commit: $(${pkgs.git}/bin/git rev-parse --short HEAD)"
+      CURRENT_COMMIT=$(${pkgs.git}/bin/git rev-parse --short HEAD)
+      log "Current commit: $CURRENT_COMMIT"
 
-      # Run darwin-rebuild
+      # Verify commit signature (run as jason who has the GPG key)
+      log "Verifying commit signature..."
+      VERIFY_OUTPUT=$(su - jason -c "cd '$REPO_DIR' && ${pkgs.git}/bin/git verify-commit HEAD 2>&1" || true)
+      if ! echo "$VERIFY_OUTPUT" | grep -q "Good signature from.*jasonodoom"; then
+        log "ERROR: Commit not signed by jasonodoom - aborting update"
+        log "Verification output: $VERIFY_OUTPUT"
+        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        exit 1
+      fi
+      log "Commit signature verified"
+
+      # Run darwin-rebuild and capture output
       log "Running darwin-rebuild switch"
       cd "$REPO_DIR/apple-macbook-air-m2"
-      if /run/current-system/sw/bin/darwin-rebuild switch --flake .#theophany 2>&1 | tee -a "$LOG_FILE"; then
+
+      BUILD_OUTPUT=$(mktemp)
+      if /run/current-system/sw/bin/darwin-rebuild switch --flake .#theophany 2>&1 | tee -a "$LOG_FILE" | tee "$BUILD_OUTPUT"; then
         log "darwin-rebuild completed successfully"
+        rm -f "$BUILD_OUTPUT"
       else
         log "darwin-rebuild failed"
+        LOG_TAIL=$(tail -100 "$BUILD_OUTPUT")
+        create_failure_issue "$LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        rm -f "$BUILD_OUTPUT"
         exit 1
       fi
 
