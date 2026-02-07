@@ -13,6 +13,7 @@
       Type = "oneshot";
       User = "jason";
     };
+    path = [ pkgs.git pkgs.gnupg pkgs.gh ];
     script = ''
       set -euo pipefail
 
