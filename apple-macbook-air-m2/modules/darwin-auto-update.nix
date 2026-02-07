@@ -70,7 +70,7 @@ $log_content
 
       # Verify commit signature (run as jason who has the GPG key)
       log "Verifying commit signature..."
-      VERIFY_OUTPUT=$(su - jason -c "cd '$REPO_DIR' && ${pkgs.git}/bin/git verify-commit HEAD 2>&1" || true)
+      VERIFY_OUTPUT=$(su - jason -c "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0='$REPO_DIR' ${pkgs.git}/bin/git -C '$REPO_DIR' verify-commit HEAD 2>&1" || true)
       if ! echo "$VERIFY_OUTPUT" | grep -q "Good signature from.*jasonodoom"; then
         log "ERROR: Commit not signed by jasonodoom - aborting update"
         log "Verification output: $VERIFY_OUTPUT"
