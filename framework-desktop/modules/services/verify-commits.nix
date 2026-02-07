@@ -7,7 +7,7 @@
     description = "Verify GPG signatures on commits before auto-upgrade";
     before = [ "nixos-upgrade.service" ];
     requiredBy = [ "nixos-upgrade.service" ];
-    after = [ "network-online.target" ];
+    after = [ "network-online.target" "import-gpg-key.service" ];
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
