@@ -74,11 +74,23 @@ EOF
       sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import --trust-model pgp "$GPG_KEY_FILE"
     fi
 
-    # Get the key ID and set ultimate trust for signature verification
-    KEYID=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
-    echo "$KEYID:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    # Get fingerprint and set ultimate trust for signature verification
+    FINGERPRINT=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons --fingerprint jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+    if [ -n "$FINGERPRINT" ]; then
+      echo "$FINGERPRINT:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    fi
 
-    echo "GPG public key imported and trusted"
+    # Import GitHub web-flow signing key for merge commits and set trust
+    echo "Importing GitHub web-flow signing key..."
+    ${pkgs.curl}/bin/curl -s https://github.com/web-flow.gpg | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import 2>/dev/null || true
+
+    # Set ultimate trust for GitHub's signing key
+    GH_FINGERPRINT=$(sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --list-keys --with-colons --fingerprint "GitHub <noreply@github.com>" 2>/dev/null | ${pkgs.gawk}/bin/awk -F: '/^fpr/ {print $10; exit}')
+    if [ -n "$GH_FINGERPRINT" ]; then
+      echo "$GH_FINGERPRINT:6:" | sudo -u ${config.system.primaryUser} ${pkgs.gnupg}/bin/gpg --homedir "$USER_HOME/.gnupg" --import-ownertrust
+    fi
+
+    echo "GPG public keys imported and trusted"
   '';
 
   environment.systemPackages = with pkgs; [

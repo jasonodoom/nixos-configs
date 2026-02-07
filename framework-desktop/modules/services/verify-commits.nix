@@ -7,16 +7,17 @@
     description = "Verify GPG signatures on commits before auto-upgrade";
     before = [ "nixos-upgrade.service" ];
     requiredBy = [ "nixos-upgrade.service" ];
-    after = [ "network-online.target" ];
+    after = [ "network-online.target" "import-gpg-key.service" ];
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
       User = "jason";
     };
+    path = [ pkgs.git pkgs.gnupg pkgs.gh ];
     script = ''
       set -euo pipefail
 
-      REPO_URL="git@github-deploy.com:jasonodoom/nixos-configs.git"
+      REPO_URL="https://github.com/jasonodoom/nixos-configs.git"
       WORK_DIR=$(mktemp -d)
       TRUSTED_KEY="jasonodoom"
       HOSTNAME="perdurabo"
@@ -54,9 +55,9 @@ $message
       echo "Verifying HEAD commit signature..."
       VERIFY_OUTPUT=$(${pkgs.git}/bin/git verify-commit HEAD 2>&1 || true)
 
-      if ! echo "$VERIFY_OUTPUT" | grep -q "Good signature from.*$TRUSTED_KEY"; then
-        echo "ERROR: HEAD commit is not signed by $TRUSTED_KEY"
-        create_failure_issue "Commit signature verification failed. This commit is not signed by $TRUSTED_KEY.
+      if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
+        echo "ERROR: HEAD commit is not signed by jasonodoom or GitHub"
+        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom or GitHub.
 
 $VERIFY_OUTPUT" "$CURRENT_COMMIT"
         exit 1
