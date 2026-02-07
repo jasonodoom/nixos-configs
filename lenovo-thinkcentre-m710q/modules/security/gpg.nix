@@ -30,6 +30,10 @@
       # Set trust level to ultimate for signature verification
       KEYID=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
       echo "$KEYID:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
+
+      # Import GitHub web-flow signing key for merge commits
+      echo "Importing GitHub web-flow signing key..."
+      ${pkgs.curl}/bin/curl -s https://github.com/web-flow.gpg | ${pkgs.gnupg}/bin/gpg --import 2>/dev/null || true
     '';
   };
 

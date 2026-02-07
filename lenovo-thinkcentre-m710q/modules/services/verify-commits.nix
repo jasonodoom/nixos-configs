@@ -55,9 +55,9 @@ $message
       echo "Verifying HEAD commit signature..."
       VERIFY_OUTPUT=$(git verify-commit HEAD 2>&1 || true)
 
-      if ! echo "$VERIFY_OUTPUT" | grep -q "Good signature from.*$TRUSTED_KEY"; then
-        echo "ERROR: HEAD commit is not signed by $TRUSTED_KEY"
-        create_failure_issue "Commit signature verification failed. This commit is not signed by $TRUSTED_KEY.
+      if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
+        echo "ERROR: HEAD commit is not signed by jasonodoom or GitHub"
+        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom or GitHub.
 
 $VERIFY_OUTPUT" "$CURRENT_COMMIT"
         exit 1
