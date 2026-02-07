@@ -47,12 +47,11 @@
           ${pkgs.gnupg}/bin/gpg --import --trust-model pgp "$GPG_KEY_FILE"
         fi
 
-        # Get the key ID from the imported key
+        # Get the key ID and set ultimate trust for signature verification
         KEYID=$(${pkgs.gnupg}/bin/gpg --list-keys --with-colons jasonodoom | ${pkgs.gawk}/bin/awk -F: '/^pub/ {print $5}' | head -1)
+        echo "$KEYID:6:" | ${pkgs.gnupg}/bin/gpg --import-ownertrust
 
-        echo "GPG public key imported from GitHub - manual verification required"
-        echo "To trust the key, run: gpg --edit-key $KEYID trust"
-        echo "Service will check for key updates on next boot"
+        echo "GPG public key imported and trusted"
       ''}";
     };
   };

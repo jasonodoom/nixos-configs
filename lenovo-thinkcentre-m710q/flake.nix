@@ -70,11 +70,13 @@
         ./modules/security/security.nix
         ./modules/security/secrets.nix
         ./modules/security/ssh.nix
+        ./modules/security/gpg.nix
         ./modules/security/luks.nix
         ./modules/security/fail2ban.nix
 
         # Services
         ./modules/services/logs.nix
+        ./modules/services/verify-commits.nix
 
         # Container services
         # ./modules/containers/openbao.nix

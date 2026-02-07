@@ -68,6 +68,17 @@ $log_content
       CURRENT_COMMIT=$(${pkgs.git}/bin/git rev-parse --short HEAD)
       log "Current commit: $CURRENT_COMMIT"
 
+      # Verify commit signature (run as jason who has the GPG key)
+      log "Verifying commit signature..."
+      VERIFY_OUTPUT=$(su - jason -c "cd '$REPO_DIR' && ${pkgs.git}/bin/git verify-commit HEAD 2>&1" || true)
+      if ! echo "$VERIFY_OUTPUT" | grep -q "Good signature from.*jasonodoom"; then
+        log "ERROR: Commit not signed by jasonodoom - aborting update"
+        log "Verification output: $VERIFY_OUTPUT"
+        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        exit 1
+      fi
+      log "Commit signature verified"
+
       # Run darwin-rebuild and capture output
       log "Running darwin-rebuild switch"
       cd "$REPO_DIR/apple-macbook-air-m2"
