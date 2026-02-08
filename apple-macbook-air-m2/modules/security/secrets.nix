@@ -5,20 +5,11 @@
   # Age encryption configuration
   # Secrets are decrypted at activation time and symlinked to /run/agenix/
 
-  # age.secrets.openai-api-key = {
-  #   file = ../secrets/openai-api-key.age;
-  #   owner = config.system.primaryUser;
-  #   group = "staff";
-  #   mode = "0400";
-  # };
-
-  # Environment variable from secret
-  # environment.systemPackages = [
-  #   (pkgs.writeScriptBin "load-secrets" ''
-  #     #!${pkgs.bash}/bin/bash
-  #     export OPENAI_API_KEY=$(cat /run/agenix/openai-api-key)
-  #   '')
-  # ];
+  # GitHub token for creating issues on auto-upgrade failures
+  age.secrets.gh-token = {
+    file = ../../secrets/gh-token.age;
+    mode = "0400";
+  };
 
   # Age identities (SSH keys used for decryption)
   age.identityPaths = [

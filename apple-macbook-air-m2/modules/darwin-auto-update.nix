@@ -23,25 +23,40 @@
 
         log "Creating GitHub issue for update failure"
 
-        su - jason -c "
-          ${pkgs.gh}/bin/gh issue create \
-            --repo jasonodoom/nixos-configs \
-            --title 'darwin-auto-update failed on theophany ($(date +%Y-%m-%d))' \
-            --body \"The scheduled darwin-auto-update failed on theophany.
+        # gh auth uses macOS keyring which is not available in launchd context
+        # Token is managed by agenix and decrypted at activation time
+        GH_TOKEN_FILE="${config.age.secrets.gh-token.path}"
+        if [ ! -f "$GH_TOKEN_FILE" ]; then
+          log "No GitHub token at $GH_TOKEN_FILE (agenix secret missing)"
+          return 1
+        fi
 
-**Commit:** $commit
-**Time:** $(date)
+        local body_file
+        body_file=$(mktemp)
+        {
+          echo "The scheduled darwin-auto-update failed on theophany."
+          echo ""
+          echo "**Commit:** $commit"
+          echo "**Time:** $(date)"
+          echo ""
+          echo "<details>"
+          echo "<summary>Build log (last 100 lines)</summary>"
+          echo ""
+          echo '```'
+          echo "$log_content"
+          echo '```'
+          echo ""
+          echo "</details>"
+        } > "$body_file"
 
-<details>
-<summary>Build log (last 100 lines)</summary>
+        export GH_TOKEN=$(cat "$GH_TOKEN_FILE")
+        ${pkgs.gh}/bin/gh issue create \
+          --repo jasonodoom/nixos-configs \
+          --title "darwin-auto-update failed on theophany ($(date +%Y-%m-%d))" \
+          --body-file "$body_file" \
+          --assignee jasonodoom
 
-\\\`\\\`\\\`
-$log_content
-\\\`\\\`\\\`
-
-</details>\" \
-            --assignee jasonodoom
-        "
+        rm -f "$body_file"
       }
 
       # Check if on AC power
@@ -68,12 +83,9 @@ $log_content
       CURRENT_COMMIT=$(${pkgs.git}/bin/git rev-parse --short HEAD)
       log "Current commit: $CURRENT_COMMIT"
 
-      # Verify commit signature (clone fresh as jason to avoid ownership issues)
+      # Verify commit signature directly in the repo using safe.directory
       log "Verifying commit signature..."
-      VERIFY_DIR=$(mktemp -d)
-      chown jason:staff "$VERIFY_DIR"
-      VERIFY_OUTPUT=$(su - jason -c "${pkgs.git}/bin/git clone --depth 1 --branch '$BRANCH' '$REPO_URL' '$VERIFY_DIR/repo' 2>/dev/null && ${pkgs.git}/bin/git -C '$VERIFY_DIR/repo' verify-commit HEAD 2>&1" || true)
-      rm -rf "$VERIFY_DIR"
+      VERIFY_OUTPUT=$(su - jason -c "${pkgs.git}/bin/git -c safe.directory='$REPO_DIR' -C '$REPO_DIR' verify-commit HEAD 2>&1" || true)
       if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
         log "ERROR: Commit not signed by jasonodoom - aborting update"
         log "Verification output: $VERIFY_OUTPUT"
