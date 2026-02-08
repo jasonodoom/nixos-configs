@@ -49,8 +49,7 @@
           echo "</details>"
         } > "$body_file"
 
-        source "$GH_TOKEN_FILE"
-        export GH_TOKEN
+        export GH_TOKEN=$(cat "$GH_TOKEN_FILE")
         ${pkgs.gh}/bin/gh issue create \
           --repo jasonodoom/nixos-configs \
           --title "darwin-auto-update failed on theophany ($(date +%Y-%m-%d))" \
