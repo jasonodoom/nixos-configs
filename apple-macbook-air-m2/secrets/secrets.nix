@@ -11,18 +11,14 @@ let
   # Perdurabo key (from framework-desktop)
   jason-perdurabo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHCSqE56Z7PmlNBd+9wHIAi+3V9jL2KI+x3YZMR8GSSS jason@perdurabo";
 
-  # System SSH public keys (if using host keys)
-  # Get with: sudo cat /etc/ssh/ssh_host_ed25519_key.pub
-  theophany = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJvXL9ugRxoZ5bQqCxdBQprF0K0e5fJD8VVGHyQB+N/X root@theophany";
-
   # All keys that can decrypt secrets
-  allKeys = [ jason-perdurabo jason-yubikey jason-theophany theophany ];
+  allKeys = [ jason-perdurabo jason-yubikey jason-theophany ];
 in
 {
 
   #  Create the encrypted file with: agenix -e secrets/openai-api-key.age
   # "secrets/openai-api-key.age".publicKeys = allKeys;
 
-  # Add more secrets here as needed
-  # "secrets/another-secret.age".publicKeys = allKeys;
+  # GitHub token for creating issues on auto-upgrade failures
+  "gh-token.age".publicKeys = allKeys;
 }
