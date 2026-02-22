@@ -24,9 +24,10 @@
         url = "github:ryantm/agenix";
         inputs.nixpkgs.follows = "nixpkgs";
       };
+      determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     };
 
-    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix, ... }:
+    outputs = inputs@{ self, nix-darwin, nixpkgs, agenix, determinate, ... }:
     let
       overlays = [
         (import ./overlays { inherit inputs; })
@@ -54,6 +55,7 @@
           ./modules/determinate-nix-update.nix
           ./modules/darwin-auto-update.nix
           ./modules/homebrew.nix
+          ./modules/container.nix
           ./modules/dock.nix
           ./modules/firefox.nix
         ];
@@ -65,6 +67,7 @@
           bash-completion
           coreutils-full
           claude-code
+          container
           direnv
           nix-direnv
           vscode
@@ -138,20 +141,19 @@
           screencapture.location = "~/Downloads";
         };
 
-        # Configure Nix via /etc/nix/nix.custom.conf (included by Determinate Nix)
-        environment.etc."nix/nix.custom.conf".text = ''
-          # Custom configuration
-          trusted-users = root jason
-          cores = 0  # Allow individual builds to use all 8 cores
-          max-jobs = auto
-          substituters = https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org
-          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
-          builders-use-substitutes = true
-          builders = ssh://jason@perdurabo x86_64-linux - 8 1 big-parallel,nixos-test
-        '';
-
-        # Disable nix-darwin's Nix management (using Determinate Nix instead)
-        nix.enable = false;
+        # Determinate Nix configuration via nix-darwin module
+        determinateNix = {
+          enable = true;
+          customSettings = {
+            trusted-users = ["root" "jason"];
+            cores = 0;
+            max-jobs = "auto";
+            substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org";
+            trusted-public-keys = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=";
+            builders-use-substitutes = true;
+            builders = "ssh://jason@perdurabo x86_64-linux - 8 1 big-parallel,nixos-test";
+          };
+        };
 
         # Programs
         programs.zsh.enable = true;
@@ -175,7 +177,10 @@
     {
       # darwin-rebuild build --flake .#theophany
       darwinConfigurations."theophany" = nix-darwin.lib.darwinSystem {
-        modules = [ configuration ];
+        modules = [
+          determinate.darwinModules.default
+          configuration
+        ];
       };
 
       # Expose the package set for convenience
