@@ -14,15 +14,13 @@ let
 
     log "Starting Determinate Nix update check"
 
-    # Determinate Nix self-update
-    if /nix/nix-installer self-upgrade 2>&1 | tee -a "$LOG_FILE"; then
-      log "Determinate Nix update check completed"
+    # Determinate Nix update via determinate-nixd
+    if determinate-nixd upgrade 2>&1 | tee -a "$LOG_FILE"; then
+      log "Determinate Nix update completed"
     else
-      log "Determinate Nix update check failed"
+      log "Determinate Nix update failed"
       exit 1
     fi
-
-    log "Determinate Nix update completed"
   '';
 in
 {
@@ -38,11 +36,6 @@ in
         "${updateScript}/bin/determinate-nix-update"
       ];
       StartCalendarInterval = [
-        {
-          Hour = 20;  # 8pm local time
-          Minute = 0;
-          Weekday = 1;  # Monday
-        }
         {
           Hour = 20;  # 8pm local time
           Minute = 0;
