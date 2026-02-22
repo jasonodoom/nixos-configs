@@ -145,7 +145,7 @@
         determinateNix = {
           enable = true;
           customSettings = {
-            trusted-users = "root jason";
+            trusted-users = ["root" "jason"];
             cores = 0;
             max-jobs = "auto";
             substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org";
