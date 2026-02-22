@@ -65,6 +65,7 @@
           bash-completion
           coreutils-full
           claude-code
+          container
           direnv
           nix-direnv
           vscode
