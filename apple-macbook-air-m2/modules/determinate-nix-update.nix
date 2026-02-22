@@ -39,11 +39,6 @@ in
         {
           Hour = 20;  # 8pm local time
           Minute = 0;
-          Weekday = 1;  # Monday
-        }
-        {
-          Hour = 20;  # 8pm local time
-          Minute = 0;
           Weekday = 5;  # Friday
         }
       ];
