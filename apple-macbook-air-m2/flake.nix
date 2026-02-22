@@ -54,6 +54,7 @@
           ./modules/determinate-nix-update.nix
           ./modules/darwin-auto-update.nix
           ./modules/homebrew.nix
+          ./modules/container.nix
           ./modules/dock.nix
           ./modules/firefox.nix
         ];
