@@ -13,6 +13,11 @@ on:
           - framework-desktop
           - apple-macbook-air-m2
         default: all
+      flake-input:
+        description: 'Specific flake input to update (e.g. nix-darwin). Leave empty to update all inputs.'
+        required: false
+        type: string
+        default: ''
   schedule:
     - cron: "0 0 * * 0"  # Weekly on Sunday at midnight UTC
 
@@ -38,14 +43,15 @@ jobs:
         if: github.event.inputs.flake == 'all' || github.event.inputs.flake == matrix.flake || github.event.inputs.flake == ''
         uses: DeterminateSystems/update-flake-lock@v28
         with:
+          inputs: ${{ github.event.inputs.flake-input }}
           token: ${{ secrets.GH_BOT_TOKEN }}
-          pr-title: "Update flake.lock for ${{ matrix.flake }}"
+          pr-title: "Update flake.lock for ${{ matrix.flake }}${{ github.event.inputs.flake-input && format(' ({0})', github.event.inputs.flake-input) || '' }}"
           pr-labels: |
             dependencies
             automated
           pr-body: |
-            Automated flake.lock update for ${{ matrix.flake }}.
-          commit-msg: "Update flake.lock for ${{ matrix.flake }}"
+            Automated flake.lock update for ${{ matrix.flake }}${{ github.event.inputs.flake-input && format(' (input: {0})', github.event.inputs.flake-input) || '' }}.
+          commit-msg: "Update flake.lock for ${{ matrix.flake }}${{ github.event.inputs.flake-input && format(' ({0})', github.event.inputs.flake-input) || '' }}"
           git-author-name: github-actions[bot]
           git-author-email: 41898282+github-actions[bot]@users.noreply.github.com
           git-committer-name: github-actions[bot]
