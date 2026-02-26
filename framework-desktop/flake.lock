@@ -448,16 +448,16 @@
         "systems": "systems_3"
       },
       "locked": {
-        "lastModified": 1769107495,
-        "narHash": "sha256-jk4C2xw6vKIjo5F+FHRNTgNGZ7Zl+Hgpl84xeptCs1g=",
+        "lastModified": 1771011681,
+        "narHash": "sha256-qjWVB8xWVgIVUgrf27F6hwiFIE+4ERXWeHv26ugg/x4=",
         "owner": "tailscale",
         "repo": "tailscale",
-        "rev": "d885b34776cd2e96f1f368a4d31729e37ff8b59b",
+        "rev": "2de4d317a8c2595904f1563ebd98fdcf843da275",
         "type": "github"
       },
       "original": {
         "owner": "tailscale",
-        "ref": "v1.94.1",
+        "ref": "v1.94.2",
         "repo": "tailscale",
         "type": "github"
       }
