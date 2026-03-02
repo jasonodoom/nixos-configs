@@ -11,6 +11,12 @@
       PubkeyAuthentication = true;
       KbdInteractiveAuthentication = false;
       StreamLocalBindUnlink = true;
+      MaxAuthTries = 3;
+      ClientAliveInterval = 300;
+      ClientAliveCountMax = 2;
+      LoginGraceTime = 30;
+      MaxSessions = 2;
+      MaxStartups = "2:30:5";
     };
     authorizedKeysFiles = [ ".ssh/authorized_keys" ];
     extraConfig = ''

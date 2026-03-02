@@ -31,7 +31,7 @@ in
   "pihole-admin-password.age".publicKeys = all;
 
   # Tailscale auth key for initrd remote LUKS unlock
-  # Expires: 2026-02-10
+  # Expires: 2026-05-31
   "tailscale-initrd-key.age".publicKeys = all;
 
   # GitHub token for creating issues on auto-upgrade failures

@@ -40,12 +40,11 @@
     Host *
       Protocol 2
       HashKnownHosts yes
-      PasswordAuthentication yes
+      PasswordAuthentication no
       StrictHostKeyChecking ask
       IdentityFile ~/.ssh/id_rsa_yubikey.pub
       IdentityFile ~/.ssh/id_ed25519
       VisualHostKey yes
-      LogLevel DEBUG1
       User jason
   '';
 
