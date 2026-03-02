@@ -19,7 +19,7 @@
     alias ducks='du -chs * | sort -rh | head'
     alias shredhere='find ./ -type f -exec shred -uv {} \;'
 
-    # Git shortcuts
+    # Shortcuts
     alias k='kubectl'
 
     # Nix shortcuts (noglob prevents zsh from treating # as glob pattern)

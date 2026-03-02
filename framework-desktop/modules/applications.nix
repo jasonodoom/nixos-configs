@@ -37,6 +37,7 @@
     obsidian
 
     # AI/ML Tools
+    python3Packages.huggingface-hub
 
     # Hardware and Electronics
     arduino
