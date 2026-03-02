@@ -109,7 +109,9 @@
           ansible-lint
           pass
           go
+          python3Packages.huggingface-hub
           agenix.packages."${pkgs.stdenv.hostPlatform.system}".default
+          ragenix
         ];
 
         # Set primary user for system defaults
