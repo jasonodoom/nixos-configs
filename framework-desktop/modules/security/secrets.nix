@@ -11,6 +11,12 @@
         group = "users";
         mode = "0400";
       };
+
+      # Tailscale auth key for initrd remote LUKS unlock
+      tailscale-initrd-key = {
+        file = ../../secrets/tailscale-initrd-key.age;
+        mode = "0400";
+      };
     };
 
     # Use the system's SSH host key for decryption

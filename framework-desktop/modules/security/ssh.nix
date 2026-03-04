@@ -11,6 +11,7 @@
       PubkeyAuthentication = true;
       KbdInteractiveAuthentication = false;
       StreamLocalBindUnlink = true;
+      LogLevel = "INFO";
       MaxAuthTries = 3;
       ClientAliveInterval = 300;
       ClientAliveCountMax = 2;
@@ -43,6 +44,9 @@
 
   # SSH configuration for GitHub access
   programs.ssh.extraConfig = ''
+    Host *
+      LogLevel ERROR
+
     # Deploy key for system operations (nixos-rebuild, auto-upgrade, etc.)
     Host github-deploy.com
       HostName github.com

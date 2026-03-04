@@ -203,6 +203,19 @@ EOF
     fi
   '';
 
+  # Sync agenix-decrypted tailscale key to initrd secrets path
+  # Bridges agenix (.age → /run/agenix/) with boot.initrd.secrets (/etc/secrets/initrd/)
+  system.activationScripts.initrd-tailscale-key = lib.stringAfter [ "agenixNewGeneration" "specialfs" ] ''
+    if [ -f "${config.age.secrets.tailscale-initrd-key.path}" ]; then
+      mkdir -p /etc/secrets/initrd
+      cp "${config.age.secrets.tailscale-initrd-key.path}" /etc/secrets/initrd/tailscale-auth-key
+      chmod 400 /etc/secrets/initrd/tailscale-auth-key
+      echo "Tailscale initrd auth key synced from agenix"
+    else
+      echo "WARNING: agenix tailscale-initrd-key not found, initrd Tailscale auth may be stale"
+    fi
+  '';
+
   # Validate initrd SSH configuration after boot
   systemd.services.test-initrd-ssh = {
     description = "Validate initrd SSH configuration after boot";
