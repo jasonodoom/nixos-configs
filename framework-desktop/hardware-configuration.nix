@@ -13,11 +13,6 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
-  # LUKS encryption setup
-  boot.initrd.luks.devices."nixos-enc" = {
-    device = "/dev/nvme1n1p2";  # Encrypted partition
-    preLVM = true;              # Decrypt before LVM activation
-  };
 
   # Root filesystem (LVM logical volume)
   fileSystems."/" = {
@@ -27,7 +22,7 @@
 
   # Boot partition (unencrypted EFI)
   fileSystems."/boot" = {
-    device = "/dev/nvme1n1p1";
+    device = "/dev/disk/by-uuid/0262-DB3F";
     fsType = "vfat";
     options = [ "fmask=0022" "dmask=0022" ];
   };
@@ -35,10 +30,10 @@
   # Check and repair boot partition health before activation
   system.activationScripts.check-boot-health = lib.stringAfter [ "specialfs" ] ''
     echo "Checking /boot filesystem health..."
-    if ${pkgs.dosfstools}/bin/fsck.vfat -n /dev/nvme1n1p1 2>&1 | grep -q "Dirty bit\|differences between boot sector"; then
+    if ${pkgs.dosfstools}/bin/fsck.vfat -n /dev/disk/by-uuid/0262-DB3F 2>&1 | grep -q "Dirty bit\|differences between boot sector"; then
       echo "WARNING: /boot filesystem has issues. Attempting repair..."
-      ${pkgs.dosfstools}/bin/fsck.vfat -a /dev/nvme1n1p1 || true
-      ${pkgs.dosfstools}/bin/fsck.vfat -a -b /dev/nvme1n1p1 || true
+      ${pkgs.dosfstools}/bin/fsck.vfat -a /dev/disk/by-uuid/0262-DB3F || true
+      ${pkgs.dosfstools}/bin/fsck.vfat -a -b /dev/disk/by-uuid/0262-DB3F || true
       echo "Boot filesystem repaired."
     else
       echo "/boot filesystem is healthy."
