@@ -96,8 +96,7 @@
           tmux
           nixfmt-rfc-style
           nixpkgs-review
-          npins
-          wrangler  
+          wrangler
           nodejs_20
           ncdu
           iftop
