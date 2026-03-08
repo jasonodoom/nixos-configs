@@ -1,8 +1,8 @@
-# Claude Code overlay - pinned to 2.1.62
+# Claude Code overlay - pinned to 2.1.70
 let
-  version = "2.1.62";
-  hash = "sha256-TtogpvydBItoSYgQDXu3hBVC1UomQSGFaSubZfklzS4=";
-  npmDepsHash = "sha256-b8lv/rduKqgq3lZ5zL3sax9PP3afe4pFpUJHg1K9N5M=";
+  version = "2.1.70";
+  hash = "sha256-YGPF83dBBfYlAZftP9wLpPZPx2y8Q9jSmX12gvB5Z9I=";
+  npmDepsHash = "sha256-k+UORB4anWeBQIr+XbkKjsw792e/viz2Ous8rXKuYJI=";
 in
 final: prev: {
   claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
@@ -12,7 +12,7 @@ final: prev: {
       inherit hash;
     };
     postPatch = ''
-      cp ${./claude-code-2.1.62-package-lock.json} package-lock.json
+      cp ${./claude-code-2.1.70-package-lock.json} package-lock.json
     '';
     npmDeps = prev.fetchNpmDeps {
       src = prev.fetchurl {
@@ -20,7 +20,7 @@ final: prev: {
         inherit hash;
       };
       postPatch = ''
-        cp ${./claude-code-2.1.62-package-lock.json} package-lock.json
+        cp ${./claude-code-2.1.70-package-lock.json} package-lock.json
       '';
       hash = npmDepsHash;
     };
