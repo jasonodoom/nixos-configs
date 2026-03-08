@@ -1,5 +1,5 @@
 # Development tools and environment
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgs-unstable, lib, ... }:
 
 {
   # Development programs
@@ -94,7 +94,7 @@
     # Development utilities
     mob
     nixpkgs-review
-    npins
+    pkgs-unstable.wrangler
   ];
 
   # Environment variables
