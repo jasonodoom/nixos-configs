@@ -94,7 +94,6 @@
     # Development utilities
     mob
     nixpkgs-review
-    npins
     pkgs-unstable.wrangler
   ];
 
