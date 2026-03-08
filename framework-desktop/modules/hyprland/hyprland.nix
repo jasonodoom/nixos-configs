@@ -3,13 +3,15 @@
 
 with lib; let
   # Hyprland plugins from nixpkgs-unstable
+  # Disabled: plugins at 0.53.x are incompatible with Hyprland 0.54.x (header restructuring)
+  # Re-enable once nixpkgs updates plugins to match Hyprland 0.54
   hypr-plugin-dir = pkgs.symlinkJoin {
     name = "hyprland-plugins";
     paths = with pkgs-unstable.hyprlandPlugins; [
-      hy3
-      hyprexpo
-      hyprfocus
-      hyprbars
+      # hy3        # disabled: incompatible with hyprland 0.54.x
+      # hyprexpo   # disabled: incompatible with hyprland 0.54.x
+      # hyprfocus  # disabled: incompatible with hyprland 0.54.x
+      # hyprbars   # disabled: incompatible with hyprland 0.54.x
       # hyprspace  # disabled: broken with hyprland 0.53+ (nixpkgs#443989)
     ];
   };
@@ -209,11 +211,12 @@ in
     exec-once = hyprctl dispatch dpms on
 
     # Load Hyprland plugins first
-    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhy3.so"
-    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprexpo.so"
-    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprfocus.so"
-    exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprbars.so"
-    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"  # disabled: broken with hyprland 0.53+
+    # Disabled: plugins incompatible with hyprland 0.54.x, re-enable once nixpkgs updates
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhy3.so"
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprexpo.so"
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprfocus.so"
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprbars.so"
+    # exec-once = hyprctl plugin load "$HYPR_PLUGIN_DIR/lib/libhyprspace.so"
 
     # Auto-restore previous session on login (if session file exists)
     exec-once = [ -f ~/.config/hypr/session.json ] && sleep 3 && hyprctl dispatch restoresession ~/.config/hypr/session.json
