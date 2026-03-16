@@ -38,6 +38,10 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     flake-utils.url = "github:numtide/flake-utils";
+
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+    };
   };
 
   outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, vscode-server, determinate, nixos-hardware, flake-utils, ... }@inputs:
@@ -110,6 +114,7 @@
         ./modules/virtualization.nix
         ./modules/vscode.nix
         ./modules/services/verify-commits.nix
+        ./modules/services/forgejo.nix
       ];
     };
   in
