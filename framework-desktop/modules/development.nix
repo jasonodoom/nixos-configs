@@ -42,6 +42,8 @@
   environment.systemPackages = with pkgs; [
     # AI assistants
     claude-code
+    llm-agents.gemini-cli
+    llm-agents.codex
 
     # Version control (git configuration now in git.nix)
     git-interactive-rebase-tool
