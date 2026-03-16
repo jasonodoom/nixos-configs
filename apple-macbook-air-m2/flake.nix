@@ -85,7 +85,7 @@
           tshark
           tree
           wget
-          neofetch
+          fastfetch
           krb5
           p11-kit
           openssh
