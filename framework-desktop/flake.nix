@@ -25,7 +25,6 @@
 
     tailscale = {
       url = "github:tailscale/tailscale/v1.94.2";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     vscode-server = {
@@ -158,7 +157,7 @@
         # Go development environment
         go = pkgs.mkShell {
           buildInputs = with pkgs; [
-            go
+            pkgs-unstable.go_1_26
             gopls          # Language server
             gofumpt        # Formatter
             golangci-lint  # Linter
