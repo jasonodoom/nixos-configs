@@ -27,11 +27,6 @@
       url = "github:tailscale/tailscale/v1.94.2";
     };
 
-    vscode-server = {
-      url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -43,7 +38,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, vscode-server, determinate, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, determinate, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -69,9 +64,6 @@
 
         # Agenix for secrets management
         agenix.nixosModules.default
-
-        # VSCode server for remote development
-        vscode-server.nixosModules.default
 
         # Determinate Nix for enterprise features
         determinate.nixosModules.default
