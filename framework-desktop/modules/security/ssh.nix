@@ -69,6 +69,13 @@
       User amy
       IdentityFile ~/.ssh/perdurabo_id_ed25519
       IdentitiesOnly yes
+
+    Host forgejo
+      HostName perdurabo.ussuri-elevator.ts.net
+      User git
+      Port 22
+      IdentityFile ~/.ssh/forgejo_ed25519
+      IdentitiesOnly yes
   '';
 
   # SSH client configuration from encrypted agenix secret
