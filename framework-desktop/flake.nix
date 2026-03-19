@@ -24,8 +24,7 @@
     };
 
     tailscale = {
-      url = "github:tailscale/tailscale/v1.96.2";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:tailscale/tailscale/v1.94.2";
     };
 
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
