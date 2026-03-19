@@ -9,10 +9,10 @@
 
     settings = {
       server = {
-        DOMAIN = "perdurabo";
-        HTTP_ADDR = "100.105.92.54"; # Tailscale IP only
+        DOMAIN = "perdurabo.ussuri-elevator.ts.net";
+        HTTP_ADDR = "127.0.0.1"; # Caddy reverse-proxies to localhost
         HTTP_PORT = 3000;
-        ROOT_URL = "http://perdurabo:3000/";
+        ROOT_URL = "https://perdurabo.ussuri-elevator.ts.net/";
         SSH_PORT = 22;
       };
 
@@ -21,7 +21,7 @@
       };
 
       session = {
-        COOKIE_SECURE = false; # No TLS on Tailscale internal
+        COOKIE_SECURE = true; # TLS via Caddy & Tailscale certs
       };
 
       actions = {
@@ -42,8 +42,19 @@
     };
   };
 
-  # Open Forgejo port only on Tailscale interface
+  # Caddy reverse proxy with Tailscale HTTPS certs
+  services.caddy = {
+    enable = true;
+    virtualHosts."perdurabo.ussuri-elevator.ts.net" = {
+      extraConfig = ''
+        reverse_proxy 127.0.0.1:3000
+        tls /var/lib/tailscale/certs/perdurabo.ussuri-elevator.ts.net.crt /var/lib/tailscale/certs/perdurabo.ussuri-elevator.ts.net.key
+      '';
+    };
+  };
+
+  # Open HTTPS on Tailscale interface (replace old port 3000)
   networking.firewall.interfaces."tailscale0" = {
-    allowedTCPPorts = [ 3000 ];
+    allowedTCPPorts = [ 443 ];
   };
 }
