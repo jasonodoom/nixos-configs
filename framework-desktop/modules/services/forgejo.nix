@@ -13,7 +13,9 @@
         HTTP_ADDR = "127.0.0.1"; # Caddy reverse-proxies to localhost
         HTTP_PORT = 3000;
         ROOT_URL = "https://perdurabo.ussuri-elevator.ts.net/";
-        SSH_PORT = 22;
+        SSH_PORT = 2222;
+        START_SSH_SERVER = true;
+        SSH_LISTEN_HOST = "0.0.0.0";
       };
 
       service = {
@@ -58,6 +60,6 @@
 
   # Open HTTPS on Tailscale interface (replace old port 3000)
   networking.firewall.interfaces."tailscale0" = {
-    allowedTCPPorts = [ 443 ];
+    allowedTCPPorts = [ 443 2222 ];
   };
 }
