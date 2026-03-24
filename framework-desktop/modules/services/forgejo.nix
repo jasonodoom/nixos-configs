@@ -53,6 +53,9 @@
     };
   };
 
+  # Ensure Caddy can read Tailscale certs
+  systemd.services.caddy.serviceConfig.ExecStartPre = "+${pkgs.bash}/bin/bash -c '${pkgs.coreutils}/bin/chmod 755 /var/lib/tailscale && ${pkgs.coreutils}/bin/chmod 750 /var/lib/tailscale/certs && ${pkgs.coreutils}/bin/chown root:caddy /var/lib/tailscale/certs && ${pkgs.coreutils}/bin/chown root:caddy /var/lib/tailscale/certs/*.key && ${pkgs.coreutils}/bin/chmod 640 /var/lib/tailscale/certs/*.key'";
+
   # Open HTTPS on Tailscale interface (replace old port 3000)
   networking.firewall.interfaces."tailscale0" = {
     allowedTCPPorts = [ 443 ];
