@@ -104,6 +104,9 @@
           nixpkgs-review
           wrangler
           nodejs_20
+          bun
+          rustc
+          cargo
           ncdu
           iftop
           htop
