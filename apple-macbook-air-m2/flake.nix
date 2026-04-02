@@ -103,7 +103,7 @@
           nixfmt-rfc-style
           nixpkgs-review
           wrangler
-          nodejs_20
+          nodejs_22
           bun
           rustc
           cargo
