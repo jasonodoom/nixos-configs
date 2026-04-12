@@ -10,35 +10,18 @@ on:
         description: 'Specific version to update to (leave empty for latest)'
         required: false
         type: string
-      target:
-        description: 'Target machine(s) to update'
-        required: false
-        type: choice
-        default: 'both'
-        options:
-          - both
-          - theophany
-          - perdurabo
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
 
+env:
+  GCS_BUCKET: https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases
+
 jobs:
-  prepare:
+  update:
     runs-on: ubuntu-latest
-    outputs:
-      latest: ${{ steps.version-info.outputs.latest }}
-      target: ${{ steps.version-info.outputs.target }}
-      theophany_current: ${{ steps.version-info.outputs.theophany_current }}
-      perdurabo_current: ${{ steps.version-info.outputs.perdurabo_current }}
-      update_theophany: ${{ steps.targets.outputs.update_theophany }}
-      update_perdurabo: ${{ steps.targets.outputs.update_perdurabo }}
-      needed: ${{ steps.targets.outputs.needed }}
-      src_hash: ${{ steps.hashes.outputs.src_hash }}
-      npm_deps_hash: ${{ steps.hashes.outputs.npm_deps_hash }}
-      branch: ${{ steps.branch.outputs.branch }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -53,439 +36,189 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Claude Code version info
-        id: version-info
+      - name: Get version info
+        id: version
         run: |
-          # Get latest version from npm
-          LATEST_VERSION=$(curl -s https://registry.npmjs.org/@anthropic-ai/claude-code/latest | jq -r '.version')
-          echo "latest=${LATEST_VERSION}" >> $GITHUB_OUTPUT
-          echo "Latest Claude Code version: ${LATEST_VERSION}"
-
-          # Use input version if provided, otherwise use latest
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            TARGET_VERSION="${{ github.event.inputs.version }}"
+            TARGET="${{ github.event.inputs.version }}"
           else
-            TARGET_VERSION="${LATEST_VERSION}"
+            TARGET=$(curl -fsSL "$GCS_BUCKET/latest")
           fi
-          echo "target=${TARGET_VERSION}" >> $GITHUB_OUTPUT
-          echo "Target version: ${TARGET_VERSION}"
+          echo "target=${TARGET}" >> $GITHUB_OUTPUT
+          echo "Target version: ${TARGET}"
 
-          # Get current versions from overlays
-          THEOPHANY_VERSION=$(grep -oP "version = \"\K[^\"]+" apple-macbook-air-m2/overlays/claude-code.nix || echo "unknown")
-          PERDURABO_VERSION=$(grep -oP "version = \"\K[^\"]+" framework-desktop/overlays/claude-code.nix || echo "unknown")
-          echo "theophany_current=${THEOPHANY_VERSION}" >> $GITHUB_OUTPUT
-          echo "perdurabo_current=${PERDURABO_VERSION}" >> $GITHUB_OUTPUT
-          echo "Current theophany version: ${THEOPHANY_VERSION}"
-          echo "Current perdurabo version: ${PERDURABO_VERSION}"
+          THEOPHANY_CURRENT=$(grep -oP 'version = "\K[^"]+' apple-macbook-air-m2/overlays/claude-code.nix || echo "unknown")
+          PERDURABO_CURRENT=$(grep -oP 'version = "\K[^"]+' framework-desktop/overlays/claude-code.nix || echo "unknown")
+          echo "theophany_current=${THEOPHANY_CURRENT}" >> $GITHUB_OUTPUT
+          echo "perdurabo_current=${PERDURABO_CURRENT}" >> $GITHUB_OUTPUT
 
-      - name: Determine targets
-        id: targets
-        run: |
-          TARGET="${{ github.event.inputs.target || 'both' }}"
-          TARGET_VERSION="${{ steps.version-info.outputs.target }}"
-
-          UPDATE_THEOPHANY="false"
-          UPDATE_PERDURABO="false"
-
-          if [ "$TARGET" == "both" ] || [ "$TARGET" == "theophany" ]; then
-            if [ "${{ steps.version-info.outputs.theophany_current }}" != "${TARGET_VERSION}" ]; then
-              UPDATE_THEOPHANY="true"
-            fi
-          fi
-
-          if [ "$TARGET" == "both" ] || [ "$TARGET" == "perdurabo" ]; then
-            if [ "${{ steps.version-info.outputs.perdurabo_current }}" != "${TARGET_VERSION}" ]; then
-              UPDATE_PERDURABO="true"
-            fi
-          fi
-
-          echo "update_theophany=${UPDATE_THEOPHANY}" >> $GITHUB_OUTPUT
-          echo "update_perdurabo=${UPDATE_PERDURABO}" >> $GITHUB_OUTPUT
-
-          if [ "$UPDATE_THEOPHANY" == "true" ] || [ "$UPDATE_PERDURABO" == "true" ]; then
-            echo "needed=true" >> $GITHUB_OUTPUT
-            echo "Update needed"
-          else
+          if [ "$THEOPHANY_CURRENT" = "$TARGET" ] && [ "$PERDURABO_CURRENT" = "$TARGET" ]; then
             echo "needed=false" >> $GITHUB_OUTPUT
-            echo "Already on target version(s)"
+            echo "Already on version ${TARGET}"
+          else
+            echo "needed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create branch name
-        id: branch
-        if: steps.targets.outputs.needed == 'true'
+      - name: Check if PR already exists
+        if: steps.version.outputs.needed == 'true'
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH_NAME="update-claude-code-${{ steps.version-info.outputs.target }}"
-          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          BRANCH="update-claude-code-${{ steps.version.outputs.target }}"
+          EXISTING=$(gh pr list --head "${BRANCH}" --state open --json number -q '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Download and generate package-lock.json
-        if: steps.targets.outputs.needed == 'true'
-        run: |
-          VERSION="${{ steps.version-info.outputs.target }}"
-          WORKDIR=$(mktemp -d)
-          cd "$WORKDIR"
-
-          # Download the tarball
-          curl -sL "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${VERSION}.tgz" -o claude-code.tgz
-
-          # Extract and generate package-lock.json
-          tar -xzf claude-code.tgz
-          cd package
-
-          # Create a minimal package-lock.json with npm
-          npm install --package-lock-only --ignore-scripts 2>/dev/null || true
-
-          # Copy the generated lock file
-          cp package-lock.json "$GITHUB_WORKSPACE/claude-code-${VERSION}-package-lock.json"
-
-          echo "Generated package-lock.json for version ${VERSION}"
-
-      - name: Calculate hashes
-        if: steps.targets.outputs.needed == 'true'
+      - name: Fetch manifest and compute hashes
+        if: steps.version.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         id: hashes
         run: |
-          VERSION="${{ steps.version-info.outputs.target }}"
+          VERSION="${{ steps.version.outputs.target }}"
+          MANIFEST=$(curl -fsSL "$GCS_BUCKET/$VERSION/manifest.json")
 
-          # Calculate source hash using nix-prefetch-url
-          SRC_HASH=$(nix-prefetch-url --type sha256 "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${VERSION}.tgz" 2>/dev/null)
-          SRC_HASH_SRI=$(nix hash to-sri --type sha256 "$SRC_HASH")
-          echo "src_hash=${SRC_HASH_SRI}" >> $GITHUB_OUTPUT
-          echo "Source hash: ${SRC_HASH_SRI}"
+          # Extract checksums from manifest
+          LINUX_X64_SHA256=$(echo "$MANIFEST" | jq -r '.platforms["linux-x64"].checksum')
+          DARWIN_ARM64_SHA256=$(echo "$MANIFEST" | jq -r '.platforms["darwin-arm64"].checksum')
 
-          # Calculate npm deps hash
-          WORKDIR=$(mktemp -d)
-          cd "$WORKDIR"
-          curl -sL "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${VERSION}.tgz" -o source.tgz
-          tar -xzf source.tgz
-          cp "$GITHUB_WORKSPACE/claude-code-${VERSION}-package-lock.json" package/package-lock.json
+          # Convert hex to SRI format
+          LINUX_X64_SRI=$(nix hash to-sri --type sha256 "$LINUX_X64_SHA256")
+          DARWIN_ARM64_SRI=$(nix hash to-sri --type sha256 "$DARWIN_ARM64_SHA256")
 
-          # Use prefetch-npm-deps to get the hash
-          NPM_DEPS_HASH=$(nix run nixpkgs#prefetch-npm-deps --accept-flake-config -- package/package-lock.json 2>&1 | tail -1)
-          echo "npm_deps_hash=${NPM_DEPS_HASH}" >> $GITHUB_OUTPUT
-          echo "NPM deps hash: ${NPM_DEPS_HASH}"
+          echo "linux_x64_hash=${LINUX_X64_SRI}" >> $GITHUB_OUTPUT
+          echo "darwin_arm64_hash=${DARWIN_ARM64_SRI}" >> $GITHUB_OUTPUT
+          echo "Linux x64: ${LINUX_X64_SRI}"
+          echo "Darwin arm64: ${DARWIN_ARM64_SRI}"
 
       - name: Update overlays
-        if: steps.targets.outputs.needed == 'true'
+        if: steps.version.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
         run: |
-          VERSION="${{ steps.version-info.outputs.target }}"
-          SRC_HASH="${{ steps.hashes.outputs.src_hash }}"
-          NPM_DEPS_HASH="${{ steps.hashes.outputs.npm_deps_hash }}"
+          VERSION="${{ steps.version.outputs.target }}"
+          LINUX_HASH="${{ steps.hashes.outputs.linux_x64_hash }}"
+          DARWIN_HASH="${{ steps.hashes.outputs.darwin_arm64_hash }}"
 
-          # Update theophany overlay
-          if [ "${{ steps.targets.outputs.update_theophany }}" == "true" ]; then
-            cp "claude-code-${VERSION}-package-lock.json" "apple-macbook-air-m2/overlays/claude-code-${VERSION}-package-lock.json"
-            find apple-macbook-air-m2/overlays -name "claude-code-*-package-lock.json" ! -name "claude-code-${VERSION}-package-lock.json" -delete
-
-            cat > apple-macbook-air-m2/overlays/claude-code.nix << EOF
-          # Claude Code overlay - pinned to ${VERSION}
+          cat > framework-desktop/overlays/claude-code.nix << 'NIXEOF'
+          # Claude Code overlay - native binary from Anthropic
+          # Updated automatically by .github/workflows/update-claude-code.yml
           let
-            version = "${VERSION}";
-            hash = "${SRC_HASH}";
-            npmDepsHash = "${NPM_DEPS_HASH}";
+            version = "VERSION_PLACEHOLDER";
+            platform = "linux-x64";
+            hash = "HASH_PLACEHOLDER";
           in
           final: prev: {
-            claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
+            claude-code = final.stdenv.mkDerivation {
+              pname = "claude-code";
               inherit version;
-              src = prev.fetchurl {
-                url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-\${version}.tgz";
+              src = final.fetchurl {
+                url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platform}/claude";
                 inherit hash;
               };
-              postPatch = ''
-                cp \${./claude-code-${VERSION}-package-lock.json} package-lock.json
+              dontUnpack = true;
+              nativeBuildInputs = [ final.autoPatchelfHook ];
+              buildInputs = [ final.stdenv.cc.cc.lib ];
+              installPhase = ''
+                install -Dm755 $src $out/bin/claude
               '';
-              npmDeps = prev.fetchNpmDeps {
-                src = prev.fetchurl {
-                  url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-\${version}.tgz";
-                  inherit hash;
-                };
-                postPatch = ''
-                  cp \${./claude-code-${VERSION}-package-lock.json} package-lock.json
-                '';
-                hash = npmDepsHash;
-              };
-            });
+            };
           }
-          EOF
-            echo "Updated theophany overlay to ${VERSION}"
-          fi
+          NIXEOF
+          sed -i "s|VERSION_PLACEHOLDER|${VERSION}|g" framework-desktop/overlays/claude-code.nix
+          sed -i "s|HASH_PLACEHOLDER|${LINUX_HASH}|g" framework-desktop/overlays/claude-code.nix
 
-          # Update perdurabo overlay
-          if [ "${{ steps.targets.outputs.update_perdurabo }}" == "true" ]; then
-            cp "claude-code-${VERSION}-package-lock.json" "framework-desktop/overlays/claude-code-${VERSION}-package-lock.json"
-            find framework-desktop/overlays -name "claude-code-*-package-lock.json" ! -name "claude-code-${VERSION}-package-lock.json" -delete
-
-            cat > framework-desktop/overlays/claude-code.nix << EOF
-          # Claude Code overlay - pinned to ${VERSION}
+          cat > apple-macbook-air-m2/overlays/claude-code.nix << 'NIXEOF'
+          # Claude Code overlay - native binary from Anthropic
+          # Updated automatically by .github/workflows/update-claude-code.yml
           let
-            version = "${VERSION}";
-            hash = "${SRC_HASH}";
-            npmDepsHash = "${NPM_DEPS_HASH}";
+            version = "VERSION_PLACEHOLDER";
+            platform = "darwin-arm64";
+            hash = "HASH_PLACEHOLDER";
           in
           final: prev: {
-            claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
+            claude-code = final.stdenv.mkDerivation {
+              pname = "claude-code";
               inherit version;
-              src = prev.fetchurl {
-                url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-\${version}.tgz";
+              src = final.fetchurl {
+                url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platform}/claude";
                 inherit hash;
               };
-              postPatch = ''
-                cp \${./claude-code-${VERSION}-package-lock.json} package-lock.json
+              dontUnpack = true;
+              installPhase = ''
+                install -Dm755 $src $out/bin/claude
               '';
-              npmDeps = prev.fetchNpmDeps {
-                src = prev.fetchurl {
-                  url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-\${version}.tgz";
-                  inherit hash;
-                };
-                postPatch = ''
-                  cp \${./claude-code-${VERSION}-package-lock.json} package-lock.json
-                '';
-                hash = npmDepsHash;
-              };
-            });
+            };
           }
-          EOF
-            echo "Updated perdurabo overlay to ${VERSION}"
-          fi
+          NIXEOF
+          sed -i "s|VERSION_PLACEHOLDER|${VERSION}|g" apple-macbook-air-m2/overlays/claude-code.nix
+          sed -i "s|HASH_PLACEHOLDER|${DARWIN_HASH}|g" apple-macbook-air-m2/overlays/claude-code.nix
 
-      - name: Upload updated repo
-        if: steps.targets.outputs.needed == 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: updated-repo
-          path: |
-            apple-macbook-air-m2/overlays/
-            framework-desktop/overlays/
-
-  build-theophany:
-    needs: prepare
-    if: needs.prepare.outputs.needed == 'true' && needs.prepare.outputs.update_theophany == 'true'
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: unstable
-
-      - name: Download updated overlays
-        uses: actions/download-artifact@v8
-        with:
-          name: updated-repo
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
-        with:
-          source-tag: "v3.12.1"
-          extra-conf: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
-      - name: Stage files for Nix flake visibility
+      - name: Create branch, commit, and PR
+        if: steps.version.outputs.needed == 'true' && steps.check-pr.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add -N apple-macbook-air-m2/overlays/claude-code*.nix apple-macbook-air-m2/overlays/claude-code-*-package-lock.json 2>/dev/null || true
+          VERSION="${{ steps.version.outputs.target }}"
+          BRANCH="update-claude-code-${VERSION}"
 
-      - name: Build theophany configuration
-        run: |
-          cd apple-macbook-air-m2
-          nix build .#darwinConfigurations.theophany.system \
-            --accept-flake-config \
-            --show-trace \
-            --max-jobs 2
-
-      - name: Verify theophany claude-code version
-        run: |
-          VERSION="${{ needs.prepare.outputs.target }}"
-          cd apple-macbook-air-m2
-
-          INSTALLED_VERSION=$(nix run .#darwinConfigurations.theophany.pkgs.claude-code --accept-flake-config -- --version 2>/dev/null | head -1)
-          echo "Installed version: ${INSTALLED_VERSION}"
-          echo "Expected version: ${VERSION}"
-
-          if [[ "${INSTALLED_VERSION}" != *"${VERSION}"* ]]; then
-            echo "ERROR: Version mismatch! Expected ${VERSION} but got ${INSTALLED_VERSION}"
-            exit 1
-          fi
-          echo "Version verified successfully for theophany"
-
-  build-perdurabo:
-    needs: prepare
-    if: needs.prepare.outputs.needed == 'true' && needs.prepare.outputs.update_perdurabo == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Maximize disk space for Nix
-        uses: wimpysworld/nothing-but-nix@main
-
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: unstable
-
-      - name: Download updated overlays
-        uses: actions/download-artifact@v8
-        with:
-          name: updated-repo
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
-        with:
-          source-tag: "v3.12.1"
-          extra-conf: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
-      - name: Stage files for Nix flake visibility
-        run: |
-          git add -N framework-desktop/overlays/claude-code*.nix framework-desktop/overlays/claude-code-*-package-lock.json 2>/dev/null || true
-
-      - name: Build perdurabo configuration
-        run: |
-          cd framework-desktop
-          nix build .#nixosConfigurations.perdurabo.config.system.build.toplevel \
-            --accept-flake-config \
-            --show-trace \
-            --max-jobs 2
-
-      - name: Verify perdurabo claude-code version
-        run: |
-          VERSION="${{ needs.prepare.outputs.target }}"
-          cd framework-desktop
-
-          # Build claude-code and get the store path
-          STORE_PATH=$(nix build .#nixosConfigurations.perdurabo.pkgs.claude-code --accept-flake-config --no-link --print-out-paths)
-          echo "Store path: ${STORE_PATH}"
-
-          # Check if the binary exists and get version
-          if [ -x "${STORE_PATH}/bin/claude" ]; then
-            INSTALLED_VERSION=$("${STORE_PATH}/bin/claude" --version 2>&1 | head -1)
-          else
-            echo "ERROR: claude binary not found at ${STORE_PATH}/bin/claude"
-            ls -la "${STORE_PATH}/bin/" || true
-            exit 1
-          fi
-
-          echo "Installed version: ${INSTALLED_VERSION}"
-          echo "Expected version: ${VERSION}"
-
-          if [[ "${INSTALLED_VERSION}" != *"${VERSION}"* ]]; then
-            echo "ERROR: Version mismatch! Expected ${VERSION} but got ${INSTALLED_VERSION}"
-            exit 1
-          fi
-          echo "Version verified successfully for perdurabo"
-
-  finalize:
-    needs: [prepare, build-theophany, build-perdurabo]
-    if: |
-      always() &&
-      needs.prepare.outputs.needed == 'true' &&
-      (needs.build-theophany.result == 'success' || needs.build-theophany.result == 'skipped') &&
-      (needs.build-perdurabo.result == 'success' || needs.build-perdurabo.result == 'skipped') &&
-      !(needs.build-theophany.result == 'skipped' && needs.build-perdurabo.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: unstable
-
-      - name: Download updated overlays
-        uses: actions/download-artifact@v8
-        with:
-          name: updated-repo
-
-      - name: Create branch and commit
-        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "${{ needs.prepare.outputs.branch }}"
-          git add apple-macbook-air-m2/overlays/ framework-desktop/overlays/
-          git commit -m "Update Claude Code to ${{ needs.prepare.outputs.target }}"
-          git push origin "${{ needs.prepare.outputs.branch }}"
 
-      - name: Create Pull Request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TARGETS=""
-          if [ "${{ needs.prepare.outputs.update_theophany }}" == "true" ]; then
-            TARGETS="theophany"
-          fi
-          if [ "${{ needs.prepare.outputs.update_perdurabo }}" == "true" ]; then
-            if [ -n "$TARGETS" ]; then
-              TARGETS="${TARGETS} and perdurabo"
-            else
-              TARGETS="perdurabo"
-            fi
+          git fetch origin
+          if git ls-remote --heads origin "${BRANCH}" | grep -q "${BRANCH}"; then
+            git push origin --delete "${BRANCH}" || true
           fi
 
-          PR_URL=$(gh pr create \
-            --title "Update Claude Code to ${{ needs.prepare.outputs.target }}" \
-            --body "Automated update of Claude Code overlay to version ${{ needs.prepare.outputs.target }}.
+          git checkout -b "${BRANCH}"
+          git add framework-desktop/overlays/claude-code.nix apple-macbook-air-m2/overlays/claude-code.nix
+          git commit -m "Update Claude Code to ${VERSION}"
+          git push origin "${BRANCH}"
+
+          gh pr create \
+            --title "Update Claude Code to ${VERSION}" \
+            --body "$(cat <<EOF
+          Automated update of Claude Code to ${VERSION} using native binary distribution.
 
           ## Changes
-          - Updated Claude Code overlay for ${TARGETS}
-          - Source hash: \`${{ needs.prepare.outputs.src_hash }}\`
-          - NPM deps hash: \`${{ needs.prepare.outputs.npm_deps_hash }}\`
+          - Updated overlay for perdurabo (linux-x64)
+          - Updated overlay for theophany (darwin-arm64)
 
           ## Previous Versions
-          - theophany: ${{ needs.prepare.outputs.theophany_current }}
-          - perdurabo: ${{ needs.prepare.outputs.perdurabo_current }}
-
-          ## npm Package
-          https://www.npmjs.com/package/@anthropic-ai/claude-code/v/${{ needs.prepare.outputs.target }}
+          - perdurabo: ${{ steps.version.outputs.perdurabo_current }}
+          - theophany: ${{ steps.version.outputs.theophany_current }}
 
           ---
-          This PR was automatically created by the [update-claude-code workflow](https://github.com/${{ github.repository }}/blob/unstable/.github/workflows/update-claude-code.yml)." \
+          This PR was automatically created by the [update-claude-code workflow](https://github.com/${{ github.repository }}/blob/unstable/.github/workflows/update-claude-code.yml).
+          EOF
+          )" \
             --base unstable \
-            --head "${{ needs.prepare.outputs.branch }}" \
+            --head "${BRANCH}" \
             --label "dependencies" \
             --label "automated" \
-            --assignee jasonodoom)
+            --assignee jasonodoom
 
-          echo "Created PR: ${PR_URL}"
-
-      - name: Summary
-        run: |
-          echo "## Claude Code Update Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Latest Version | ${{ needs.prepare.outputs.latest }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Target Version | ${{ needs.prepare.outputs.target }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| theophany Current | ${{ needs.prepare.outputs.theophany_current }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| perdurabo Current | ${{ needs.prepare.outputs.perdurabo_current }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Update theophany | ${{ needs.prepare.outputs.update_theophany }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Update perdurabo | ${{ needs.prepare.outputs.update_perdurabo }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Verification" >> $GITHUB_STEP_SUMMARY
-          echo "Build and version verification passed for all updated targets." >> $GITHUB_STEP_SUMMARY
-
-  on-failure:
-    needs: [prepare, build-theophany, build-perdurabo, finalize]
-    if: |
-      always() &&
-      (needs.prepare.result == 'failure' || needs.build-theophany.result == 'failure' || needs.build-perdurabo.result == 'failure' || needs.finalize.result == 'failure')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Create issue on failure
+      - name: Notify on failure
+        if: failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue create \
-            --title "Claude Code update workflow failed" \
-            --body "The automated Claude Code update workflow failed.
+          EXISTING=$(gh issue list --state open --label "bug" --label "automated" --search "Claude Code update workflow failed" --json number -q '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "Still failing.
 
           **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          **Target Version:** ${{ needs.prepare.outputs.target }}
-          **Triggered by:** ${{ github.event_name }}
+          **Target:** ${{ steps.version.outputs.target }}"
+          else
+            gh issue create \
+              --title "Claude Code update workflow failed" \
+              --body "The automated Claude Code update workflow failed.
 
-          **Job Results:**
-          - prepare: ${{ needs.prepare.result }}
-          - build-theophany: ${{ needs.build-theophany.result }}
-          - build-perdurabo: ${{ needs.build-perdurabo.result }}
-          - finalize: ${{ needs.finalize.result }}
+          **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          **Target:** ${{ steps.version.outputs.target }}
 
           Please check the workflow logs for details." \
-            --label "bug" \
-            --label "automated" \
-            --assignee jasonodoom
+              --label "bug" \
+              --label "automated" \
+              --assignee jasonodoom
+          fi

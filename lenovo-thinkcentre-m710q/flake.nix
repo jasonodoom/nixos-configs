@@ -22,16 +22,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    tailscale = {
-      url = "github:tailscale/tailscale/v1.94.2";
-    };
-
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
 
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, determinate, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -87,8 +83,6 @@
   {
     # Overlays for custom packages
     overlays.default = final: prev: {
-      # Use Tailscale from GitHub flake since Unstable does not have latest
-      tailscale = tailscale.packages.${final.stdenv.hostPlatform.system}.default;
     };
 
     # NixOS configurations
