@@ -79,7 +79,7 @@ jobs:
 
       - name: Install Nix
         if: steps.check-commits.outputs.needs_pr == 'true' && steps.check-pr.outputs.pr_exists == '0'
-        uses: DeterminateSystems/nix-installer-action@v21
+        uses: DeterminateSystems/nix-installer-action@v22
         with:
           source-tag: "v3.12.1"
           extra-conf: |
