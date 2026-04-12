@@ -1,28 +1,23 @@
-# Claude Code overlay - pinned to 2.1.80
+# Claude Code overlay - native binary from Anthropic
+# Updated automatically by .github/workflows/update-claude-code.yml
 let
-  version = "2.1.80";
-  hash = "sha256-AoufUosfpysMmHa+/O8pBanTt8cLlsUlw6eO0vXQLFA=";
-  npmDepsHash = "sha256-PxQh0bXPRotAzPxOuNZHrtxmHw89e0rlnRN/zdMhIEA=";
+  version = "2.1.104";
+  platform = "linux-x64";
+  hash = "sha256-9f6E1LiloyK4OormOsEXrbFD0qmgv9c6IBpSAdZCOGk=";
 in
 final: prev: {
-  claude-code = prev.claude-code.overrideAttrs (oldAttrs: {
+  claude-code = final.stdenv.mkDerivation {
+    pname = "claude-code";
     inherit version;
-    src = prev.fetchurl {
-      url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
+    src = final.fetchurl {
+      url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platform}/claude";
       inherit hash;
     };
-    postPatch = ''
-      cp ${./claude-code-2.1.80-package-lock.json} package-lock.json
+    dontUnpack = true;
+    nativeBuildInputs = [ final.autoPatchelfHook ];
+    buildInputs = [ final.stdenv.cc.cc.lib ];
+    installPhase = ''
+      install -Dm755 $src $out/bin/claude
     '';
-    npmDeps = prev.fetchNpmDeps {
-      src = prev.fetchurl {
-        url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-        inherit hash;
-      };
-      postPatch = ''
-        cp ${./claude-code-2.1.80-package-lock.json} package-lock.json
-      '';
-      hash = npmDepsHash;
-    };
-  });
+  };
 }
