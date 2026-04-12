@@ -69,6 +69,23 @@ user_pref("extensions.formautofill.creditCards.enabled", false);
 
 // Always ask where to save files
 user_pref("browser.download.useDownloadDir", false);
+
+// HTTPS-Only Mode
+user_pref("dom.security.https_only_mode", true);
+user_pref("dom.security.https_only_mode_ever_enabled", true);
+
+// Resist fingerprinting
+user_pref("privacy.resistFingerprinting", true);
+
+// Disable WebGL
+user_pref("webgl.disabled", true);
+
+// Cookie isolation and network state partitioning
+user_pref("network.cookie.cookieBehavior", 5);
+user_pref("privacy.partition.network_state", true);
+
+// Disable offline cache
+user_pref("browser.cache.offline.enable", false);
 EOF
 
         chmod 644 "$PROFILE/user.js"
