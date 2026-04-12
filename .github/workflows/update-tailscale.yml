@@ -223,15 +223,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TAILSCALE_UPDATE_TOKEN }}
         run: |
-          gh issue create \
-            --title "[FAIL] Tailscale update workflow failed" \
-            --body "The automated Tailscale update workflow failed.
+          # Check if an open failure issue already exists
+          EXISTING=$(gh issue list --state open --label "bug" --label "automated" --search "[FAIL] Tailscale update workflow failed" --json number -q '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "Issue #${EXISTING} already open, adding comment instead"
+            gh issue comment "$EXISTING" --body "Still failing.
+
+          **Workflow run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          **Attempted version:** ${{ steps.tailscale-release.outputs.version }}
+          **Current version:** ${{ steps.current-version.outputs.version }}"
+          else
+            gh issue create \
+              --title "[FAIL] Tailscale update workflow failed" \
+              --body "The automated Tailscale update workflow failed.
 
           **Workflow run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           **Attempted version:** ${{ steps.tailscale-release.outputs.version }}
           **Current version:** ${{ steps.current-version.outputs.version }}
 
           Please investigate the failure and update manually if needed." \
-            --assignee jasonodoom \
-            --label "bug" \
-            --label "automated"
+              --assignee jasonodoom \
+              --label "bug" \
+              --label "automated"
+          fi
