@@ -23,10 +23,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    tailscale = {
-      url = "github:tailscale/tailscale/v1.94.2";
-    };
-
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -38,7 +34,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, tailscale, determinate, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
