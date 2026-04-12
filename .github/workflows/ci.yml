@@ -67,7 +67,7 @@ jobs:
 
     - name: Install Nix with cache configuration (Perdurabo)
       if: matrix.config == 'perdurabo'
-      uses: DeterminateSystems/nix-installer-action@v21
+      uses: DeterminateSystems/nix-installer-action@v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -78,7 +78,7 @@ jobs:
 
     - name: Install Nix with cache configuration (Congo)
       if: matrix.config == 'congo'
-      uses: DeterminateSystems/nix-installer-action@v21
+      uses: DeterminateSystems/nix-installer-action@v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -89,7 +89,7 @@ jobs:
 
     - name: Install Nix with cache configuration (macOS)
       if: matrix.os == 'macos-14'
-      uses: DeterminateSystems/nix-installer-action@v21
+      uses: DeterminateSystems/nix-installer-action@v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -224,7 +224,7 @@ jobs:
       uses: actions/checkout@v6
 
     - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@v21
+      uses: DeterminateSystems/nix-installer-action@v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |

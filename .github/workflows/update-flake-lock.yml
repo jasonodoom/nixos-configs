@@ -37,7 +37,7 @@ jobs:
           token: ${{ secrets.GH_BOT_TOKEN }}
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+        uses: DeterminateSystems/nix-installer-action@v22
 
       - name: Update flake lock for ${{ matrix.flake }}
         if: github.event.inputs.flake == 'all' || github.event.inputs.flake == matrix.flake || github.event.inputs.flake == ''
