@@ -40,13 +40,12 @@
   # Register Nix bash as a valid login shell
   environment.shells = [ pkgs.bashInteractive ];
 
-  # Set bash as default shell
-  system.activationScripts.set-default-shell.text = ''
+  # Set bash as default shell and write starship config
+  system.activationScripts.postActivation.text = ''
+    # Set default shell to Nix bash
     dscl . -create /Users/${config.system.primaryUser} UserShell "/run/current-system/sw/bin/bash"
-  '';
 
-  # Starship configuration
-  system.activationScripts.starship-config.text = ''
+    # Write starship configuration
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.config"
     cat > "$USER_HOME/.config/starship.toml" << 'STARSHIP_EOF'

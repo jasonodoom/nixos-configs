@@ -23,7 +23,7 @@
   ];
 
   # Starship configuration
-  system.activationScripts.starship-config.text = ''
+  system.activationScripts.postActivation.text = ''
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.config"
     cat > "$USER_HOME/.config/starship.toml" << 'STARSHIP_EOF'
