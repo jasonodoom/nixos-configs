@@ -85,18 +85,18 @@
       USERS=$(w -h | cut -d ' ' -f1 | sort | uniq | tr '\n' ' ')
       UPTIME=$(uptime | sed 's/.*up /up /')
 
-      # Travel mode status
-      if [[ "$(/usr/bin/defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState 2>/dev/null)" == "0" ]]; then
-        TRAVEL="\033[1;33mON\033[0m"
-      else
-        TRAVEL="off"
-      fi
-
       echo -e "\n\033[1;31m$CACHED_HOSTNAME\033[0m | $(date '+%Y-%m-%d %H:%M:%S') | $UPTIME"
-      echo -e "\033[1;31mUsers:\033[0m $USERS | \033[1;31mDisk:\033[0m $DISK | \033[1;31mTravel:\033[0m $TRAVEL\n"
+      echo -e "\033[1;31mUsers:\033[0m $USERS | \033[1;31mDisk:\033[0m $DISK\n"
 
       vocab 2>/dev/null || true
       echo
+    fi
+
+    # Travel mode status - always show
+    if [[ "$(/usr/bin/defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState 2>/dev/null)" == "0" ]]; then
+      echo -e "\033[1;31mTravel:\033[0m \033[1;33mON\033[0m"
+    else
+      echo -e "\033[1;31mTravel:\033[0m off"
     fi
   '';
 }
