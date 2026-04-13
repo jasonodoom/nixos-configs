@@ -1,33 +1,56 @@
-# Main Zsh Configuration
+# Main Bash Configuration
 { config, pkgs, lib, ... }:
 
 {
   imports = [
     ./profile.nix
     ./aliases.nix
+    ./functions.nix
     ./vocab.nix
   ];
 
-  programs.zsh = {
+  programs.bash = {
     enable = true;
-    enableCompletion = true;
-
+    completion.enable = true;
     interactiveShellInit = ''
-      # Initialize starship prompt
-      eval "$(${pkgs.starship}/bin/starship init zsh)"
+      eval "$(${pkgs.starship}/bin/starship init bash)"
     '';
   };
 
+  # Readline configuration
+  environment.etc."inputrc".text = ''
+    "\e[A": history-search-backward
+    "\e[B": history-search-forward
+    "\e[C": forward-char
+    "\e[D": backward-char
+    set input-meta on
+    set output-meta on
+    set convert-meta off
+    set show-all-if-ambiguous on
+    set completion-ignore-case on
+    set mark-symlinked-directories on
+    set visible-stats on
+  '';
+
   environment.systemPackages = with pkgs; [
     starship
+    bashInteractive
   ];
+
+  # Set bash as default shell
+  system.activationScripts.set-default-shell.text = ''
+    NIX_BASH="/run/current-system/sw/bin/bash"
+    if ! grep -q "$NIX_BASH" /etc/shells 2>/dev/null; then
+      echo "$NIX_BASH" >> /etc/shells
+    fi
+    dscl . -create /Users/${config.system.primaryUser} UserShell "$NIX_BASH"
+  '';
 
   # Starship configuration
   system.activationScripts.starship-config.text = ''
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.config"
     cat > "$USER_HOME/.config/starship.toml" << 'STARSHIP_EOF'
-# Minimal prompt inspired by robbyrussell
 format = """$directory$git_branch$git_status$character"""
 
 [character]

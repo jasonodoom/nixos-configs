@@ -48,8 +48,10 @@
           ./modules/security/gpg.nix
           ./modules/security/keys.nix
           ./modules/security/secrets.nix
+          ./modules/security/defaults.nix
+          ./modules/security/travel-hardening.nix
           # Shell
-          ./modules/shell/zsh/zsh.nix
+          ./modules/shell/bash/bash.nix
           ./modules/shell/screen.nix
           ./modules/shell/tmux.nix
           # Apps & System

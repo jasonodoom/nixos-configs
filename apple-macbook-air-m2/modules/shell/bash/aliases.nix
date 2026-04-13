@@ -1,12 +1,13 @@
-# Zsh Aliases Configuration (from your .bashrcd/.aliases)
+# Bash Aliases Configuration
 { config, pkgs, lib, ... }:
 
 {
-  programs.zsh.interactiveShellInit = ''
+  programs.bash.interactiveShellInit = ''
     # Core commands
     alias nano='vim'
     alias vi='vim'
     alias ll='ls -ltra'
+    alias la='ls -la'
     alias weather='curl wttr.in'
     alias password='openssl rand -base64 32'
     alias killgpg='gpgconf --kill all && gpg-agent --daemon'
@@ -39,15 +40,13 @@
     # Shortcuts
     alias k='kubectl'
 
-    # Nix shortcuts (noglob prevents zsh from treating # as glob pattern)
+    # Nix
     alias ncg='nix-collect-garbage -d'
     alias dgo='nix-env --delete-generations old'
     alias gcn='nix-collect-garbage --delete-older-than 1s'
     alias nix_clean='nix-collect-garbage --delete-older-than 1s && nix-collect-garbage -d'
-    alias drs='noglob sudo darwin-rebuild switch --flake git+ssh://github-deploy.com/jasonodoom/nixos-configs?dir=apple-macbook-air-m2#theophany'
-    alias drsl='noglob sudo darwin-rebuild switch --flake .#theophany'
-    alias nix='noglob nix'
-    alias darwin-rebuild='noglob darwin-rebuild'
+    alias drs='sudo darwin-rebuild switch --flake "git+ssh://github-deploy.com/jasonodoom/nixos-configs?dir=apple-macbook-air-m2#theophany"'
+    alias drsl='sudo darwin-rebuild switch --flake ".#theophany"'
 
     # Tailscale
     alias tailscale='/Applications/Tailscale.app/Contents/MacOS/Tailscale'
