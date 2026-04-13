@@ -73,6 +73,9 @@ shell-integration-features = cursor,sudo,title
 # Scrollback
 scrollback-limit = 2000
 
+# Launch bash as login shell
+command = /run/current-system/sw/bin/bash -l
+
 # Keybindings
 keybind = shift+enter=text:\x1b\r
 GHOSTTY_EOF
