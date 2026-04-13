@@ -51,7 +51,7 @@
           ./modules/security/defaults.nix
           ./modules/security/travel-hardening.nix
           # Shell
-          ./modules/shell/zsh/zsh.nix
+          ./modules/shell/bash/bash.nix
           ./modules/shell/screen.nix
           ./modules/shell/tmux.nix
           # Apps & System
