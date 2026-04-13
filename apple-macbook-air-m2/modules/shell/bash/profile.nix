@@ -22,6 +22,9 @@
     export HISTSIZE=10000
     export HISTTIMEFORMAT='%Y-%m-%d %H:%M:%S '
 
+    # Suppress macOS default shell warning
+    export BASH_SILENCE_DEPRECATION_WARNING=1
+
     # Environment variables
     export EDITOR='vim'
     export PAGER='less'
@@ -38,6 +41,12 @@
     export MACHINE=$(uname -s)
     export HOST=$(uname -n)
     export PLATFORM=$(uname -p)
+
+    # Add local bin to PATH
+    export PATH="$PATH:$HOME/bin"
+
+    # Rancher Desktop
+    export PATH="/Users/jason/.rd/bin:$PATH"
 
     # Prevent programs from opening dialogues for password
     unset SSH_ASKPASS
