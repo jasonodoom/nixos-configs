@@ -78,7 +78,6 @@
           container
           direnv
           nix-direnv
-          vscode
           maccy
           rectangle
           ripgrep
