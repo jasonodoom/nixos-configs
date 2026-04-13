@@ -36,6 +36,7 @@
       "zoom"
 
       # Development
+      "visual-studio-code"
       "iterm2"
       "github"
       "virtualbox"

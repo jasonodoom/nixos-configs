@@ -37,17 +37,15 @@
     bashInteractive
   ];
 
-  # Set bash as default shell
-  system.activationScripts.set-default-shell.text = ''
-    NIX_BASH="/run/current-system/sw/bin/bash"
-    if ! grep -q "$NIX_BASH" /etc/shells 2>/dev/null; then
-      echo "$NIX_BASH" >> /etc/shells
-    fi
-    dscl . -create /Users/${config.system.primaryUser} UserShell "$NIX_BASH"
-  '';
+  # Register Nix bash as a valid login shell
+  environment.shells = [ pkgs.bashInteractive ];
 
-  # Starship configuration
-  system.activationScripts.starship-config.text = ''
+  # Set bash as default shell and write starship config
+  system.activationScripts.postActivation.text = ''
+    # Set default shell to Nix bash
+    dscl . -create /Users/${config.system.primaryUser} UserShell "/run/current-system/sw/bin/bash"
+
+    # Write starship configuration
     USER_HOME="/Users/${config.system.primaryUser}"
     mkdir -p "$USER_HOME/.config"
     cat > "$USER_HOME/.config/starship.toml" << 'STARSHIP_EOF'

@@ -78,7 +78,6 @@
           container
           direnv
           nix-direnv
-          vscode
           maccy
           rectangle
           ripgrep
@@ -102,7 +101,7 @@
           shfmt
           shellcheck
           tmux
-          nixfmt-rfc-style
+          nixfmt
           nixpkgs-review
           wrangler
           nodejs_22
