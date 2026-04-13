@@ -101,7 +101,7 @@
           shfmt
           shellcheck
           tmux
-          nixfmt-rfc-style
+          nixfmt
           nixpkgs-review
           wrangler
           nodejs_22
