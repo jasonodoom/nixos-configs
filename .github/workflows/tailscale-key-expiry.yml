@@ -75,7 +75,7 @@ jobs:
 
       - name: Create reminder issue
         if: steps.check.outputs.warning == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const daysLeft = ${{ steps.check.outputs.days_left }};
