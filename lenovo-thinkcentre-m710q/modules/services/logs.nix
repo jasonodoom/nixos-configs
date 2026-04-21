@@ -5,8 +5,6 @@ let
   # Logs service configuration variables
   lokiHttpPort = 3100;
   lokiGrpcPort = 9096;
-  promtailHttpPort = 3031;
-  promtailGrpcPort = 3032;
   dashboardPort = 8080;
   hostname = "congo";
   retentionDays = 31;
@@ -151,171 +149,9 @@ in
     };
   };
 
-  # Promtail for log collection
-  services.promtail = {
-    enable = true;
-    configuration = {
-      server = {
-        http_listen_port = promtailHttpPort;
-        grpc_listen_port = promtailGrpcPort;
-      };
-
-      positions = {
-        filename = "/tmp/positions.yaml";
-      };
-
-      clients = [
-        {
-          url = "http://localhost:${toString lokiHttpPort}/loki/api/v1/push";
-        }
-      ];
-
-      scrape_configs = [
-        # System logs
-        {
-          job_name = "journal";
-          journal = {
-            max_age = "12h";
-            labels = {
-              job = "systemd-journal";
-              host = hostname;
-            };
-          };
-          relabel_configs = [
-            {
-              source_labels = ["__journal__systemd_unit"];
-              target_label = "unit";
-            }
-          ];
-        }
-
-        # Pi-hole DNS query logs
-        {
-          job_name = "pihole-queries";
-          static_configs = [
-            {
-              targets = ["localhost"];
-              labels = {
-                job = "pihole-queries";
-                host = hostname;
-                service = "pihole";
-                __path__ = "/var/log/pihole-queries.log";
-              };
-            }
-          ];
-          pipeline_stages = [
-            {
-              match = {
-                selector = ''{job="pihole-queries"}'';
-                stages = [
-                  {
-                    regex = {
-                      expression = "^(?P<timestamp>\\S+ \\S+) (?P<type>\\w+)\\[\\d+\\]: (?P<client>\\S+) (?P<query>\\S+) (?P<result>.*)$";
-                    };
-                  }
-                  {
-                    labels = {
-                      query_type = "type";
-                      client_ip = "client";
-                      domain = "query";
-                    };
-                  }
-                ];
-              };
-            }
-          ];
-        }
-
-        # Fail2ban logs
-        {
-          job_name = "fail2ban";
-          static_configs = [
-            {
-              targets = ["localhost"];
-              labels = {
-                job = "fail2ban";
-                host = hostname;
-                service = "fail2ban";
-                __path__ = "/var/log/fail2ban.log";
-              };
-            }
-          ];
-          pipeline_stages = [
-            {
-              match = {
-                selector = ''{job="fail2ban"}'';
-                stages = [
-                  {
-                    regex = {
-                      expression = "^(?P<timestamp>\\S+ \\S+ \\S+) (?P<level>\\w+)\\s+\\[(?P<jail>\\w+)\\] (?P<action>\\w+) (?P<ip>\\S+)";
-                    };
-                  }
-                  {
-                    labels = {
-                      level = "level";
-                      jail = "jail";
-                      action = "action";
-                      banned_ip = "ip";
-                    };
-                  }
-                ];
-              };
-            }
-          ];
-        }
-
-        # SSH authentication logs
-        {
-          job_name = "ssh-auth";
-          static_configs = [
-            {
-              targets = ["localhost"];
-              labels = {
-                job = "ssh-auth";
-                host = hostname;
-                service = "sshd";
-                __path__ = "/var/log/auth.log";
-              };
-            }
-          ];
-          pipeline_stages = [
-            {
-              match = {
-                selector = ''{job="ssh-auth"} |~ "sshd"'';
-                stages = [
-                  {
-                    regex = {
-                      expression = "^(?P<timestamp>\\S+ \\d+ \\S+) \\S+ sshd\\[\\d+\\]: (?P<event>.*)";
-                    };
-                  }
-                  {
-                    labels = {
-                      auth_event = "event";
-                    };
-                  }
-                ];
-              };
-            }
-          ];
-        }
-
-        # Container logs
-        {
-          job_name = "containers";
-          static_configs = [
-            {
-              targets = ["localhost"];
-              labels = {
-                job = "containers";
-                host = hostname;
-                __path__ = "/var/log/containers/*.log";
-              };
-            }
-          ];
-        }
-      ];
-    };
-  };
+  # Promtail was removed from nixpkgs (upstream EOL). Log shipping into
+  # Loki is disabled until migrated to grafana-alloy or fluent-bit.
+  # See: https://grafana.com/docs/alloy/latest/set-up/migrate/
 
 # Simple web interface for log viewing using nginx
   services.nginx = {
@@ -368,9 +204,6 @@ in
       notifempty = true;
     };
   };
-
-  # Add promtail user to adm group for log access
-  users.users.promtail.extraGroups = [ "adm" ];
 
   # Systemd service to create log directories
   systemd.tmpfiles.rules = [
