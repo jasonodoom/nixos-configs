@@ -32,4 +32,10 @@ in
   # Tailscale auth key for initrd remote LUKS unlock
   # Expires: 2026-05-31
   "tailscale-initrd-key.age".publicKeys = all;
+
+  # Forgejo actions runner registration token
+  "forgejo-runner-token.age".publicKeys = all;
+
+  # Tailscale auth key for the forgejo-runner microvm
+  "forgejo-runner-tailscale-authkey.age".publicKeys = all;
 }

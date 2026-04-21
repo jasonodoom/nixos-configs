@@ -25,9 +25,13 @@
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
 
     flake-utils.url = "github:numtide/flake-utils";
+
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, flake-utils, llm-agents, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -75,14 +79,19 @@
 
         # Container services
         # ./modules/containers/openbao.nix
-        # ./modules/containers/pihole.nix
+        ./modules/containers/pihole.nix
         # ./modules/containers/homepage.nix
+        ./modules/containers/ai-agents.nix
       ];
     };
   in
   {
     # Overlays for custom packages
     overlays.default = final: prev: {
+      inherit (import ./overlays/claude-code.nix final prev) claude-code;
+      llm-agents = llm-agents.packages.${final.stdenv.hostPlatform.system};
+      codex = llm-agents.packages.${final.stdenv.hostPlatform.system}.codex;
+      gemini-cli = llm-agents.packages.${final.stdenv.hostPlatform.system}.gemini-cli;
     };
 
     # NixOS configurations
@@ -96,6 +105,21 @@
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
     in {
       cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
+
+      initrd-unlock = import ./tests/initrd-unlock-test.nix {
+        inherit pkgs;
+        nixosSystem = self.nixosConfigurations.congo;
+      };
+
+      no-store-secrets = import ./tests/no-store-secrets-test.nix {
+        inherit pkgs;
+        nixosSystem = self.nixosConfigurations.congo;
+      };
+
+      ai-agents = import ./tests/ai-agents-test.nix {
+        inherit pkgs;
+        nixosSystem = self.nixosConfigurations.congo;
+      };
     };
   };
 }
