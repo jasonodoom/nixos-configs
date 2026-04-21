@@ -32,9 +32,14 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+
+    microvm = {
+      url = "github:astro/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, microvm, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -60,6 +65,9 @@
 
         # Agenix for secrets management
         agenix.nixosModules.default
+
+        # MicroVM host support
+        microvm.nixosModules.host
 
         # Determinate Nix for enterprise features
         determinate.nixosModules.default
@@ -102,6 +110,7 @@
         ./modules/vscode.nix
         ./modules/services/verify-commits.nix
         ./modules/services/forgejo.nix
+        ./modules/services/forgejo-runner-vm.nix
       ];
     };
   in
@@ -141,6 +150,12 @@
 
         # Fast: guard against secrets leaking into the nix store
         no-store-secrets = import ./tests/no-store-secrets-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
+        # Fast: eval-check the forgejo-runner microvm module shape
+        forgejo-runner-vm = import ./tests/forgejo-runner-vm-test.nix {
           inherit pkgs;
           nixosSystem = self.nixosConfigurations.perdurabo;
         };
