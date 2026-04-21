@@ -37,7 +37,7 @@ in
       time.timeZone = "UTC";
 
       microvm = {
-        hypervisor = "cloud-hypervisor";
+        hypervisor = "qemu";
         vcpu = 4;
         mem = 8192;
         balloon = true;
