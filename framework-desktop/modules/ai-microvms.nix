@@ -53,7 +53,7 @@ let
         balloon = true;
 
         interfaces = [{
-          type = "tap";
+          type = "bridge";
           id = "vm-${name}";
           mac = agent.mac;
           bridge = "virbr-ai";
