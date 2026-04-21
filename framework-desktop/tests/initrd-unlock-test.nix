@@ -58,6 +58,10 @@ let
     { name = "initrd has at least one ethernet driver";
       ok = lib.any (m: lib.elem m initrd.availableKernelModules)
         [ "r8169" "e1000e" "igb" "iwlwifi" ]; }
+
+    { name = "initrd has USB keyboard modules for local unlock";
+      ok = lib.all (m: lib.elem m initrd.availableKernelModules)
+        [ "usbhid" "hid_generic" ]; }
   ];
 
   failed = lib.filter (c: !c.ok) checks;
