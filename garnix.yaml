@@ -5,6 +5,10 @@ flakeDir: framework-desktop
 
 builds:
   include:
-    - "nixosConfigurations.*"
     - "devShells.x86_64-linux.*"
     - "packages.x86_64-linux.*"
+  exclude:
+    # perdurabo's config now evaluates four microvms (forgejo-runner + three
+    # AI agents) and exceeds Garnix's 8 GiB eval cap. GitHub Actions builds
+    # the toplevel without the cap, so coverage is retained there.
+    - "nixosConfigurations.perdurabo"
