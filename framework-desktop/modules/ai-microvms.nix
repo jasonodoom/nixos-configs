@@ -106,6 +106,11 @@ in
 
   networking.firewall.trustedInterfaces = [ "virbr-ai" ];
 
+  # qemu-bridge-helper refuses by default; whitelist the AI bridge.
+  environment.etc."qemu/bridge.conf".text = ''
+    allow virbr-ai
+  '';
+
   microvm.vms = lib.mapAttrs mkAgentVm agents;
 
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
