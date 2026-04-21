@@ -40,7 +40,7 @@ in
         hypervisor = "cloud-hypervisor";
         vcpu = 4;
         mem = 8192;
-        balloonMem = 7500;
+        balloon = true;
 
         interfaces = [{
           type = "user";

@@ -15,12 +15,15 @@ let
   sourceIsStoreSecret = entry:
     let src = entry.source or null; in
     src != null
+    && builtins.isString (toString src)
     && lib.isStorePath (toString src)
     && (lib.hasInfix "age" (toString src) || lib.hasInfix "secret" (toString src));
 
   textHasSecretMarker = entry:
-    let t = entry.text or ""; in
-    t != ""
+    let t = entry.text or null; in
+    t != null
+    && builtins.isString t
+    && t != ""
     && (lib.hasInfix "-----BEGIN AGE ENCRYPTED FILE-----" t
         || lib.hasInfix "-----BEGIN OPENSSH PRIVATE KEY-----" t
         || lib.hasInfix "-----BEGIN RSA PRIVATE KEY-----" t

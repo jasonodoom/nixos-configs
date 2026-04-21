@@ -50,7 +50,7 @@ let
         hypervisor = "cloud-hypervisor";
         vcpu = 2;
         mem = 4096;
-        balloonMem = 3500;
+        balloon = true;
 
         interfaces = [{
           type = "tap";

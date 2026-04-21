@@ -37,6 +37,9 @@ in
 
   config = {
     users.mutableUsers = false;
+    # Guest is only reachable via sshd with the host's pubkey. No interactive
+    # login as root or any other user, so silence the "no password set" assert.
+    users.allowNoPasswordLogin = true;
 
     users.users.agent = {
       isNormalUser = true;
