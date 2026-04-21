@@ -17,6 +17,8 @@
     '';
   };
 
+  users.users.jason.shell = pkgs.bash;
+
   # Readline configuration
   environment.etc."inputrc".text = ''
     "\e[A": history-search-backward
