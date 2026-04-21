@@ -15,8 +15,14 @@ let
   sshUnit = initrd.network.ssh;
   hostName = cfg.networking.hostName;
 
+  storePathStr = p:
+    if builtins.isAttrs p
+    then toString (p.source or p.target or "")
+    else toString p;
+
   hasTailscaleStorePath =
-    lib.any (p: lib.hasInfix "tailscale" (toString p)) initrd.systemd.storePaths;
+    lib.any (p: lib.hasInfix "tailscale" (storePathStr p))
+      initrd.systemd.storePaths;
 
   checks = [
     { name = "initrd systemd enabled";
