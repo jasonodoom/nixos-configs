@@ -47,7 +47,7 @@ let
       };
 
       microvm = {
-        hypervisor = "cloud-hypervisor";
+        hypervisor = "qemu";
         vcpu = 2;
         mem = 4096;
         balloon = true;
