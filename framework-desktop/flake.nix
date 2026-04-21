@@ -111,6 +111,7 @@
         ./modules/services/verify-commits.nix
         ./modules/services/forgejo.nix
         ./modules/services/forgejo-runner-vm.nix
+        ./modules/ai-microvms.nix
       ];
     };
   in
@@ -156,6 +157,12 @@
 
         # Fast: eval-check the forgejo-runner microvm module shape
         forgejo-runner-vm = import ./tests/forgejo-runner-vm-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
+        # Fast: eval-check the AI agent microvms
+        ai-agents = import ./tests/ai-agents-test.nix {
           inherit pkgs;
           nixosSystem = self.nixosConfigurations.perdurabo;
         };
