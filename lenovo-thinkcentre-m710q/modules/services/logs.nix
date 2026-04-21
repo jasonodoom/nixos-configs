@@ -1,15 +1,15 @@
-# Log aggregation with Grafana Loki and Promtail for Congo server
+# Log aggregation with Grafana Loki and Fluent Bit for Congo server
 { config, pkgs, lib, ... }:
 
 let
-  # Logs service configuration variables
   lokiHttpPort = 3100;
   lokiGrpcPort = 9096;
   dashboardPort = 8080;
   hostname = "congo";
   retentionDays = 31;
 
-  # Create the log dashboard HTML directory with index.html
+  lokiUrl = "http://127.0.0.1:${toString lokiHttpPort}/loki/api/v1/push";
+
   logDashboard = pkgs.runCommand "congo-logs-dashboard" {} ''
     mkdir -p $out
     cat > $out/index.html << 'EOF'
@@ -30,7 +30,7 @@ let
     </style>
     <script>
         function queryLogs(job, filter, hours) {
-            const now = Date.now() * 1000000; // nanoseconds
+            const now = Date.now() * 1000000;
             const start = (Date.now() - (hours * 3600000)) * 1000000;
             let query = `{job="` + job + `"}`;
             if (filter) query += `|~"` + filter + `"`;
@@ -72,7 +72,7 @@ EOF
 in
 
 {
-  # Loki for log storage and querying
+  # Loki for log storage and querying.
   services.loki = {
     enable = true;
     configuration = {
@@ -88,9 +88,7 @@ in
         lifecycler = {
           address = "127.0.0.1";
           ring = {
-            kvstore = {
-              store = "inmemory";
-            };
+            kvstore.store = "inmemory";
             replication_factor = 1;
           };
         };
@@ -100,20 +98,13 @@ in
         chunk_retain_period = "30s";
       };
 
-      schema_config = {
-        configs = [
-          {
-            from = "2020-10-24";
-            store = "boltdb-shipper";
-            object_store = "filesystem";
-            schema = "v11";
-            index = {
-              prefix = "index_";
-              period = "24h";
-            };
-          }
-        ];
-      };
+      schema_config.configs = [{
+        from = "2020-10-24";
+        store = "boltdb-shipper";
+        object_store = "filesystem";
+        schema = "v11";
+        index = { prefix = "index_"; period = "24h"; };
+      }];
 
       storage_config = {
         boltdb_shipper = {
@@ -121,9 +112,7 @@ in
           cache_location = "/var/lib/loki/boltdb-shipper-cache";
           cache_ttl = "24h";
         };
-        filesystem = {
-          directory = "/var/lib/loki/chunks";
-        };
+        filesystem.directory = "/var/lib/loki/chunks";
       };
 
       limits_config = {
@@ -140,29 +129,105 @@ in
 
       compactor = {
         working_directory = "/var/lib/loki";
-        compactor_ring = {
-          kvstore = {
-            store = "inmemory";
-          };
-        };
+        compactor_ring.kvstore.store = "inmemory";
       };
     };
   };
 
-  # Promtail was removed from nixpkgs (upstream EOL). Log shipping into
-  # Loki is disabled until migrated to grafana-alloy or fluent-bit.
-  # See: https://grafana.com/docs/alloy/latest/set-up/migrate/
+  # Fluent Bit replaces promtail (which was removed upstream in nixpkgs).
+  # YAML schema per fluent-bit 3.x.
+  services.fluent-bit = {
+    enable = true;
+    settings = {
+      service = {
+        flush = 5;
+        daemon = false;
+        log_level = "info";
+        storage.path = "/var/lib/fluent-bit/";
+      };
 
-# Simple web interface for log viewing using nginx
+      pipeline = {
+        inputs = [
+          {
+            name = "systemd";
+            tag = "journal.*";
+            strip_underscores = "on";
+          }
+          {
+            name = "tail";
+            tag = "pihole.queries";
+            path = "/var/log/pihole-queries.log";
+            read_from_head = true;
+          }
+          {
+            name = "tail";
+            tag = "fail2ban.log";
+            path = "/var/log/fail2ban.log";
+            read_from_head = true;
+          }
+          {
+            name = "tail";
+            tag = "ssh.auth";
+            path = "/var/log/auth.log";
+            read_from_head = true;
+          }
+          {
+            name = "tail";
+            tag = "containers.log";
+            path = "/var/log/containers/*.log";
+            read_from_head = true;
+          }
+        ];
+
+        outputs = [
+          {
+            name = "loki";
+            match = "journal.*";
+            host = "127.0.0.1";
+            port = lokiHttpPort;
+            labels = "job=systemd-journal,host=${hostname}";
+          }
+          {
+            name = "loki";
+            match = "pihole.queries";
+            host = "127.0.0.1";
+            port = lokiHttpPort;
+            labels = "job=pihole-queries,host=${hostname},service=pihole";
+          }
+          {
+            name = "loki";
+            match = "fail2ban.log";
+            host = "127.0.0.1";
+            port = lokiHttpPort;
+            labels = "job=fail2ban,host=${hostname},service=fail2ban";
+          }
+          {
+            name = "loki";
+            match = "ssh.auth";
+            host = "127.0.0.1";
+            port = lokiHttpPort;
+            labels = "job=ssh-auth,host=${hostname},service=sshd";
+          }
+          {
+            name = "loki";
+            match = "containers.log";
+            host = "127.0.0.1";
+            port = lokiHttpPort;
+            labels = "job=containers,host=${hostname}";
+          }
+        ];
+      };
+    };
+  };
+
+  # Simple web interface for log viewing using nginx
   services.nginx = {
     enable = true;
     virtualHosts."logs.congo.local" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = dashboardPort;
-        }
-      ];
+      listen = [{
+        addr = "0.0.0.0";
+        port = dashboardPort;
+      }];
       locations = {
         "/" = {
           return = "301 http://$server_name/logs/";
@@ -182,8 +247,6 @@ in
       };
     };
   };
-
-  # Note: Firewall rules configured in networking.nix
 
   # Log rotation for custom logs
   services.logrotate.settings = {
@@ -205,11 +268,12 @@ in
     };
   };
 
-  # Systemd service to create log directories
+  # Ensure log directories and fluent-bit state dir exist.
   systemd.tmpfiles.rules = [
-    "d /var/lib/loki 0755 loki loki"
-    "d /var/log 0755 root root"
-    "f /var/log/pihole-queries.log 0644 root root"
-    "f /var/log/auth.log 0640 root adm"
+    "d /var/lib/loki        0755 loki loki -"
+    "d /var/lib/fluent-bit  0755 root root -"
+    "d /var/log             0755 root root -"
+    "f /var/log/pihole-queries.log 0644 root root -"
+    "f /var/log/auth.log    0640 root adm  -"
   ];
 }
