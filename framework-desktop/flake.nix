@@ -32,9 +32,14 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+
+    microvm = {
+      url = "github:astro/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, microvm, ... }@inputs:
   let
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
@@ -60,6 +65,9 @@
 
         # Agenix for secrets management
         agenix.nixosModules.default
+
+        # MicroVM host support
+        microvm.nixosModules.host
 
         # Determinate Nix for enterprise features
         determinate.nixosModules.default
@@ -102,6 +110,8 @@
         ./modules/vscode.nix
         ./modules/services/verify-commits.nix
         ./modules/services/forgejo.nix
+        ./modules/services/forgejo-runner-vm.nix
+        ./modules/ai-microvms.nix
       ];
     };
   in
@@ -132,6 +142,30 @@
       checks = pkgs.lib.optionalAttrs (system == "x86_64-linux") {
         # Fast: CLI access (console, SSH, Tailscale)
         cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
+
+        # Fast: initrd LUKS + tailscale wiring assertions (no VM boot)
+        initrd-unlock = import ./tests/initrd-unlock-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
+        # Fast: guard against secrets leaking into the nix store
+        no-store-secrets = import ./tests/no-store-secrets-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
+        # Fast: eval-check the forgejo-runner microvm module shape
+        forgejo-runner-vm = import ./tests/forgejo-runner-vm-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
+        # Fast: eval-check the AI agent microvms
+        ai-agents = import ./tests/ai-agents-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
 
         # Fast: Service-only testing (headless, lightweight)
         desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
