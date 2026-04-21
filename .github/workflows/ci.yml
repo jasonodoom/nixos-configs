@@ -253,14 +253,16 @@ jobs:
       run: |
         echo "Running basic security checks..."
 
-        # Check for private keys (should never be in repo)
-        if grep -r "BEGIN.*PRIVATE KEY" --include="*.nix" .; then
+        # Check for private keys (should never be in repo).
+        # Exclude no-store-secrets-test.nix: it references PEM markers as
+        # literal patterns to guard against this exact class of leak.
+        if grep -r "BEGIN.*PRIVATE KEY" --include="*.nix" --exclude="no-store-secrets-test.nix" .; then
           echo "Found private keys in repository - this is a security risk!"
           exit 1
         fi
 
         # Check for hardcoded passwords or secrets (excluding SSH public keys)
-        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton\|signingkey\|token.*=.*\"token\"\|ssh-ed25519\|ssh-rsa"; then
+        if grep -r -E "(password|secret|key|token)\s*=\s*\"[^\"]+\"" --include="*.nix" --exclude="no-store-secrets-test.nix" . | grep -v "passwordFile\|hashedPassword\|config.age.secrets\|PasswordAuthentication\|showPasswordVisibilityButton\|hidePasswordVisibilityButton\|signingkey\|token.*=.*\"token\"\|ssh-ed25519\|ssh-rsa"; then
           echo "Found potential hardcoded passwords"
           exit 1
         fi
