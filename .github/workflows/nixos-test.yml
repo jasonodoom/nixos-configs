@@ -143,7 +143,9 @@ jobs:
           fi
 
           cd ${{ matrix.host }}
-          if grep -q "Traceback\|FAILED\|RequestedAssertionFailed" system-build-output.log cli-test-output.log desktop-test-output.log 2>/dev/null; then
+          if grep -E "Traceback|FAILED|RequestedAssertionFailed" system-build-output.log cli-test-output.log desktop-test-output.log 2>/dev/null \
+               | grep -vE "warning: error:|retrying" \
+               | grep -q .; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
           fi
@@ -272,7 +274,13 @@ jobs:
           fi
 
           cd ${{ matrix.host }}
-          if grep -q "error:\|failed\|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null; then
+          # Match real failures only. Strip "warning: error: ... retrying"
+          # noise from transient substituter 5xx responses, which always
+          # includes the word "error:" even though the fetch succeeded on
+          # a subsequent attempt.
+          if grep -E "error:|failed|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null \
+               | grep -vE "warning: error:|retrying" \
+               | grep -q .; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
           fi

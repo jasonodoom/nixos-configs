@@ -47,15 +47,16 @@ let
       };
 
       microvm = {
-        hypervisor = "cloud-hypervisor";
+        hypervisor = "qemu";
         vcpu = 2;
         mem = 4096;
         balloon = true;
 
         interfaces = [{
-          type = "tap";
+          type = "bridge";
           id = "vm-${name}";
           mac = agent.mac;
+          bridge = "virbr-ai";
         }];
 
         shares = [
@@ -106,4 +107,6 @@ in
   networking.firewall.trustedInterfaces = [ "virbr-ai" ];
 
   microvm.vms = lib.mapAttrs mkAgentVm agents;
+
+  environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
 }

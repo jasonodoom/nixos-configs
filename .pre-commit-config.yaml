@@ -14,3 +14,12 @@ repos:
         args: ['--maxkb=500']
       - id: check-merge-conflict
       - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: nix-flake-check
+        name: nix flake check (eval-only, per changed host)
+        entry: .githooks/nix-flake-check.sh
+        language: system
+        pass_filenames: false
+        files: '(framework-desktop|lenovo-thinkcentre-m710q|apple-macbook-air-m2|modules)/.*\.(nix|lock)$'
