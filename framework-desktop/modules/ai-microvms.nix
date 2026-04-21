@@ -72,6 +72,12 @@ let
             tag = "agent-code";
             proto = "virtiofs";
           }
+          {
+            source = "${userHomeState}/${name}-sshd";
+            mountPoint = "/var/lib/sshd-hostkeys";
+            tag = "agent-sshd";
+            proto = "virtiofs";
+          }
         ];
       };
 
@@ -92,6 +98,9 @@ in
     "d ${userHomeState}/claude       0750 1000  1000  -"
     "d ${userHomeState}/codex        0750 1000  1000  -"
     "d ${userHomeState}/gemini       0750 1000  1000  -"
+    "d ${userHomeState}/claude-sshd  0700 root  root  -"
+    "d ${userHomeState}/codex-sshd   0700 root  root  -"
+    "d ${userHomeState}/gemini-sshd  0700 root  root  -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];

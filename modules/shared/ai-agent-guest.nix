@@ -73,6 +73,12 @@ in
       listenAddresses = [
         { addr = "0.0.0.0"; port = cfg.sshPort; }
       ];
+      # Persist sshd host keys on a bind-mounted path so they survive
+      # VM/container rebuilds and clients don't see host-key-changed warnings.
+      hostKeys = [
+        { path = "/var/lib/sshd-hostkeys/ssh_host_ed25519_key"; type = "ed25519"; }
+        { path = "/var/lib/sshd-hostkeys/ssh_host_rsa_key"; type = "rsa"; bits = 4096; }
+      ];
     };
 
     networking.firewall.allowedTCPPorts = [ cfg.sshPort ];
