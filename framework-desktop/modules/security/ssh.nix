@@ -64,6 +64,27 @@
       IdentitiesOnly yes
       StrictHostKeyChecking yes
 
+    Host ai-claude
+      HostName 10.0.42.11
+      Port 2201
+      User agent
+      IdentityFile ~/.ssh/perdurabo_id_ed25519
+      StrictHostKeyChecking accept-new
+
+    Host ai-codex
+      HostName 10.0.42.12
+      Port 2202
+      User agent
+      IdentityFile ~/.ssh/perdurabo_id_ed25519
+      StrictHostKeyChecking accept-new
+
+    Host ai-gemini
+      HostName 10.0.42.13
+      Port 2203
+      User agent
+      IdentityFile ~/.ssh/perdurabo_id_ed25519
+      StrictHostKeyChecking accept-new
+
     Host congo
       HostName congo
       User amy

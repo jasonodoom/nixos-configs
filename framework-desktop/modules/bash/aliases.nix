@@ -62,9 +62,9 @@
     "fixssh" = "chmod 700 ~/.ssh && chmod 644 ~/.ssh/authorized_keys && chmod 600 ~/.ssh/*_rsa";
 
     # AI agents in sandboxed microvms
-    "claude" = "ssh -qt agent@10.0.42.11 -p 2201 claude";
-    "codex" = "ssh -qt agent@10.0.42.12 -p 2202 codex";
-    "gemini" = "ssh -qt agent@10.0.42.13 -p 2203 gemini";
+    "claude" = "ssh -qt ai-claude claude";
+    "codex" = "ssh -qt ai-codex codex";
+    "gemini" = "ssh -qt ai-gemini gemini";
 
     # File generation utilities
     "100mb" = "dd if=/dev/zero of=100mb.file bs=100 count=1024000";
