@@ -49,10 +49,12 @@ jobs:
 
           THEOPHANY_CURRENT=$(grep -oP 'version = "\K[^"]+' apple-macbook-air-m2/overlays/claude-code.nix || echo "unknown")
           PERDURABO_CURRENT=$(grep -oP 'version = "\K[^"]+' framework-desktop/overlays/claude-code.nix || echo "unknown")
+          CONGO_CURRENT=$(grep -oP 'version = "\K[^"]+' lenovo-thinkcentre-m710q/overlays/claude-code.nix || echo "unknown")
           echo "theophany_current=${THEOPHANY_CURRENT}" >> $GITHUB_OUTPUT
           echo "perdurabo_current=${PERDURABO_CURRENT}" >> $GITHUB_OUTPUT
+          echo "congo_current=${CONGO_CURRENT}" >> $GITHUB_OUTPUT
 
-          if [ "$THEOPHANY_CURRENT" = "$TARGET" ] && [ "$PERDURABO_CURRENT" = "$TARGET" ]; then
+          if [ "$THEOPHANY_CURRENT" = "$TARGET" ] && [ "$PERDURABO_CURRENT" = "$TARGET" ] && [ "$CONGO_CURRENT" = "$TARGET" ]; then
             echo "needed=false" >> $GITHUB_OUTPUT
             echo "Already on version ${TARGET}"
           else
@@ -128,6 +130,35 @@ jobs:
           sed -i "s|VERSION_PLACEHOLDER|${VERSION}|g" framework-desktop/overlays/claude-code.nix
           sed -i "s|HASH_PLACEHOLDER|${LINUX_HASH}|g" framework-desktop/overlays/claude-code.nix
 
+          mkdir -p lenovo-thinkcentre-m710q/overlays
+          cat > lenovo-thinkcentre-m710q/overlays/claude-code.nix << 'NIXEOF'
+          # Claude Code overlay - native binary from Anthropic
+          # Updated automatically by .github/workflows/update-claude-code.yml
+          let
+            version = "VERSION_PLACEHOLDER";
+            platform = "linux-x64";
+            hash = "HASH_PLACEHOLDER";
+          in
+          final: prev: {
+            claude-code = final.stdenv.mkDerivation {
+              pname = "claude-code";
+              inherit version;
+              src = final.fetchurl {
+                url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${version}/${platform}/claude";
+                inherit hash;
+              };
+              dontUnpack = true;
+              nativeBuildInputs = [ final.autoPatchelfHook ];
+              buildInputs = [ final.stdenv.cc.cc.lib ];
+              installPhase = ''
+                install -Dm755 $src $out/bin/claude
+              '';
+            };
+          }
+          NIXEOF
+          sed -i "s|VERSION_PLACEHOLDER|${VERSION}|g" lenovo-thinkcentre-m710q/overlays/claude-code.nix
+          sed -i "s|HASH_PLACEHOLDER|${LINUX_HASH}|g" lenovo-thinkcentre-m710q/overlays/claude-code.nix
+
           cat > apple-macbook-air-m2/overlays/claude-code.nix << 'NIXEOF'
           # Claude Code overlay - native binary from Anthropic
           # Updated automatically by .github/workflows/update-claude-code.yml
@@ -171,7 +202,7 @@ jobs:
           fi
 
           git checkout -b "${BRANCH}"
-          git add framework-desktop/overlays/claude-code.nix apple-macbook-air-m2/overlays/claude-code.nix
+          git add framework-desktop/overlays/claude-code.nix apple-macbook-air-m2/overlays/claude-code.nix lenovo-thinkcentre-m710q/overlays/claude-code.nix
           git commit -m "Update Claude Code to ${VERSION}"
           git push origin "${BRANCH}"
 

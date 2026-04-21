@@ -15,3 +15,59 @@ updates:
     reviewers:
       - "jasonodoom"
     open-pull-requests-limit: 5
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    target-branch: "unstable"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "18:00"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "jasonodoom"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "nix"
+    directory: "/framework-desktop"
+    target-branch: "unstable"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "18:00"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "jasonodoom"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "nix"
+    directory: "/lenovo-thinkcentre-m710q"
+    target-branch: "unstable"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "18:00"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "jasonodoom"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "nix"
+    directory: "/apple-macbook-air-m2"
+    target-branch: "unstable"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "18:00"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "jasonodoom"
+    open-pull-requests-limit: 5

@@ -1,0 +1,20 @@
+title = "nixos-configs gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths and patterns that legitimately contain high-entropy strings"
+
+paths = [
+  '''.*\.age$''',
+  '''.*/secrets\.nix$''',
+  '''.*/flake\.lock$''',
+  '''.*/tests/no-store-secrets-test\.nix$''',
+]
+
+regexes = [
+  '''ssh-(ed25519|rsa|ecdsa|dss) [A-Za-z0-9+/=]+ [^\n]*''',
+  '''-----BEGIN AGE ENCRYPTED FILE-----''',
+  '''tskey-auth-YOUR-KEY-HERE''',
+]

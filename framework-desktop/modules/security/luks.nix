@@ -182,7 +182,7 @@ EOF
       # Network
       "r8169" "e1000e" "igb" "tun"
       # Keyboard/Console for local LUKS unlock
-      "atkbd" "i8042"
+      "atkbd" "i8042" "usbhid" "hid_generic"
     ];
 
     # Force LUKS support in initrd
