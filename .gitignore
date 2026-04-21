@@ -6,3 +6,26 @@ framework-desktop/secrets/*
 lenovo-thinkcentre-m710q/secrets/*
 !lenovo-thinkcentre-m710q/secrets/secrets.nix
 !lenovo-thinkcentre-m710q/secrets/*.age
+
+# macOS
+.DS_Store
+
+# Nix build outputs
+result
+result-*
+**/result
+**/result-*
+
+# Logs
+*.log
+log.txt
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local ad-hoc scripts not meant for the repo
+**/run-test.sh
+**/run-tests.sh

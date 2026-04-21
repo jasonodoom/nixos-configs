@@ -17,6 +17,11 @@
     # Container management
     "containers" = "systemctl list-units 'container@*'";
 
+    # AI agents in sandboxed nspawn containers
+    "claude" = "ssh -qt agent@10.0.43.2 -p 2201 claude";
+    "codex" = "ssh -qt agent@10.0.43.6 -p 2202 codex";
+    "gemini" = "ssh -qt agent@10.0.43.10 -p 2203 gemini";
+
     # Container health checks (via HTTP)
     "check-openbao" = "curl -s http://localhost:8200/v1/sys/health";
     "check-pihole" = "curl -s http://localhost:8053";

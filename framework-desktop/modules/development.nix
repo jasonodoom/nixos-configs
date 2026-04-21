@@ -9,10 +9,8 @@
 
   # Development packages
   environment.systemPackages = with pkgs; [
-    # AI assistants
-    claude-code
-    llm-agents.gemini-cli
-    llm-agents.codex
+    # AI assistants run in sandboxed microvms (see modules/ai-microvms.nix),
+    # reached from the host via bash aliases in modules/bash/aliases.nix.
 
     # Version control (git configuration now in git.nix)
     git-interactive-rebase-tool
