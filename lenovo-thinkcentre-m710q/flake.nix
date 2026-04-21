@@ -79,7 +79,7 @@
 
         # Container services
         # ./modules/containers/openbao.nix
-        # ./modules/containers/pihole.nix
+        ./modules/containers/pihole.nix
         # ./modules/containers/homepage.nix
         ./modules/containers/ai-agents.nix
       ];
