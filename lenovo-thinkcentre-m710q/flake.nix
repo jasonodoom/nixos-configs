@@ -101,6 +101,11 @@
         inherit pkgs;
         nixosSystem = self.nixosConfigurations.congo;
       };
+
+      no-store-secrets = import ./tests/no-store-secrets-test.nix {
+        inherit pkgs;
+        nixosSystem = self.nixosConfigurations.congo;
+      };
     };
   };
 }

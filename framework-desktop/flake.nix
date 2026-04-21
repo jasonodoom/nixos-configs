@@ -139,6 +139,12 @@
           nixosSystem = self.nixosConfigurations.perdurabo;
         };
 
+        # Fast: guard against secrets leaking into the nix store
+        no-store-secrets = import ./tests/no-store-secrets-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
         # Fast: Service-only testing (headless, lightweight)
         desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
 
