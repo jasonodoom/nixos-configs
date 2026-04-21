@@ -46,6 +46,7 @@
       IdentityFile ~/.ssh/id_ed25519
       VisualHostKey yes
       User jason
+      LogLevel ERROR
   '';
 
   environment.systemPackages = with pkgs; [
