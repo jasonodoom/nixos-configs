@@ -66,6 +66,16 @@ jobs:
           CLI_EXIT_CODE=$?
           echo "CLI_EXIT_CODE=$CLI_EXIT_CODE" >> $GITHUB_OUTPUT
 
+      - name: Run initrd unlock test
+        id: initrd-test
+        run: |
+          cd ${{ matrix.host }}
+          export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#checks.x86_64-linux.initrd-unlock --show-trace --accept-flake-config 2>&1 | tee initrd-test-output.log
+          INITRD_EXIT_CODE=$?
+          echo "INITRD_EXIT_CODE=$INITRD_EXIT_CODE" >> $GITHUB_OUTPUT
+
       - name: Run desktop switching test
         id: desktop-test
         if: matrix.host == 'framework-desktop'
@@ -90,6 +100,11 @@ jobs:
           if [ "${{ steps.cli-test.outputs.CLI_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
             echo "CLI test failed"
+          fi
+
+          if [ "${{ steps.initrd-test.outputs.INITRD_EXIT_CODE }}" != "0" ]; then
+            TEST_FAILED=true
+            echo "Initrd unlock test failed"
           fi
 
           if [ "${{ matrix.host }}" == "framework-desktop" ] && [ "${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE }}" != "0" ]; then
@@ -167,6 +182,7 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- CLI access: ${{ steps.cli-test.outputs.CLI_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Initrd unlock: ${{ steps.initrd-test.outputs.INITRD_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ matrix.host }}" == "framework-desktop" ]; then
             echo "- Desktop switching: ${{ steps.desktop-test.outputs.DESKTOP_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           fi

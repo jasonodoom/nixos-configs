@@ -96,6 +96,11 @@
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
     in {
       cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
+
+      initrd-unlock = import ./tests/initrd-unlock-test.nix {
+        inherit pkgs;
+        nixosSystem = self.nixosConfigurations.congo;
+      };
     };
   };
 }

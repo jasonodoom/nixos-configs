@@ -133,6 +133,12 @@
         # Fast: CLI access (console, SSH, Tailscale)
         cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
 
+        # Fast: initrd LUKS + tailscale wiring assertions (no VM boot)
+        initrd-unlock = import ./tests/initrd-unlock-test.nix {
+          inherit pkgs;
+          nixosSystem = self.nixosConfigurations.perdurabo;
+        };
+
         # Fast: Service-only testing (headless, lightweight)
         desktop-switching = import ./tests/desktop-switching-test.nix { inherit pkgs pkgs-unstable; };
 
