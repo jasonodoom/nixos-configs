@@ -15,7 +15,7 @@
             git
             pre-commit
             gitleaks
-            nixfmt-rfc-style
+            nixfmt
             shellcheck
             shfmt
           ];

@@ -3,17 +3,23 @@
 
 {
   programs.bash.interactiveShellInit = ''
-    # Shell options
-    shopt -s autocd
-    shopt -s cdspell
-    shopt -s checkwinsize
-    shopt -s cmdhist
-    shopt -s histappend
-    shopt -s nocaseglob
+    # Readline/shopt tweaks only apply when the shell is truly interactive.
+    # Guarding avoids errors like `bind: command not found` and
+    # `shopt: progcomp: invalid shell option name` when this file gets
+    # re-sourced by non-interactive subshells (e.g. `direnv export bash`).
+    if [[ $- == *i* ]]; then
+      # Shell options
+      shopt -s autocd
+      shopt -s cdspell
+      shopt -s checkwinsize
+      shopt -s cmdhist
+      shopt -s histappend
+      shopt -s nocaseglob
 
-    # Key bindings
-    bind '\C-l:clear-screen'
-    bind '\C-u:kill-whole-line'
+      # Key bindings
+      bind '\C-l:clear-screen'
+      bind '\C-u:kill-whole-line'
+    fi
 
     # History configuration
     export HISTCONTROL='ignoreboth:erasedups'
