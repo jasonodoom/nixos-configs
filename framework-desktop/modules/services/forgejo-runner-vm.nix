@@ -5,6 +5,8 @@ let
   stateDir = "/var/lib/microvms/forgejo-runner";
 in
 {
+  boot.kernelModules = [ "vhost_vsock" ];
+
   age.secrets = {
     forgejo-runner-token = {
       file = ../../secrets/forgejo-runner-token.age;
