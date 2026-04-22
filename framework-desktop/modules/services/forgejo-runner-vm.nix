@@ -51,12 +51,20 @@ in
           mac = "02:00:00:00:0c:01";
         }];
 
-        volumes = [{
-          mountPoint = "/var/lib/tailscale";
-          image = "${stateDir}/tailscale.img";
-          size = 256;
-          fsType = "ext4";
-        }];
+        volumes = [
+          {
+            mountPoint = "/var/lib/tailscale";
+            image = "${stateDir}/tailscale.img";
+            size = 256;
+            fsType = "ext4";
+          }
+          {
+            mountPoint = "/var/lib/containers";
+            image = "${stateDir}/containers.img";
+            size = 32768;
+            fsType = "ext4";
+          }
+        ];
 
         shares = [
           {
@@ -84,6 +92,11 @@ in
         enable = true;
         dockerSocket.enable = true;
         dockerCompat = true;
+        autoPrune = {
+          enable = true;
+          flags = [ "--all" ];
+          dates = "weekly";
+        };
       };
 
       services.gitea-actions-runner.instances.aer = {
