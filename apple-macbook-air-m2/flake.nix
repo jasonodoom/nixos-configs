@@ -76,8 +76,6 @@
           llm-agents.gemini-cli
           llm-agents.codex
           container
-          direnv
-          nix-direnv
           maccy
           rectangle
           ripgrep
@@ -168,6 +166,13 @@
 
         # Programs
         programs.zsh.enable = true;
+
+        # direnv with nix-direnv caching so `cd` into a repo reuses the
+        # evaluated dev-shell instead of re-running nix every time.
+        programs.direnv = {
+          enable = true;
+          nix-direnv.enable = true;
+        };
 
         # Set Git commit hash for darwin-version
         system.configurationRevision = self.rev or self.dirtyRev or null;

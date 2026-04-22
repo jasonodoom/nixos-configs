@@ -2,6 +2,30 @@
 { config, pkgs, lib, ... }:
 
 {
+  # YOLO wrappers that ssh into the microvm, pass the bypass flag through,
+  # and color the Ghostty tab while the session is live. Defined here so
+  # they're present when the user types `yolo-claude` on perdurabo.
+  programs.bash.interactiveShellInit = lib.mkAfter ''
+    yolo-claude() {
+      printf '\033]1337;SetColors=tabbg=f7768e\a'
+      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: claude\007'
+      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
+      ssh -qt ai-claude claude --dangerously-skip-permissions "$@"
+    }
+    yolo-codex() {
+      printf '\033]1337;SetColors=tabbg=f7768e\a'
+      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: codex\007'
+      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
+      ssh -qt ai-codex codex --dangerously-bypass-approvals-and-sandbox "$@"
+    }
+    yolo-gemini() {
+      printf '\033]1337;SetColors=tabbg=f7768e\a'
+      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: gemini\007'
+      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
+      ssh -qt ai-gemini gemini --yolo "$@"
+    }
+  '';
+
   programs.bash.shellAliases = {
     # Core commands
     "sudo" = "doas";

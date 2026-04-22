@@ -29,3 +29,6 @@ log.txt
 # Local ad-hoc scripts not meant for the repo
 **/run-test.sh
 **/run-tests.sh
+
+# direnv / nix-direnv cache
+.direnv/

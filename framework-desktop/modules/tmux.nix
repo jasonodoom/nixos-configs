@@ -53,6 +53,10 @@
       # Better mouse support
       set -g mouse on
 
+      # Let OSC escape sequences (iTerm2/Ghostty tab color, title) from
+      # nested processes pass through tmux to the outer terminal.
+      set -g allow-passthrough on
+
       # 256 color support (like your screen-256color)
       set -g default-terminal "screen-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"

@@ -1,8 +1,13 @@
 # Zsh Aliases Configuration (from your .bashrcd/.aliases)
 { config, pkgs, lib, ... }:
 
+let
+  yolo = import ../../../../modules/shared/yolo-agent-wrappers.nix { inherit lib; };
+in
 {
   programs.zsh.interactiveShellInit = ''
+    ${yolo.shellSnippet}
+
     # Core commands
     alias nano='vim'
     alias vi='vim'

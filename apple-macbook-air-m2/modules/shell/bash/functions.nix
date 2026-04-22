@@ -1,8 +1,13 @@
 # Bash Functions Configuration
 { config, pkgs, lib, ... }:
 
+let
+  yolo = import ../../../../modules/shared/yolo-agent-wrappers.nix { inherit lib; };
+in
 {
   programs.bash.interactiveShellInit = ''
+    ${yolo.shellSnippet}
+
     # Extract archives
     extract() {
       if [[ ! -f "$1" ]]; then
