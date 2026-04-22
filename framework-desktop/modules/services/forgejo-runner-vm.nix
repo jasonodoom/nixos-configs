@@ -99,6 +99,40 @@ in
 
       networking.firewall.enable = true;
       networking.firewall.trustedInterfaces = [ "tailscale0" ];
+
+      systemd.services.vm-diag = {
+        description = "Dump runtime diagnostics to shared state dir";
+        after = [ "tailscaled-autoconnect.service" "gitea-actions-runner-aer.service" ];
+        wants = [ "tailscaled-autoconnect.service" "gitea-actions-runner-aer.service" ];
+        wantedBy = [ "multi-user.target" ];
+        path = with pkgs; [ tailscale coreutils systemd ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          set +e
+          out=/var/lib/runner/diag.txt
+          {
+            date -u
+            echo "=== hostname ==="
+            hostname
+            echo "=== /dev/net/tun ==="
+            ls -la /dev/net/tun 2>&1
+            echo "=== tailscale status ==="
+            tailscale status 2>&1 || true
+            echo "=== tailscaled-autoconnect logs ==="
+            journalctl -u tailscaled-autoconnect --no-pager -n 60 2>&1 || true
+            echo "=== tailscaled logs ==="
+            journalctl -u tailscaled --no-pager -n 60 2>&1 || true
+            echo "=== gitea-actions-runner-aer logs ==="
+            journalctl -u gitea-actions-runner-aer --no-pager -n 120 2>&1 || true
+            echo "=== secret sizes ==="
+            ls -la /run/host-secrets 2>&1
+          } > "$out" 2>&1
+          chmod 0644 "$out"
+        '';
+      };
     };
   };
 
