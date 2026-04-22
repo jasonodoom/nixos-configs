@@ -4,6 +4,8 @@
   services.forgejo = {
     enable = true;
 
+    package = pkgs.forgejo;
+
     # SQLite — no external database needed
     database.type = "sqlite3";
 
