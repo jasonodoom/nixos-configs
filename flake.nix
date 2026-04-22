@@ -12,6 +12,10 @@
         devShells.default = pkgs.mkShell {
           name = "nixos-configs-dev";
           packages = with pkgs; [
+            # bashInteractive must come first so `bash` in this devShell
+            # resolves to a shell with readline/bind/progcomp, not the
+            # stripped stdenv bash that normally ends up in devShell PATH.
+            bashInteractive
             git
             pre-commit
             gitleaks

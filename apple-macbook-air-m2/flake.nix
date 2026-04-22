@@ -175,6 +175,11 @@
           nix-direnv.enable = true;
         };
 
+        # Silence the long "direnv: export +FOO +BAR ..." dump that fires
+        # on every cd. Must be set at the env level so it's in scope before
+        # the direnv hook runs.
+        environment.variables.DIRENV_LOG_FORMAT = "";
+
         # Set Git commit hash for darwin-version
         system.configurationRevision = self.rev or self.dirtyRev or null;
 
