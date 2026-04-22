@@ -71,8 +71,8 @@
 
       if [[ ! -f "$CACHE_FILE" ]]; then
         {
-          echo "CACHED_HOSTNAME=$(hostname)"
-          echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+          echo "CACHED_HOSTNAME=\"$(hostname)\""
+          echo "DISK=\"$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')\""
         } > "$CACHE_FILE"
       else
         NOW=$(date +%s)
@@ -81,8 +81,8 @@
         CACHE_AGE=$((NOW - FILE_TIME))
         if [[ $CACHE_AGE -gt $CACHE_TTL ]]; then
           {
-            echo "CACHED_HOSTNAME=$(hostname)"
-            echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+            echo "CACHED_HOSTNAME=\"$(hostname)\""
+            echo "DISK=\"$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')\""
           } > "$CACHE_FILE"
         fi
       fi
