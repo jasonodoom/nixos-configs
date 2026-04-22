@@ -8,6 +8,9 @@ final: prev: {
   # Use Tailscale from nixpkgs-unstable for latest version
   tailscale = (import inputs.nixpkgs-unstable { system = final.stdenv.hostPlatform.system; }).tailscale;
 
+  # Use Forgejo from nixpkgs-unstable for latest major (v15+)
+  forgejo = (import inputs.nixpkgs-unstable { system = final.stdenv.hostPlatform.system; }).forgejo;
+
   # LLM agents from numtide/llm-agents.nix
   llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
 
