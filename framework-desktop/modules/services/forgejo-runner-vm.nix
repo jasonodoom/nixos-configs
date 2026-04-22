@@ -41,6 +41,7 @@ in
         vcpu = 4;
         mem = 8192;
         balloon = true;
+        vsock.cid = 42;
 
         interfaces = [{
           type = "user";
