@@ -51,6 +51,13 @@ in
           mac = "02:00:00:00:0c:01";
         }];
 
+        volumes = [{
+          mountPoint = "/var/lib/tailscale";
+          image = "${stateDir}/tailscale.img";
+          size = 256;
+          fsType = "ext4";
+        }];
+
         shares = [
           {
             source = "${stateDir}/state";
@@ -138,9 +145,11 @@ in
 
   systemd.services."microvm@forgejo-runner" = {
     preStart = ''
-      install -m 0444 -o microvm -g kvm \
-        ${config.age.secrets.forgejo-runner-token.path} \
-        ${stateDir}/secrets/runner-token
+      umask 0177
+      printf 'TOKEN=%s\n' "$(tr -d '\r\n' < ${config.age.secrets.forgejo-runner-token.path})" \
+        > ${stateDir}/secrets/runner-token
+      chown microvm:kvm ${stateDir}/secrets/runner-token
+      chmod 0444 ${stateDir}/secrets/runner-token
       install -m 0400 -o microvm -g kvm \
         ${config.age.secrets.forgejo-runner-tailscale-authkey.path} \
         ${stateDir}/secrets/tailscale-authkey
