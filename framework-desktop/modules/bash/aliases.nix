@@ -1,29 +1,19 @@
 # Bash Aliases Configuration
 { config, pkgs, lib, ... }:
 
+let
+  yolo = import ../../../modules/shared/yolo-agent-wrappers.nix { inherit lib; };
+in
 {
-  # YOLO wrappers that ssh into the microvm, pass the bypass flag through,
-  # and color the Ghostty tab while the session is live. Defined here so
-  # they're present when the user types `yolo-claude` on perdurabo.
+  # `claude` / `codex` / `gemini` on perdurabo always SSH into the matching
+  # microvm. The wrapper detects the bypass flag in the user's args and
+  # colors the Ghostty tab (OSC passes through SSH) only in that case.
   programs.bash.interactiveShellInit = lib.mkAfter ''
-    yolo-claude() {
-      printf '\033]1337;SetColors=tabbg=f7768e\a'
-      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: claude\007'
-      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
-      ssh -qt ai-claude claude --dangerously-skip-permissions "$@"
-    }
-    yolo-codex() {
-      printf '\033]1337;SetColors=tabbg=f7768e\a'
-      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: codex\007'
-      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
-      ssh -qt ai-codex codex --dangerously-bypass-approvals-and-sandbox "$@"
-    }
-    yolo-gemini() {
-      printf '\033]1337;SetColors=tabbg=f7768e\a'
-      printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: gemini\007'
-      trap 'printf "\033]1337;SetColors=tabbg=\a\033]2;\007"' EXIT INT TERM
-      ssh -qt ai-gemini gemini --yolo "$@"
-    }
+    ${yolo.shellSnippet}
+
+    claude() { __yolo_wrap claude "ssh -qt ai-claude claude" "$@"; }
+    codex()  { __yolo_wrap codex  "ssh -qt ai-codex codex"   "$@"; }
+    gemini() { __yolo_wrap gemini "ssh -qt ai-gemini gemini" "$@"; }
   '';
 
   programs.bash.shellAliases = {
@@ -85,10 +75,9 @@
     "killgpg" = "gpgconf --kill gpg-agent";
     "fixssh" = "chmod 700 ~/.ssh && chmod 644 ~/.ssh/authorized_keys && chmod 600 ~/.ssh/*_rsa";
 
-    # AI agents in sandboxed microvms
-    "claude" = "ssh -qt ai-claude claude";
-    "codex" = "ssh -qt ai-codex codex";
-    "gemini" = "ssh -qt ai-gemini gemini";
+    # AI agents in sandboxed microvms: `claude`/`codex`/`gemini` are defined
+    # as functions above (see interactiveShellInit) so they can detect
+    # bypass flags and tint the Ghostty tab. No alias needed here.
 
     # File generation utilities
     "100mb" = "dd if=/dev/zero of=100mb.file bs=100 count=1024000";

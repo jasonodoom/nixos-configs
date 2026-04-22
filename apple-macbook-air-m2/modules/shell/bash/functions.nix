@@ -8,6 +8,11 @@ in
   programs.bash.interactiveShellInit = ''
     ${yolo.shellSnippet}
 
+    # Shadow the AI CLI names; auto-detect bypass flags and tint the tab.
+    claude() { __yolo_wrap claude "command claude" "$@"; }
+    codex()  { __yolo_wrap codex  "command codex"  "$@"; }
+    gemini() { __yolo_wrap gemini "command gemini" "$@"; }
+
     # Extract archives
     extract() {
       if [[ ! -f "$1" ]]; then

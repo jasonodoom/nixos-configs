@@ -1,43 +1,57 @@
 { lib, ... }:
 
-# Shared shell snippet that defines wrappers around AI CLIs when invoked
-# with permission bypass flags. The wrapper:
-#   - sets the Ghostty/iTerm-style tab background color (OSC 1337 SetColors)
-#   - prefixes the terminal tab title with a warning glyph (OSC 2)
-#   - restores both on exit (trap)
+# Shell snippet that shadows the AI CLI entry points (claude/codex/gemini)
+# with bash/zsh-compatible functions that auto-detect permission-bypass
+# flags and color the Ghostty/iTerm tab for the life of the session.
 #
-# Exposes three functions: yolo-claude / yolo-codex / yolo-gemini.
-# Use the exported string via programs.{bash,zsh}.interactiveShellInit.
+# Detects these flags as "YOLO mode":
+#   claude --dangerously-skip-permissions
+#   codex  --dangerously-bypass-approvals-and-sandbox  (alias: --yolo)
+#   gemini --yolo | -y
+#
+# Without a bypass flag, the functions just exec the real binary — no
+# color change. OSC escapes pass through SSH and through tmux when
+# `allow-passthrough on` is set, so the outer Ghostty tab tints even when
+# the agent runs inside a microvm or a tmux pane.
 
 {
   shellSnippet = ''
-    # Emit Ghostty/iTerm2 tab-bg color + tab-title. OSC sequences pass
-    # through SSH, so running this wrapper on perdurabo also colors the
-    # Ghostty tab on theophany.
     __yolo_tab_on() {
       local label="$1"
-      # iTerm2/Ghostty: tab background color (red-ish)
       printf '\033]1337;SetColors=tabbg=f7768e\a'
-      # Window/tab title prefix
       printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: %s\007' "$label"
     }
     __yolo_tab_off() {
       printf '\033]1337;SetColors=tabbg=\a'
       printf '\033]2;\007'
     }
-    __yolo_run() {
+    __yolo_has_flag() {
+      # $1 = label, $2.. = args from caller; echo "yolo" if any matches.
       local label="$1"; shift
-      __yolo_tab_on "$label"
-      trap '__yolo_tab_off' EXIT INT TERM
-      "$@"
-      local rc=$?
-      __yolo_tab_off
-      trap - EXIT INT TERM
-      return $rc
+      local a
+      for a in "$@"; do
+        case "$label:$a" in
+          claude:--dangerously-skip-permissions) echo yolo; return ;;
+          codex:--dangerously-bypass-approvals-and-sandbox|codex:--yolo) echo yolo; return ;;
+          gemini:--yolo|gemini:-y) echo yolo; return ;;
+        esac
+      done
     }
-
-    yolo-claude() { __yolo_run claude claude --dangerously-skip-permissions "$@"; }
-    yolo-codex()  { __yolo_run codex  codex  --dangerously-bypass-approvals-and-sandbox "$@"; }
-    yolo-gemini() { __yolo_run gemini gemini --yolo "$@"; }
+    __yolo_wrap() {
+      # $1 = label, $2 = real command to run (space-delimited, e.g.
+      # "command claude" or "ssh -qt ai-claude claude"), $3.. = user args.
+      local label="$1"; local cmd="$2"; shift 2
+      if [ -n "$(__yolo_has_flag "$label" "$@")" ]; then
+        __yolo_tab_on "$label"
+        trap '__yolo_tab_off' EXIT INT TERM
+        eval "$cmd" "$(printf ' %q' "$@")"
+        local rc=$?
+        __yolo_tab_off
+        trap - EXIT INT TERM
+        return $rc
+      else
+        eval "$cmd" "$(printf ' %q' "$@")"
+      fi
+    }
   '';
 }
