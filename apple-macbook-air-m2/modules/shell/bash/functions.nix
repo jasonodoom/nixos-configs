@@ -1,8 +1,18 @@
 # Bash Functions Configuration
 { config, pkgs, lib, ... }:
 
+let
+  yolo = import ../../../../modules/shared/yolo-agent-wrappers.nix { inherit lib; };
+in
 {
   programs.bash.interactiveShellInit = ''
+    ${yolo.shellSnippet}
+
+    # Shadow the AI CLI names; auto-detect bypass flags and tint the tab.
+    claude() { __yolo_wrap claude "command claude" "$@"; }
+    codex()  { __yolo_wrap codex  "command codex"  "$@"; }
+    gemini() { __yolo_wrap gemini "command gemini" "$@"; }
+
     # Extract archives
     extract() {
       if [[ ! -f "$1" ]]; then
@@ -65,8 +75,10 @@
       du -h "$target"/* 2>/dev/null | sort -hr | head -20
     }
 
-    # FZF integration
-    if command -v fzf >/dev/null 2>&1; then
+    # FZF integration — readline-dependent, only wire up when the shell
+    # is actually interactive. Guard avoids "bind: command not found" when
+    # /etc/bashrc is sourced non-interactively (e.g. by `direnv export bash`).
+    if [[ $- == *i* ]] && command -v fzf >/dev/null 2>&1; then
       __fzf_history() {
         local selected
         selected=$(HISTTIMEFORMAT= history | fzf --tac --no-sort --query="$READLINE_LINE" | sed 's/^ *[0-9]* *//')

@@ -52,4 +52,36 @@
   environment.systemPackages = with pkgs; [
     openssh
   ];
+
+  # Per-host overrides pinned to the TOP of ~/.ssh/config. SSH uses
+  # first-match-wins per keyword, and user config is read before system
+  # config — so any `Host *` stanza later in the personal config (e.g.
+  # `LogLevel DEBUG1`) would otherwise win for specific hosts like
+  # perdurabo. Writing a managed block at position 1 beats it.
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    USER_HOME="/Users/${config.system.primaryUser}"
+    SSH_CFG="$USER_HOME/.ssh/config"
+    MARKER_BEGIN="# BEGIN nix-darwin managed perdurabo overrides"
+    MARKER_END="# END nix-darwin managed perdurabo overrides"
+
+    mkdir -p "$USER_HOME/.ssh"
+    touch "$SSH_CFG"
+    chown ${config.system.primaryUser}:staff "$SSH_CFG"
+    chmod 600 "$SSH_CFG"
+
+    if ! grep -qF "$MARKER_BEGIN" "$SSH_CFG"; then
+      tmp="$(mktemp)"
+      {
+        echo "$MARKER_BEGIN"
+        echo "Host perdurabo ai-claude ai-codex ai-gemini"
+        echo "  LogLevel ERROR"
+        echo "$MARKER_END"
+        echo ""
+        cat "$SSH_CFG"
+      } > "$tmp"
+      mv "$tmp" "$SSH_CFG"
+      chown ${config.system.primaryUser}:staff "$SSH_CFG"
+      chmod 600 "$SSH_CFG"
+    fi
+  '';
 }
