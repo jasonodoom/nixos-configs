@@ -99,6 +99,11 @@ in
           container = {
             network = "host";
             privileged = false;
+            # Expose the guest's podman socket into job containers so
+            # testcontainers (used by @aer/db and @aer/api tests) can
+            # spawn sidecar containers.
+            options = "-v /run/podman/podman.sock:/var/run/docker.sock:rw -e DOCKER_HOST=unix:///var/run/docker.sock";
+            valid_volumes = [ "/run/podman/podman.sock" ];
           };
           runner.capacity = 1;
         };
