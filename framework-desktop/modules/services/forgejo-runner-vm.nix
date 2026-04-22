@@ -138,7 +138,7 @@ in
 
   systemd.services."microvm@forgejo-runner" = {
     preStart = ''
-      install -m 0400 -o microvm -g kvm \
+      install -m 0444 -o microvm -g kvm \
         ${config.age.secrets.forgejo-runner-token.path} \
         ${stateDir}/secrets/runner-token
       install -m 0400 -o microvm -g kvm \
