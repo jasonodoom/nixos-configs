@@ -53,8 +53,8 @@
       # Cache only static/slow-changing data (hostname, disk)
       if [[ ! -f "$CACHE_FILE" ]]; then
         {
-          echo "HOSTNAME=$(hostname)"
-          echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+          echo "HOSTNAME=\"$(hostname)\""
+          echo "DISK=\"$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')\""
         } > "$CACHE_FILE"
       else
         # Check cache age using touch comparison
@@ -65,8 +65,8 @@
         CACHE_AGE=$((NOW - FILE_TIME))
         if [[ $CACHE_AGE -gt $CACHE_TTL ]]; then
           {
-            echo "HOSTNAME=$(hostname)"
-            echo "DISK=$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')"
+            echo "HOSTNAME=\"$(hostname)\""
+            echo "DISK=\"$(df -h / 2>/dev/null | tail -1 | awk '{print $5 " used"}')\""
           } > "$CACHE_FILE"
         fi
       fi
