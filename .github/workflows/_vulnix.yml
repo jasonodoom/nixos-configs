@@ -85,7 +85,9 @@ jobs:
             if [ -z "$cves" ]; then
               continue
             fi
-            echo "### \`$pkg\` $ver" >> findings.md
+            cve_count=$(echo "$cves" | wc -l | tr -d ' ')
+            echo "<details>" >> findings.md
+            echo "<summary><code>$pkg</code> $ver — $cve_count CVE(s)</summary>" >> findings.md
             echo >> findings.md
             for cve in $cves; do
               meta=$(curl -fsSL --max-time 10 \
@@ -113,6 +115,8 @@ jobs:
                 echo "$chans" >> findings.md
               fi
             fi
+            echo >> findings.md
+            echo "</details>" >> findings.md
             echo >> findings.md
           done
 
