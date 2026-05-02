@@ -21,9 +21,13 @@
     };
     authorizedKeysFiles = [ ".ssh/authorized_keys" ];
     extraConfig = ''
-      AllowUsers jason@192.168.1.* jason@10.8.* jason@100.* jason@172.16.200.*
+      AllowUsers jason@192.168.1.* jason@10.8.* jason@172.16.200.*
       # Entertainment VLAN
       DenyUsers *@10.6.6.*
+      # Tailscale CGNAT (100.64.0.0/10). AllowUsers globs cannot express
+      # CIDR, so use Match Address to scope the tailnet allowance.
+      Match Address 100.64.0.0/10
+        AllowUsers jason
     '';
   };
 
