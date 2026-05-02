@@ -143,6 +143,9 @@
         # Fast: CLI access (console, SSH, Tailscale)
         cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
 
+        # Real boot of perdurabo's userspace; catches service regressions
+        boot = import ./tests/boot-test.nix { inherit pkgs; };
+
         # Fast: initrd LUKS + tailscale wiring assertions (no VM boot)
         initrd-unlock = import ./tests/initrd-unlock-test.nix {
           inherit pkgs;

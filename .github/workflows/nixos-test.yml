@@ -66,6 +66,16 @@ jobs:
           CLI_EXIT_CODE=$?
           echo "CLI_EXIT_CODE=$CLI_EXIT_CODE" >> $GITHUB_OUTPUT
 
+      - name: Run boot test
+        id: boot-test
+        run: |
+          cd ${{ matrix.host }}
+          export NIX_CONFIG="accept-flake-config = true"
+          set +e
+          nix build .#checks.x86_64-linux.boot --show-trace --accept-flake-config 2>&1 | tee boot-test-output.log
+          BOOT_EXIT_CODE=$?
+          echo "BOOT_EXIT_CODE=$BOOT_EXIT_CODE" >> $GITHUB_OUTPUT
+
       - name: Run initrd unlock test
         id: initrd-test
         run: |
@@ -120,6 +130,11 @@ jobs:
           if [ "${{ steps.cli-test.outputs.CLI_EXIT_CODE }}" != "0" ]; then
             TEST_FAILED=true
             echo "CLI test failed"
+          fi
+
+          if [ "${{ steps.boot-test.outputs.BOOT_EXIT_CODE }}" != "0" ]; then
+            TEST_FAILED=true
+            echo "Boot test failed"
           fi
 
           if [ "${{ steps.initrd-test.outputs.INITRD_EXIT_CODE }}" != "0" ]; then
@@ -214,6 +229,7 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- CLI access: ${{ steps.cli-test.outputs.CLI_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Boot: ${{ steps.boot-test.outputs.BOOT_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Initrd unlock: ${{ steps.initrd-test.outputs.INITRD_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           echo "- No-store-secrets: ${{ steps.no-secrets-test.outputs.NO_SECRETS_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
           echo "- AI agents: ${{ steps.ai-agents-test.outputs.AI_AGENTS_EXIT_CODE == '0' && '[PASS]' || '[FAIL]' }}" >> $GITHUB_STEP_SUMMARY
