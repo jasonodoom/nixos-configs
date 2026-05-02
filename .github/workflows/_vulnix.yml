@@ -1,0 +1,155 @@
+name: Vulnix scan (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      host_dir:
+        description: "Path to the host directory containing flake.nix"
+        required: true
+        type: string
+      host_name:
+        description: "nixosConfigurations attribute name (e.g. perdurabo)"
+        required: true
+        type: string
+      pr_number:
+        description: "Pull request number to comment on, if any"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          source-tag: "v3.12.1"
+          extra-conf: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            substituters = https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+
+      - name: Build system closure
+        id: build
+        working-directory: ${{ inputs.host_dir }}
+        env:
+          HOST_NAME: ${{ inputs.host_name }}
+        run: |
+          set -eu
+          OUT=$(nix build --no-link --print-out-paths \
+            ".#nixosConfigurations.${HOST_NAME}.config.system.build.toplevel")
+          echo "toplevel=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Run vulnix
+        id: vulnix
+        run: |
+          set +e
+          nix run nixpkgs#vulnix -- --json "${TOPLEVEL}" > vulnix.json
+          rc=$?
+          set -e
+          # vulnix exits 0 when clean, 2 when CVEs found, other on error
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+            echo "vulnix failed with exit $rc"
+            cat vulnix.json || true
+            exit "$rc"
+          fi
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          jq 'length' vulnix.json
+        env:
+          TOPLEVEL: ${{ steps.build.outputs.toplevel }}
+
+      - name: Enrich findings via vulnpatch.dev
+        if: steps.vulnix.outputs.rc == '2'
+        env:
+          HOST_NAME: ${{ inputs.host_name }}
+          HOST_DIR: ${{ inputs.host_dir }}
+        run: |
+          set -eu
+          : > findings.md
+          echo "## Vulnix findings for ${HOST_NAME} (${HOST_DIR})" >> findings.md
+          echo >> findings.md
+          jq -c '.[]' vulnix.json | while read -r row; do
+            pkg=$(echo "$row" | jq -r '.name // .pname // "unknown"')
+            ver=$(echo "$row" | jq -r '.version // ""')
+            cves=$(echo "$row" | jq -r '.affected_by[]? // .cves[]? // empty' | sort -u)
+            if [ -z "$cves" ]; then
+              continue
+            fi
+            echo "### \`$pkg\` $ver" >> findings.md
+            echo >> findings.md
+            for cve in $cves; do
+              meta=$(curl -fsSL --max-time 10 \
+                "https://api.vulnpatch.dev/api/v1/cve/${cve}" \
+                2>/dev/null || echo '{}')
+              sev=$(echo "$meta" | jq -r '.data.primary.severity // "unknown"' 2>/dev/null || echo unknown)
+              cvss=$(echo "$meta" | jq -r '.data.primary.cvssScore // "n/a"' 2>/dev/null || echo n/a)
+              epss=$(echo "$meta" | jq -r 'if (.data.epss|type)=="object" then (.data.epss.score // "n/a") elif (.data.epss|type)=="number" then .data.epss else "n/a" end' 2>/dev/null || echo n/a)
+              kev=$(echo "$meta" | jq -r 'if (.data.kev|type)=="object" then true elif (.data.kev|type)=="boolean" then .data.kev else false end' 2>/dev/null || echo false)
+              line="- [$cve](https://nvd.nist.gov/vuln/detail/$cve) — severity: $sev, CVSS: $cvss, EPSS: $epss"
+              if [ "$kev" = "true" ]; then
+                line="$line, **KEV-listed**"
+              fi
+              echo "$line" >> findings.md
+            done
+            # Repology check is best-effort; skip silently on failure or timeout.
+            repo=$(curl -fsSL --max-time 5 \
+              "https://api.vulnpatch.dev/api/v1/nix/repology/${pkg}" \
+              2>/dev/null || true)
+            if [ -n "$repo" ]; then
+              chans=$(echo "$repo" | jq -r '.. | objects | select(has("repo") and has("version")) | "  - \(.repo): \(.version)"' 2>/dev/null | sort -u | head -20 || true)
+              if [ -n "$chans" ]; then
+                echo >> findings.md
+                echo "  Channel availability:" >> findings.md
+                echo "$chans" >> findings.md
+              fi
+            fi
+            echo >> findings.md
+          done
+
+      - name: Upload findings artifact
+        if: steps.vulnix.outputs.rc == '2'
+        uses: actions/upload-artifact@v5
+        with:
+          name: vulnix-${{ inputs.host_name }}
+          path: |
+            vulnix.json
+            findings.md
+
+      - name: Comment on PR
+        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          gh pr comment "${PR_NUMBER}" --body-file findings.md
+
+      - name: Open or update tracking issue
+        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOST_NAME: ${{ inputs.host_name }}
+        run: |
+          set -eu
+          TITLE="vulnix: CVEs detected on ${HOST_NAME}"
+          EXISTING=$(gh issue list --label security --state open \
+            --search "in:title \"${TITLE}\"" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file findings.md
+          else
+            gh issue create \
+              --title "$TITLE" \
+              --body-file findings.md \
+              --label security \
+              --label automated
+          fi

@@ -2,7 +2,7 @@
 
 # Shell snippet that shadows the AI CLI entry points (claude/codex/gemini)
 # with bash/zsh-compatible functions that auto-detect permission-bypass
-# flags and color the Ghostty/iTerm tab for the life of the session.
+# flags and visibly tint the terminal for the life of the session.
 #
 # Detects these flags as "YOLO mode":
 #   claude --dangerously-skip-permissions
@@ -10,19 +10,37 @@
 #   gemini --yolo | -y
 #
 # Without a bypass flag, the functions just exec the real binary — no
-# color change. OSC escapes pass through SSH and through tmux when
-# `allow-passthrough on` is set, so the outer Ghostty tab tints even when
-# the agent runs inside a microvm or a tmux pane.
+# color change.
+#
+# Highlight mechanism:
+#   * OSC 11 (set terminal background)        — works in Ghostty, iTerm2, kitty,
+#                                                wezterm, foot, alacritty, etc.
+#   * OSC 1337 SetColors=tabbg                — iTerm2 tab background; ignored
+#                                                by Ghostty.
+#   * OSC 2 (set window title)                — works everywhere; sets the
+#                                                title to "⚠️ YOLO: <label>".
+#
+# All three are emitted on entry and reset on exit (EXIT/INT/TERM trap), so
+# whichever the host terminal supports will fire. OSC escapes pass through
+# SSH and through tmux when `allow-passthrough on` is set.
 
 {
   shellSnippet = ''
     __yolo_tab_on() {
       local label="$1"
+      # Background tint (OSC 11). Dark red so terminal text stays readable.
+      printf '\033]11;#3d1419\007'
+      # iTerm2 tab background (no-op on Ghostty, kept for iTerm2 users).
       printf '\033]1337;SetColors=tabbg=f7768e\a'
+      # Window title (OSC 2).
       printf '\033]2;\xE2\x9A\xA0\xEF\xB8\x8F  YOLO: %s\007' "$label"
     }
     __yolo_tab_off() {
+      # Reset background to terminal default (OSC 111).
+      printf '\033]111\007'
+      # Reset iTerm2 tab background.
       printf '\033]1337;SetColors=tabbg=\a'
+      # Clear window title.
       printf '\033]2;\007'
     }
     __yolo_has_flag() {

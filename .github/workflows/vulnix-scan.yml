@@ -1,0 +1,32 @@
+name: Vulnix scan
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  pull_request:
+    paths:
+      - "**/flake.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  scan:
+    # Skip fork PRs: building an attacker-controlled flake would execute their code in CI.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: framework-desktop
+            host: perdurabo
+          - dir: lenovo-thinkcentre-m710q
+            host: congo
+    uses: ./.github/workflows/_vulnix.yml
+    with:
+      host_dir: ${{ matrix.dir }}
+      host_name: ${{ matrix.host }}
+      pr_number: ${{ github.event.pull_request.number && format('{0}', github.event.pull_request.number) || '' }}

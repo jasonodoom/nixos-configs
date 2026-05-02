@@ -220,12 +220,14 @@ in
     };
   };
 
-  # Simple web interface for log viewing using nginx
+  # Simple web interface for log viewing using nginx. Bound to localhost so
+  # the dashboard is only reachable via SSH local-forward or via the host
+  # firewall hole on tailscale0 (see networking.nix).
   services.nginx = {
     enable = true;
     virtualHosts."logs.congo.local" = {
       listen = [{
-        addr = "0.0.0.0";
+        addr = "127.0.0.1";
         port = dashboardPort;
       }];
       locations = {

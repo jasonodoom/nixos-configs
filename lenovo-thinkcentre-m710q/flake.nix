@@ -106,6 +106,8 @@
     in {
       cli-access = import ./tests/cli-access-test.nix { inherit pkgs; };
 
+      boot = import ./tests/boot-test.nix { inherit pkgs; };
+
       initrd-unlock = import ./tests/initrd-unlock-test.nix {
         inherit pkgs;
         nixosSystem = self.nixosConfigurations.congo;

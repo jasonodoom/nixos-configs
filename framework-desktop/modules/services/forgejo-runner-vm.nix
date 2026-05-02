@@ -110,11 +110,11 @@ in
         ];
         settings = {
           container = {
-            network = "host";
+            # Bridge networking: jobs cannot reach host-only services
+            # directly. act_runner still bind-mounts /var/run/docker.sock
+            # into the job container so testcontainers works.
+            network = "bridge";
             privileged = false;
-            # act_runner auto-binds /var/run/docker.sock into job
-            # containers. We only need to point DOCKER_HOST at it so
-            # testcontainers picks it up.
             options = "-e DOCKER_HOST=unix:///var/run/docker.sock";
           };
           runner.capacity = 1;

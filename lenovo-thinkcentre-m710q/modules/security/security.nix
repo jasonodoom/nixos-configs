@@ -21,13 +21,13 @@
     users.root.hashedPassword = "!";  # Locked account
   };
 
-  # Doas configuration
+  # Doas configuration. keepEnv is off so doas does not inherit the caller's
+  # environment (LD_PRELOAD, PATH, etc.) into the privileged session.
   security.doas = {
     enable = true;
     extraRules = [{
       users = [ "amy" ];
-      keepEnv = true;
-      persist = true;  # Remember authentication for a session
+      persist = true;
     }];
   };
 

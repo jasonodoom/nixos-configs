@@ -1,21 +1,38 @@
 # GPG and smart card configuration for perdurabo
 { config, pkgs, lib, ... }:
 
+let
+  jasonodoomKey = builtins.fetchurl {
+    url = "https://github.com/jasonodoom.gpg";
+    sha256 = "sha256-4hboVMmEdIcxfWpe4mizxp2A4ZZuRtB0MnQuyvnJt9U=";
+  };
+  webFlowKey = builtins.fetchurl {
+    url = "https://github.com/web-flow.gpg";
+    sha256 = "sha256-bor2h/YM8/QDFRyPsbJuleb55CTKYMyPN4e9RGaj74Q=";
+  };
+
+  # Expected fingerprints. Imported keys are checked against these and the
+  # service fails if either upstream rotated without us updating the pin.
+  jasonodoomFingerprint = "F3DD4A7B465A4EB1823E2EE268CCAF80768A91A5";
+  webFlowFingerprints = [
+    "5DE3E0509C47EA3CF04A42D34AEE18F83AFDEB23"
+    "968479A1AFF927E37D1A566BB5690EEEBB952194"
+  ];
+in
 {
-  # Smart card support for YubiKey
   services.pcscd.enable = true;
 
-  # GPG agent configuration
   programs.gnupg.agent = {
     enable = true;
     pinentryPackage = pkgs.pinentry-curses;
     enableSSHSupport = true;
   };
 
-  # Import GPG public key from GitHub for commit signature verification
-  # This is a system service so it runs before auto-upgrade even if user isn't logged in
+  # Imports keys used by verify-upgrade-commits. Trust assignment is limited
+  # to jasonodoom; verify-upgrade-commits matches signing fingerprints
+  # directly via VALIDSIG and does not rely on web-flow being trusted.
   systemd.services.import-gpg-key = {
-    description = "Import GPG public key from GitHub";
+    description = "Import GPG public keys for commit verification";
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -24,43 +41,36 @@
       RemainAfterExit = true;
       User = "jason";
     };
-    path = [ pkgs.gnupg pkgs.curl pkgs.gawk ];
+    path = [ pkgs.gnupg pkgs.gawk ];
     script = ''
-      # Download GPG public key from GitHub (hash-verified)
-      GPG_KEY_FILE=${
-        builtins.fetchurl {
-          url = "https://github.com/jasonodoom.gpg";
-          sha256 = "sha256-YHXAcvdLX1F06+9kq+ymQiXJNvyPDckD93V5WUd8Bes=";
-        }
-      }
+      set -euo pipefail
 
-      # Import key for jason (used by verify-upgrade-commits)
-      echo "Importing GPG public key..."
-      gpg --import "$GPG_KEY_FILE" 2>/dev/null || true
+      EXPECTED_JASON="${jasonodoomFingerprint}"
+      EXPECTED_WEBFLOW="${lib.concatStringsSep " " webFlowFingerprints}"
 
-      # Set trust level to ultimate for signature verification
-      FINGERPRINT=$(gpg --list-keys --with-colons --fingerprint jasonodoom | awk -F: '/^fpr/ {print $10; exit}')
-      if [ -n "$FINGERPRINT" ]; then
-        echo "$FINGERPRINT:6:" | gpg --import-ownertrust
+      gpg --import "${jasonodoomKey}"
+      JASON_FPR=$(gpg --list-keys --with-colons --fingerprint "$EXPECTED_JASON" 2>/dev/null \
+        | awk -F: '/^fpr/ {print $10; exit}')
+      if [ "$JASON_FPR" != "$EXPECTED_JASON" ]; then
+        echo "ERROR: jasonodoom key fingerprint mismatch (got '$JASON_FPR', expected '$EXPECTED_JASON')" >&2
+        exit 1
       fi
+      echo "$JASON_FPR:6:" | gpg --import-ownertrust
 
-      # Import GitHub web-flow signing key for merge commits and set trust
-      echo "Importing GitHub web-flow signing key..."
-      curl -s https://github.com/web-flow.gpg | gpg --import 2>/dev/null || true
+      gpg --import "${webFlowKey}"
+      for fpr in $EXPECTED_WEBFLOW; do
+        if ! gpg --list-keys --with-colons --fingerprint "$fpr" >/dev/null 2>&1; then
+          echo "ERROR: expected web-flow fingerprint $fpr not present after import" >&2
+          exit 1
+        fi
+      done
 
-      # Set ultimate trust for GitHub's signing key
-      GH_FINGERPRINT=$(gpg --list-keys --with-colons --fingerprint "GitHub <noreply@github.com>" 2>/dev/null | awk -F: '/^fpr/ {print $10; exit}')
-      if [ -n "$GH_FINGERPRINT" ]; then
-        echo "$GH_FINGERPRINT:6:" | gpg --import-ownertrust
-      fi
-
-      echo "GPG public keys imported and trusted"
+      echo "GPG public keys imported and verified"
     '';
   };
 
-  # Timer to periodically check for GPG key updates
   systemd.timers.import-gpg-key = {
-    description = "Check for GPG key updates from GitHub";
+    description = "Refresh GPG keys";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "daily";

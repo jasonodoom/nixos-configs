@@ -189,8 +189,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
-      - name: Enable auto-merge
+      - name: Verify main has required status checks before auto-merge
+        id: check-protection
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: |
+          set -eu
+          PROT=$(gh api "repos/${{ github.repository }}/branches/main/protection" 2>/dev/null || echo '{}')
+          REQUIRED=$(echo "$PROT" | jq -r '
+            (.required_status_checks.contexts // [])
+            + ((.required_status_checks.checks // []) | map(.context))
+            | unique | length')
+          if [ "$REQUIRED" -lt 1 ]; then
+            echo "::error::Branch protection on main does not require any status checks; refusing to auto-merge."
+            exit 1
+          fi
+          echo "Required checks on main: $REQUIRED"
+
+      - name: Enable auto-merge
+        if: steps.check-protection.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |

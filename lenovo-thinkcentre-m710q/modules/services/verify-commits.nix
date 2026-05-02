@@ -1,8 +1,14 @@
 # Verify GPG signatures on commits before auto-upgrade
 { config, pkgs, lib, ... }:
 
+let
+  trustedFingerprints = [
+    "F3DD4A7B465A4EB1823E2EE268CCAF80768A91A5"  # jasonodoom
+    "5DE3E0509C47EA3CF04A42D34AEE18F83AFDEB23"  # GitHub web-flow (4AEE18F83AFDEB23)
+    "968479A1AFF927E37D1A566BB5690EEEBB952194"  # GitHub web-flow (B5690EEEBB952194)
+  ];
+in
 {
-  # Systemd service to verify commit signatures before upgrade
   systemd.services.verify-upgrade-commits = {
     description = "Verify GPG signatures on commits before auto-upgrade";
     before = [ "nixos-upgrade.service" ];
@@ -12,19 +18,19 @@
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = config.age.secrets.gh-token.path;
+      StateDirectory = "verify-upgrade-commits";
     };
-    path = [ pkgs.gh pkgs.git pkgs.gnupg ];
+    path = [ pkgs.gh pkgs.git pkgs.gnupg pkgs.gawk ];
     script = ''
       set -euo pipefail
 
       REPO_URL="https://github.com/jasonodoom/nixos-configs.git"
       WORK_DIR=$(mktemp -d)
-      TRUSTED_KEY="jasonodoom"
       HOSTNAME="congo"
+      STATE_FILE="$STATE_DIRECTORY/last-verified"
+      TRUSTED_FPS="${lib.concatStringsSep " " trustedFingerprints}"
 
-      cleanup() {
-        rm -rf "$WORK_DIR"
-      }
+      cleanup() { rm -rf "$WORK_DIR"; }
       trap cleanup EXIT
 
       create_failure_issue() {
@@ -33,41 +39,72 @@
 
         gh issue create \
           --repo jasonodoom/nixos-configs \
-          --title "auto-upgrade failed on $HOSTNAME ($(date +%Y-%m-%d))" \
-          --body "The scheduled auto-upgrade failed on $HOSTNAME.
+          --title "auto-upgrade signature check failed on $HOSTNAME ($(date +%Y-%m-%d))" \
+          --body "Auto-upgrade refused to proceed on $HOSTNAME.
 
-**Commit:** $commit
-**Time:** $(date)
+      **Commit:** $commit
+      **Time:** $(date)
 
-**Error:**
-\`\`\`
-$message
-\`\`\`" \
+      **Reason:**
+      \`\`\`
+      $message
+      \`\`\`" \
           --assignee jasonodoom || echo "Failed to create GitHub issue"
       }
 
-      echo "Cloning repo to verify signatures..."
       git clone --depth 50 "$REPO_URL" "$WORK_DIR" 2>/dev/null
-
       cd "$WORK_DIR"
-      CURRENT_COMMIT=$(git rev-parse --short HEAD)
+      NEW_HEAD=$(git rev-parse HEAD)
 
-      echo "Verifying HEAD commit signature..."
-      VERIFY_OUTPUT=$(git verify-commit HEAD 2>&1 || true)
-
-      if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
-        echo "ERROR: HEAD commit is not signed by jasonodoom or GitHub"
-        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom or GitHub.
-
-$VERIFY_OUTPUT" "$CURRENT_COMMIT"
-        exit 1
+      if [ -f "$STATE_FILE" ]; then
+        LAST=$(cat "$STATE_FILE")
+        if git rev-parse --verify "$LAST^{commit}" >/dev/null 2>&1; then
+          COMMITS=$(git log --pretty=format:%H --reverse "$LAST..HEAD" 2>/dev/null || true)
+        else
+          COMMITS=$(git log --pretty=format:%H --reverse)
+        fi
+      else
+        COMMITS=$(git log --pretty=format:%H --reverse)
       fi
 
-      echo "Commit signature verified - upgrade can proceed"
+      if [ -z "$COMMITS" ]; then
+        echo "No new commits since last verification"
+        exit 0
+      fi
+
+      for commit in $COMMITS; do
+        RAW=$(git verify-commit --raw "$commit" 2>&1 || true)
+        FPR=$(echo "$RAW" | awk '/^\[GNUPG:\] VALIDSIG / {print $3; exit}')
+        SHORT=$(git rev-parse --short "$commit")
+
+        if [ -z "$FPR" ]; then
+          create_failure_issue "Commit $SHORT has no valid GPG signature.
+
+      $RAW" "$SHORT"
+          exit 1
+        fi
+
+        TRUSTED=0
+        for tfpr in $TRUSTED_FPS; do
+          if [ "$FPR" = "$tfpr" ]; then
+            TRUSTED=1
+            break
+          fi
+        done
+
+        if [ "$TRUSTED" = "0" ]; then
+          create_failure_issue "Commit $SHORT signed by untrusted key $FPR.
+
+      Trusted fingerprints: $TRUSTED_FPS" "$SHORT"
+          exit 1
+        fi
+      done
+
+      echo "$NEW_HEAD" > "$STATE_FILE"
+      echo "Verified $(echo "$COMMITS" | wc -l) commit(s); upgrade can proceed"
     '';
   };
 
-  # Create issue if nixos-upgrade itself fails
   systemd.services.nixos-upgrade-failure-notify = {
     description = "Notify on nixos-upgrade failure";
     after = [ "nixos-upgrade.service" ];
@@ -85,16 +122,15 @@ $VERIFY_OUTPUT" "$CURRENT_COMMIT"
         --title "nixos-upgrade failed on $HOSTNAME ($(date +%Y-%m-%d))" \
         --body "The scheduled nixos-upgrade service failed on $HOSTNAME.
 
-**Time:** $(date)
+      **Time:** $(date)
 
-Check journalctl for details:
-\`\`\`
-journalctl -u nixos-upgrade.service -n 100
-\`\`\`" \
+      Check journalctl for details:
+      \`\`\`
+      journalctl -u nixos-upgrade.service -n 100
+      \`\`\`" \
         --assignee jasonodoom || echo "Failed to create GitHub issue"
     '';
   };
 
-  # Hook the failure notification
   systemd.services.nixos-upgrade.serviceConfig.OnFailure = [ "nixos-upgrade-failure-notify.service" ];
 }

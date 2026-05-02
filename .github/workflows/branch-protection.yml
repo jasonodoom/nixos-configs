@@ -1,0 +1,28 @@
+name: Apply branch protection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/branch-protection.json
+      - .github/workflows/branch-protection.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Apply protection to main
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: |
+          set -eu
+          gh api -X PUT "repos/${{ github.repository }}/branches/main/protection" \
+            --input .github/branch-protection.json
+          echo "::notice::Branch protection on main applied from .github/branch-protection.json"

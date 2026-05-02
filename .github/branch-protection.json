@@ -1,0 +1,18 @@
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "All Garnix checks",
+      "gitleaks",
+      "vm-tests-nixos (framework-desktop, perdurabo)",
+      "vm-tests-nixos (lenovo-thinkcentre-m710q, congo)",
+      "vm-tests-darwin (apple-macbook-air-m2, theophany)"
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}

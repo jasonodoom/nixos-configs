@@ -21,20 +21,18 @@
       allowPing = false;
       allowedTCPPorts = [
         2222  # SSH
-        53    # Pi-hole DNS
+        53    # Pi-hole DNS (LAN clients use this host as resolver)
       ];
       allowedUDPPorts = [
         53     # Pi-hole DNS
         41641  # Tailscale
       ];
-      interfaces."enp0s31f6" = {
+      interfaces."tailscale0" = {
         allowedTCPPorts = [
-          80    # Direct HTTP (if any)
-          8053  # Pi-hole HTTP (192.168.100.42:80)
-          8443  # Pi-hole HTTPS (192.168.100.42:443)
-          8200  # OpenBao (192.168.100.10:8200)
-          8080  # Logs dashboard
-          3100  # Loki API
+          8053  # Pi-hole HTTP (admin UI, tailnet only)
+          8443  # Pi-hole HTTPS (admin UI, tailnet only)
+          8200  # OpenBao (tailnet only)
+          3100  # Loki API (tailnet only; dashboard is localhost-only)
         ];
       };
       # Disable reverse path filtering for containers
@@ -47,7 +45,10 @@
       internalInterfaces = ["ve-+"];
       externalInterface = "enp0s31f6";
 
-      # Port forwarding for container services
+      # Port forwarding for container services. Pi-hole DNS stays open on
+      # LAN; admin UI and OpenBao API are reached via the host's tailscale0
+      # IP and use the in-kernel routing into the container subnet, so they
+      # do not need DNAT entries and the LAN firewall keeps them out.
       forwardPorts = [
         # Pi-hole DNS (TCP & UDP)
         {
@@ -59,24 +60,6 @@
           sourcePort = 53;
           destination = "192.168.100.42:53";
           proto = "udp";
-        }
-        # Pi-hole web interface (HTTP)
-        {
-          sourcePort = 8053;
-          destination = "192.168.100.42:80";
-          proto = "tcp";
-        }
-        # Pi-hole web interface (HTTPS)
-        {
-          sourcePort = 8443;
-          destination = "192.168.100.42:443";
-          proto = "tcp";
-        }
-        # OpenBao
-        {
-          sourcePort = 8200;
-          destination = "192.168.100.10:8200";
-          proto = "tcp";
         }
       ];
     };

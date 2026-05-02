@@ -9,11 +9,11 @@
   security.doas.enable = true;
   security.sudo.enable = false;
 
-  # Configure doas
+  # Configure doas. keepEnv is off so doas does not inherit the caller's
+  # environment (LD_PRELOAD, PATH, etc.) into the privileged session.
   security.doas.extraRules = [{
     users = [ "jason" ];
-    keepEnv = true;
-    persist = true;  # Remember authentication for a session
+    persist = true;
   }];
 
   # YubiKey support
