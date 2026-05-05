@@ -145,6 +145,8 @@ jobs:
         run: |
           set -eu
           TITLE="vulnix: CVEs detected on ${HOST_NAME}"
+          gh label create security --color B60205 --description "Security-related issue" 2>/dev/null || true
+          gh label create automated --color BFD4F2 --description "Created by automation" 2>/dev/null || true
           EXISTING=$(gh issue list --label security --state open \
             --search "in:title \"${TITLE}\"" \
             --json number --jq '.[0].number // empty')
