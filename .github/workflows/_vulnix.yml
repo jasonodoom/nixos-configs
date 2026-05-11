@@ -129,13 +129,41 @@ jobs:
             vulnix.json
             findings.md
 
+      - name: Truncate findings for GitHub body limit
+        if: steps.vulnix.outputs.rc == '2'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -eu
+          # GitHub caps issue/PR body length at 65536 characters; leave headroom
+          # for the truncation footer.
+          MAX=64000
+          SIZE=$(wc -c < findings.md | tr -d ' ')
+          if [ "$SIZE" -le "$MAX" ]; then
+            cp findings.md findings-body.md
+            exit 0
+          fi
+          # Cut at the last </details> boundary inside the budget so we don't
+          # leave an unclosed details block.
+          head -c "$MAX" findings.md > findings-body.md
+          LAST_END=$(grep -bo '</details>' findings-body.md | tail -1 | cut -d: -f1)
+          if [ -n "$LAST_END" ]; then
+            head -c "$((LAST_END + 10))" findings.md > findings-body.md
+          fi
+          {
+            echo
+            echo "---"
+            echo
+            echo "_Output truncated to fit GitHub's 65 KB body limit. Full report in the workflow run artifact: ${RUN_URL}_"
+          } >> findings-body.md
+
       - name: Comment on PR
         if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh pr comment "${PR_NUMBER}" --body-file findings.md
+          gh pr comment "${PR_NUMBER}" --body-file findings-body.md
 
       - name: Open or update tracking issue
         if: steps.vulnix.outputs.rc == '2' && inputs.pr_number == ''
@@ -151,11 +179,11 @@ jobs:
             --search "in:title \"${TITLE}\"" \
             --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body-file findings.md
+            gh issue comment "$EXISTING" --body-file findings-body.md
           else
             gh issue create \
               --title "$TITLE" \
-              --body-file findings.md \
+              --body-file findings-body.md \
               --label security \
               --label automated \
               --assignee jasonodoom

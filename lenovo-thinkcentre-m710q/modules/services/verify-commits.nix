@@ -8,6 +8,14 @@ let
     "5DE3E0509C47EA3CF04A42D34AEE18F83AFDEB23"  # GitHub web-flow (4AEE18F83AFDEB23)
     "968479A1AFF927E37D1A566BB5690EEEBB952194"  # GitHub web-flow (B5690EEEBB952194)
   ];
+
+  # SHAs to skip during signature verification. Use sparingly — only for
+  # historical unsigned commits we cannot retroactively sign (e.g. early
+  # auto-PR workflow runs that committed without going through the GraphQL
+  # signed-commit path). New unsigned commits should still be rejected.
+  exemptCommits = [
+    "a918032f515efd21b08d114a4c70d2bab5866ae3"  # auto-PR flake.lock update before workflow was fixed
+  ];
 in
 {
   systemd.services.verify-upgrade-commits = {
@@ -30,6 +38,7 @@ in
       HOSTNAME="congo"
       STATE_FILE="$STATE_DIRECTORY/last-verified"
       TRUSTED_FPS="${lib.concatStringsSep " " trustedFingerprints}"
+      EXEMPT_SHAS="${lib.concatStringsSep " " exemptCommits}"
 
       cleanup() { rm -rf "$WORK_DIR"; }
       trap cleanup EXIT
@@ -74,9 +83,22 @@ in
       fi
 
       for commit in $COMMITS; do
+        SHORT=$(git rev-parse --short "$commit")
+
+        EXEMPT=0
+        for esha in $EXEMPT_SHAS; do
+          if [ "$commit" = "$esha" ]; then
+            EXEMPT=1
+            break
+          fi
+        done
+        if [ "$EXEMPT" = "1" ]; then
+          echo "Skipping signature check for exempt commit $SHORT"
+          continue
+        fi
+
         RAW=$(git verify-commit --raw "$commit" 2>&1 || true)
         FPR=$(echo "$RAW" | awk '/^\[GNUPG:\] VALIDSIG / {print $3; exit}')
-        SHORT=$(git rev-parse --short "$commit")
 
         if [ -z "$FPR" ]; then
           create_failure_issue "Commit $SHORT has no valid GPG signature.
