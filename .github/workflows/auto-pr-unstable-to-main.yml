@@ -124,17 +124,61 @@ jobs:
 
           echo "updated=$UPDATED" >> $GITHUB_OUTPUT
 
-      - name: Commit flake.lock updates
+      - name: Commit flake.lock updates (signed via GraphQL)
         if: steps.update-locks.outputs.updated == 'true'
-        run: |
-          git add */flake.lock
-          git commit -m "chore: update flake.lock files"
-
-          # Pull any new changes and rebase before pushing
-          git pull --rebase origin unstable || true
-          git push origin unstable
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Build the additions array: every modified flake.lock with base64 contents.
+          ADDITIONS="[]"
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            CONTENTS=$(base64 -w0 < "$f")
+            ADDITIONS=$(jq -nc --argjson a "$ADDITIONS" --arg p "$f" --arg c "$CONTENTS" \
+              '$a + [{path: $p, contents: $c}]')
+          done < <(git diff --name-only -- '*/flake.lock')
+
+          if [ "$ADDITIONS" = "[]" ]; then
+            echo "No flake.lock changes to commit"
+            exit 0
+          fi
+
+          # Use the remote HEAD as the expected oid so we don't race a concurrent push.
+          EXPECTED_OID=$(git ls-remote origin refs/heads/unstable | awk '{print $1}')
+
+          PAYLOAD=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "unstable" \
+            --arg oid "$EXPECTED_OID" \
+            --arg msg "chore: update flake.lock files" \
+            --argjson additions "$ADDITIONS" \
+            '{
+              query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url oid } } }",
+              variables: {
+                input: {
+                  branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+                  expectedHeadOid: $oid,
+                  message: { headline: $msg },
+                  fileChanges: { additions: $additions }
+                }
+              }
+            }')
+
+          curl -fsSL -X POST https://api.github.com/graphql \
+            -H "Authorization: bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            | tee /tmp/graphql.out
+          if jq -e '.errors' /tmp/graphql.out >/dev/null; then
+            echo "GraphQL mutation reported errors" >&2
+            exit 1
+          fi
+
+          # Refresh local state for any later steps that read git.
+          git fetch origin unstable
+          git reset --hard origin/unstable
 
       - name: Create Pull Request
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
