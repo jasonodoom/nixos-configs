@@ -15,8 +15,20 @@ let
   # historical unsigned commits we cannot retroactively sign (e.g. early
   # auto-PR workflow runs that committed without going through the GraphQL
   # signed-commit path). New unsigned commits should still be rejected.
+  # All 10 entries are pre-fa2942d auto-PR / auto-update bot commits that
+  # predate signed-commit support. The workflow fix in fa2942d means new
+  # bot commits are signed via web-flow, so this list should not need to grow.
   exemptCommits = [
-    "a918032f515efd21b08d114a4c70d2bab5866ae3"  # auto-PR flake.lock update before workflow was fixed
+    "17765a9d3a1d3f4f5f2c0494f03029a71cf288f2"  # 2025-12-19 chore: update flake.lock files
+    "2bae9b825803ff61cc2e21737a26a231b22745fd"  # 2025-12-20 chore: update flake.lock files
+    "a918032f515efd21b08d114a4c70d2bab5866ae3"  # 2026-03-02 chore: update flake.lock files
+    "badd2f4e8c145b636f384fad26287336eabdbd61"  # 2026-03-16 chore: update flake.lock files
+    "f3908a4bf73bd1836ce6da6df240747e279474d0"  # 2026-03-18 chore: update flake.lock files
+    "63bd709a8841227bf7f5b6a3489e5c0013e7a0f1"  # 2026-04-12 chore: update flake.lock files
+    "d96f35fc378e5224d63ce02ca1e4797dec5aca89"  # 2026-04-12 chore: update flake.lock files
+    "f7d199a761ec689d0ffa960f852b8f4eb1eba6c8"  # 2026-04-21 chore: update flake.lock files
+    "4df13208ce74c05ce34ec46289834227e82c2922"  # 2026-04-22 chore: update flake.lock files
+    "b5bf556a74567d91016bf6cdb641e1dcd3d53730"  # 2026-05-08 Update Claude Code to 2.1.133
   ];
 in
 {
