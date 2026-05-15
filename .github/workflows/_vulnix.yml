@@ -175,11 +175,20 @@ jobs:
           TITLE="vulnix: CVEs detected on ${HOST_NAME}"
           gh label create security --color B60205 --description "Security-related issue" 2>/dev/null || true
           gh label create automated --color BFD4F2 --description "Created by automation" 2>/dev/null || true
-          EXISTING=$(gh issue list --label security --state open \
+          # Dedup across ALL states — if a tracking issue exists (open OR
+          # closed), reopen it and add a comment instead of opening a fresh
+          # one each run. This lets you close the issue when CVEs are
+          # acknowledged without spawning duplicates the next day.
+          EXISTING=$(gh issue list --label security --state all \
             --search "in:title \"${TITLE}\"" \
-            --json number --jq '.[0].number // empty')
+            --json number,state --jq '.[0]')
           if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body-file findings-body.md
+            NUM=$(echo "$EXISTING" | jq -r .number)
+            STATE=$(echo "$EXISTING" | jq -r .state)
+            if [ "$STATE" = "CLOSED" ]; then
+              gh issue reopen "$NUM"
+            fi
+            gh issue comment "$NUM" --body-file findings-body.md
           else
             gh issue create \
               --title "$TITLE" \
