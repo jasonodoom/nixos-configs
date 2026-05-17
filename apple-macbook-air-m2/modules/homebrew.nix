@@ -33,6 +33,7 @@
       "signal"
       "telegram"
       "element"
+      "mattermost"
       "zoom"
 
       # Development
@@ -70,7 +71,7 @@
       "rewind"
     ];
 
-    # Mac App Store apps 
+    # Mac App Store apps
     # mas list output can be used to find app IDs
     masApps = {
       "GarageBand" = 682658836;

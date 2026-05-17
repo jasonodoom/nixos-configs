@@ -14,6 +14,7 @@
     pidgin
     pidginPackages.pidgin-otr
     element-desktop
+    mattermost-desktop
     slack
 
     # Media and Graphics
@@ -73,7 +74,7 @@
     arandr
     maim
     scrot
-    xclip  
+    xclip
     xcowsay
 
     # Spell checking
@@ -83,7 +84,7 @@
     # WeeChat extensions
     weechatScripts.weechat-notify-send
 
-    # X11 utilities 
+    # X11 utilities
     xorg.xprop
 
     # Remote access
