@@ -67,7 +67,9 @@ format = "[($branch)]($style) "
 style = "bold red"
 
 [git_status]
-format = "[$all_status$ahead_behind]($style) "
+# Don't use $all_status — starship 1.25 prepends a literal '$' to its output.
+# Listing the individual status variables explicitly renders cleanly.
+format = "[$conflicted$stashed$deleted$renamed$modified$staged$untracked$ahead_behind]($style) "
 style = "bold red"
 modified = "✗"
 untracked = "?"
