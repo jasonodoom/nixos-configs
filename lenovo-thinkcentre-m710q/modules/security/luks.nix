@@ -1,4 +1,4 @@
-# LUKS disk encryption with SSH unlock 
+# LUKS disk encryption with SSH unlock
 { config, pkgs, lib, ... }:
 
 {
@@ -42,7 +42,8 @@
         Type = "notify";
         ExecStartPre = "/bin/mkdir -p /var/lib/tailscale";
         ExecStart = "${pkgs.tailscale}/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock";
-        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --auth-key=$(cat /etc/tailscale/auth-key) --hostname=congo-initrd'";
+        # --ssh: fallback path if sshd-over-Tailscale routing isn't usable.
+        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --ssh --timeout=60s --auth-key=$(cat /etc/tailscale/auth-key) --hostname=congo-initrd'";
         Restart = "on-failure";
       };
     };
@@ -70,7 +71,7 @@
     };
 
     # Display IP address on console after network is up
-    # This runs last so the IP info stays visible 
+    # This runs last so the IP info stays visible
     systemd.services.display-ip = {
       description = "Display IP address for SSH access";
       wantedBy = [ "sysinit.target" ];

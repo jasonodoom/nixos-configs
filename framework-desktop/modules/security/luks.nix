@@ -46,7 +46,8 @@
           "/bin/mkdir -p /var/lib/tailscale"
         ];
         ExecStart = "${pkgs.tailscale}/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock";
-        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --auth-key=$(cat /etc/tailscale/auth-key) --hostname=perdurabo-initrd && echo \"[INITRD] Tailscale connected at $(date)\" | tee -a /run/initrd.log'";
+        # --ssh: fallback path if sshd-over-Tailscale routing isn't usable.
+        ExecStartPost = "/bin/sh -c 'sleep 2 && ${pkgs.tailscale}/bin/tailscale up --ssh --timeout=60s --auth-key=$(cat /etc/tailscale/auth-key) --hostname=perdurabo-initrd && echo \"[INITRD] Tailscale connected at $(date)\" | tee -a /run/initrd.log'";
         Restart = "on-failure";
         StandardOutput = "journal+console";
         StandardError = "journal+console";
