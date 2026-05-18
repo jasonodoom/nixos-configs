@@ -39,29 +39,13 @@
       checkReversePath = "loose";
     };
 
-    # Container networking
+    # Container networking. Pi-hole now runs directly on the host, so no
+    # forwardPorts are needed; what remains here serves any remaining
+    # ve-* containers (e.g. homepage) that NAT out via enp0s31f6.
     nat = {
       enable = true;
       internalInterfaces = ["ve-+"];
       externalInterface = "enp0s31f6";
-
-      # Port forwarding for container services. Pi-hole DNS stays open on
-      # LAN; admin UI and OpenBao API are reached via the host's tailscale0
-      # IP and use the in-kernel routing into the container subnet, so they
-      # do not need DNAT entries and the LAN firewall keeps them out.
-      forwardPorts = [
-        # Pi-hole DNS (TCP & UDP)
-        {
-          sourcePort = 53;
-          destination = "192.168.100.42:53";
-          proto = "tcp";
-        }
-        {
-          sourcePort = 53;
-          destination = "192.168.100.42:53";
-          proto = "udp";
-        }
-      ];
     };
 
   };
