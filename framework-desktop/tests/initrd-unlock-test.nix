@@ -37,6 +37,12 @@ let
     { name = "tailscale-initrd service defined";
       ok = tsUnit != null; }
 
+    { name = "tailscale up command includes --ssh flag";
+      ok = tsUnit != null
+        && (let post = tsUnit.serviceConfig.ExecStartPost or "";
+                postStr = if builtins.isList post then lib.concatStringsSep " " post else post;
+            in lib.hasInfix "tailscale up" postStr && lib.hasInfix "--ssh" postStr); }
+
     { name = "tailscale-initrd waits for network-online";
       ok = tsUnit != null && lib.elem "network-online.target" (tsUnit.after or []); }
 
