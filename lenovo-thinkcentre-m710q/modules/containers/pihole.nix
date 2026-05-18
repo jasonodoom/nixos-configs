@@ -74,6 +74,18 @@
         # clients in the same subnet as Pi-hole, which silently drops queries
         # from Tailscale (100.64.0.0/10).
         listeningMode = "ALL";
+
+        # Conditional forwarding for RFC1918 reverse-DNS: send PTR lookups
+        # for private IP ranges to pfSense Unbound (192.168.1.1) so the
+        # Pi-hole query log shows real hostnames instead of bare IPs.
+        # pfSense needs `regdhcp` + `regdhcpstatic` enabled (done) and
+        # static DHCP reservations need a hostname set.
+        # Format per pihole-FTL v6: "enabled,CIDR,dns-server[#port],domain"
+        revServers = [
+          "true,192.168.0.0/16,192.168.1.1#53,home"
+          "true,172.16.0.0/12,192.168.1.1#53,home"
+          "true,10.0.0.0/8,192.168.1.1#53,home"
+        ];
       };
 
       webserver = {
