@@ -76,6 +76,7 @@
         # Services
         ./modules/services/logs.nix
         ./modules/services/verify-commits.nix
+        ./modules/services/caddy.nix
 
         # Container services
         # ./modules/containers/openbao.nix
