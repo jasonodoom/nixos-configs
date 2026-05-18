@@ -7,6 +7,17 @@
   # systemd-resolved binds 127.0.0.53:53 and would race with pihole-FTL.
   services.resolved.enable = lib.mkForce false;
 
+  # Restrict the Pi-hole web UI to Tailscale + the LAN subnets that need it.
+  # DNS (port 53) stays open via services.pihole-ftl.openFirewallDNS.
+  # Using extraCommands (iptables) because the firewall backend here is
+  # iptables-nft, not nftables-native; extraInputRules would be ignored.
+  networking.firewall.extraCommands = ''
+    for src in 100.64.0.0/10 192.168.1.0/24 192.168.88.0/24; do
+      iptables -A nixos-fw -p tcp --source "$src" --dport 80  -j nixos-fw-accept
+      iptables -A nixos-fw -p tcp --source "$src" --dport 443 -j nixos-fw-accept
+    done
+  '';
+
   # The packaged `pihole` shell wrapper unconditionally calls
   # /run/wrappers/bin/sudo -u pihole, which doesn't exist on this host
   # (sudo is disabled in favor of doas). Provide a setuid shim there that
@@ -40,7 +51,9 @@
   services.pihole-ftl = {
     enable = true;
     openFirewallDNS = true;
-    openFirewallWebserver = true;
+    # Web UI is firewall-restricted below (Tailscale + specific LANs only);
+    # the module's global open-to-world would override that.
+    openFirewallWebserver = false;
 
     # Embedded webserver (pihole-FTL v6+).
     webserverEnabled = true;
@@ -57,6 +70,10 @@
         cache_size = 10000;
         bogusPriv = true;
         domainNeeded = true;
+        # Accept queries on any interface/source. Default "LOCAL" only allows
+        # clients in the same subnet as Pi-hole, which silently drops queries
+        # from Tailscale (100.64.0.0/10).
+        listeningMode = "ALL";
       };
 
       webserver = {
