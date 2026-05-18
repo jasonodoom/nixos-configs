@@ -62,6 +62,16 @@ in
       openssh
     ]);
 
+    # Required to run claude-code (Bun standalone) without patching it -
+    # the binary's PT_INTERP is /lib64/ld-linux-x86-64.so.2 and patchelf
+    # corrupts its embedded JS payload.
+    programs.nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        stdenv.cc.cc.lib
+      ];
+    };
+
     services.openssh = {
       enable = true;
       ports = [ cfg.sshPort ];

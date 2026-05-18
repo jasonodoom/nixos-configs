@@ -119,8 +119,13 @@ jobs:
                 inherit hash;
               };
               dontUnpack = true;
-              nativeBuildInputs = [ final.autoPatchelfHook ];
-              buildInputs = [ final.stdenv.cc.cc.lib ];
+              # Ship the binary byte-for-byte. claude-code is a Bun single-file
+              # executable with the JS payload appended after the ELF; any post-build
+              # touching (autoPatchelfHook, strip, the default fixup patchelf pass)
+              # shifts the trailer offset and Bun can't find the payload. nix-ld in
+              # the guest supplies /lib64/ld-linux-x86-64.so.2 and libstdc++.
+              dontStrip = true;
+              dontPatchELF = true;
               installPhase = ''
                 install -Dm755 $src $out/bin/claude
               '';
@@ -148,8 +153,13 @@ jobs:
                 inherit hash;
               };
               dontUnpack = true;
-              nativeBuildInputs = [ final.autoPatchelfHook ];
-              buildInputs = [ final.stdenv.cc.cc.lib ];
+              # Ship the binary byte-for-byte. claude-code is a Bun single-file
+              # executable with the JS payload appended after the ELF; any post-build
+              # touching (autoPatchelfHook, strip, the default fixup patchelf pass)
+              # shifts the trailer offset and Bun can't find the payload. nix-ld in
+              # the guest supplies /lib64/ld-linux-x86-64.so.2 and libstdc++.
+              dontStrip = true;
+              dontPatchELF = true;
               installPhase = ''
                 install -Dm755 $src $out/bin/claude
               '';
