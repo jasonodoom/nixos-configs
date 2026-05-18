@@ -35,7 +35,7 @@
   # assets from this package via its embedded webserver).
   services.pihole-web = {
     enable = true;
-    ports = [ 80 443 ];
+    ports = [ 8081 ]; # fronted by Caddy; 8080 conflicts with logs.nix nginx
   };
 
   # Known limitations from the current nixpkgs packaging:
