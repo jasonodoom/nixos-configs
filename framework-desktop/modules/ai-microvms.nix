@@ -136,5 +136,12 @@ in
 
   microvm.vms = lib.mapAttrs mkAgentVm agents;
 
+  # Don't let nixos-rebuild switch bounce running VMs - it would drop any
+  # active claude/codex/gemini session. New config sits on disk; pick it
+  # up with `claude-restart` etc. or `ai-restart-all` when convenient.
+  systemd.services = lib.genAttrs
+    (map (n: "microvm@${n}") (lib.attrNames agents))
+    (_: { restartIfChanged = false; });
+
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
 }

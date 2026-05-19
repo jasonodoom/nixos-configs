@@ -93,6 +93,10 @@ in
     # AI agents in sandboxed microvms: `claude`/`codex`/`gemini` are defined
     # as functions above (see interactiveShellInit) so they can detect
     # bypass flags and tint the Ghostty tab. No alias needed here.
+    "claude-restart" = "doas systemctl restart microvm@claude";
+    "codex-restart"  = "doas systemctl restart microvm@codex";
+    "gemini-restart" = "doas systemctl restart microvm@gemini";
+    "ai-restart-all" = "doas systemctl restart microvm@claude microvm@codex microvm@gemini";
 
     # File generation utilities
     "100mb" = "dd if=/dev/zero of=100mb.file bs=100 count=1024000";
