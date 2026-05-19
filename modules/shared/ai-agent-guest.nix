@@ -72,6 +72,13 @@ in
       ];
     };
 
+    # Stop claude-code's self-updater from downloading a parallel binary
+    # into ~/.local/share/claude. nix owns the version here; if the user
+    # wants a newer one they bump the overlay.
+    environment.variables = {
+      DISABLE_AUTOUPDATER = "1";
+    };
+
     services.openssh = {
       enable = true;
       ports = [ cfg.sshPort ];
