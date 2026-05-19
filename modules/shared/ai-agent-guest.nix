@@ -95,7 +95,7 @@ in
     environment.etc."gitconfig".text = ''
       [user]
         name = Jason Odoom
-        email = jasonodoom@riseup.net
+        email = jason@adastracomputing.com
         signingkey = A46573671D50E3D8
       [commit]
         gpgsign = true
