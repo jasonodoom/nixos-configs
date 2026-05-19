@@ -173,7 +173,6 @@ in
       jq
       ripgrep
       nodejs
-      python3
       openssh
       gnupg
       gh
@@ -200,6 +199,8 @@ in
       ripgrep-all
       # Peer messaging
       askPeer
+      # SDKs the agents reach for most often; available without nix-shell.
+      (python3.withPackages (ps: with ps; [ anthropic openai ]))
     ]);
 
     systemd.services.ai-peer-inbox-watcher = {
@@ -227,9 +228,14 @@ in
       ];
     };
 
+    # nix-shell -p X resolves X against the same nixpkgs the guest was
+    # built from; pairs with the writable /nix/store overlay so packages
+    # can actually materialize at runtime.
+    nix.nixPath = [ "nixpkgs=${pkgs.path}" ];
+
     # Stop claude-code's self-updater from downloading a parallel binary
-    # into ~/.local/share/claude. nix owns the version here; if the user
-    # wants a newer one they bump the overlay.
+    # into ~/.local/share/claude. The overlay version is bumped by
+    # .github/workflows/update-claude-code.yml.
     environment.variables = {
       DISABLE_AUTOUPDATER = "1";
     };

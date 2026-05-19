@@ -92,7 +92,18 @@ let
             tag = "agent-peers";
             proto = "virtiofs";
           }
+          # Persistent upper layer for the writable /nix/store overlay.
+          # Lets nix-shell / nix develop materialize derivations inside
+          # the VM; survives VM restarts since it lives on the host.
+          {
+            source = "${userHomeState}/${name}-rwstore";
+            mountPoint = "/nix/.rwstore";
+            tag = "agent-rwstore";
+            proto = "virtiofs";
+          }
         ];
+
+        writableStoreOverlay = "/nix/.rwstore";
       };
 
       networking.useNetworkd = true;
@@ -115,6 +126,9 @@ in
     "d ${userHomeState}/claude-sshd  0700 root  root  -"
     "d ${userHomeState}/codex-sshd   0700 root  root  -"
     "d ${userHomeState}/gemini-sshd  0700 root  root  -"
+    "d ${userHomeState}/claude-rwstore 0700 root root -"
+    "d ${userHomeState}/codex-rwstore  0700 root root -"
+    "d ${userHomeState}/gemini-rwstore 0700 root root -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];
