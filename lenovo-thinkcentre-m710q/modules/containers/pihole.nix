@@ -60,11 +60,13 @@
 
     settings = {
       dns = {
+        # Forward to pfSense Unbound, which does DoT to Mullvad over PIA.
+        # Avoids Pi-hole sending plaintext DNS to the internet — the ISP
+        # only ever sees encrypted DoT traffic to Mullvad's exit IP.
+        # If pfSense Unbound is down, Pi-hole serves from cache until TTLs
+        # expire; that's an acceptable tradeoff for a homelab.
         upstreams = [
-          "194.242.2.2"
-          "2a07:e340::2"
-          "9.9.9.9"
-          "149.112.112.9"
+          "192.168.1.1#53"
         ];
         dnssec = true;
         cache_size = 10000;
