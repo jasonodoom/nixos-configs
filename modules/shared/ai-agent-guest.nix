@@ -60,6 +60,7 @@ in
       nodejs
       python3
       openssh
+      gnupg
     ]);
 
     # Required to run claude-code (Bun standalone) without patching it -
@@ -87,16 +88,15 @@ in
       PATH = [ "$HOME/.local/bin" ];
     };
 
-    # Sign commits via SSH using the YubiKey-backed key forwarded by the
-    # host's ssh-agent. The pubkey is dropped into ~/.ssh/signing-key.pub
-    # out-of-band (it has to match a key the agent serves; we don't have
-    # the secret here). Adding the same pubkey on GitHub as a "signing"
-    # key is what makes the verified badge appear.
+    # OpenPGP signing with the key in ~/.gnupg is the default. SSH signing
+    # is opt-in per-invocation when the host's ssh-agent is forwarded:
+    #   git -c gpg.format=ssh -c user.signingkey=~/.ssh/signing-key.pub \
+    #       commit -S -m ...
     environment.etc."gitconfig".text = ''
-      [gpg]
-        format = ssh
       [user]
-        signingkey = ~/.ssh/signing-key.pub
+        name = Jason Odoom
+        email = jasonodoom@riseup.net
+        signingkey = A46573671D50E3D8
       [commit]
         gpgsign = true
       [tag]
