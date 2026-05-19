@@ -115,14 +115,16 @@ let
       ${pkgs.coreutils}/bin/rm -f "$processing"
     }
 
-    # Drain anything already pending at startup.
-    for f in "$my_inbox"/*.json; do process "$f"; done
-
-    ${pkgs.inotify-tools}/bin/inotifywait -m -e close_write,moved_to \
-        --format '%w%f' "$my_inbox" \
-    | while read -r f; do
+    # Poll the inbox. inotify doesn't fire when the writer is on the other
+    # side of a virtiofs (perdurabo) or bind mount (congo), so cross-vm
+    # asks would queue forever waiting for an event that never arrives.
+    while :; do
+      for f in "$my_inbox"/*.json; do
+        [ -e "$f" ] || continue
         process "$f"
       done
+      sleep 2
+    done
   '';
 in
 {
@@ -196,7 +198,6 @@ in
       tldr
       ripgrep-all
       # Peer messaging
-      inotify-tools
       askPeer
     ]);
 
