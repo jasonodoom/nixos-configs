@@ -32,8 +32,12 @@
       # Note: In tmux, Ctrl+A is the default prefix, but we can bind direct keys
 
       # Your screen bindings: ^L windowlist, ^N new screen
-      bind-key -n C-l choose-window      # Ctrl+L shows window list (like screen)
+      bind-key -n C-l choose-tree -Zw -F "#{window_index}: #{=60:window_name}#{window_flags}"
       bind-key -n C-n new-window        # Ctrl+N creates new window (like screen)
+      bind-key -n C-S-l send-keys C-l   # Ctrl+Shift+L still clears the shell
+
+      set -s extended-keys on
+      set -as terminal-features "*:extkeys"
 
       # Additional screen-like navigation
       bind-key C-a last-window          # Ctrl+A Ctrl+A switches to last window
@@ -55,8 +59,7 @@
       set -g default-terminal "screen-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
 
-      # Increase scrollback (you had 5000 in screen)
-      set -g history-limit 10000
+      set -g history-limit 100000
 
       # No startup message (like your screen config)
       set -g display-time 2000
