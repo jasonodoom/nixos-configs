@@ -38,4 +38,7 @@ in
 
   # Tailscale auth key for the forgejo-runner microvm
   "forgejo-runner-tailscale-authkey.age".publicKeys = all;
+
+  # Tailscale auth key for AI agent microvms (claude/codex/gemini)
+  "ai-agent-tailscale-authkey.age".publicKeys = all;
 }

@@ -101,9 +101,22 @@ let
             tag = "agent-rwstore";
             proto = "virtiofs";
           }
+          {
+            source = "${userHomeState}/${name}-secrets";
+            mountPoint = "/run/host-secrets";
+            tag = "agent-secrets";
+            proto = "virtiofs";
+          }
         ];
 
         writableStoreOverlay = "/nix/.rwstore";
+      };
+
+      services.tailscale = {
+        enable = true;
+        authKeyFile = "/run/host-secrets/tailscale-authkey";
+        extraUpFlags = [ "--ssh" "--hostname=ai-${name}" ];
+        openFirewall = true;
       };
 
       networking.useNetworkd = true;
@@ -118,6 +131,11 @@ let
   };
 in
 {
+  age.secrets.ai-agent-tailscale-authkey = {
+    file = ../secrets/ai-agent-tailscale-authkey.age;
+    mode = "0400";
+  };
+
   systemd.tmpfiles.rules = [
     "d ${userHomeState}              0750 jason users -"
     "d ${userHomeState}/claude       0750 1000  1000  -"
@@ -129,6 +147,9 @@ in
     "d ${userHomeState}/claude-rwstore 0700 root root -"
     "d ${userHomeState}/codex-rwstore  0700 root root -"
     "d ${userHomeState}/gemini-rwstore 0700 root root -"
+    "d ${userHomeState}/claude-secrets 0700 root root -"
+    "d ${userHomeState}/codex-secrets  0700 root root -"
+    "d ${userHomeState}/gemini-secrets 0700 root root -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];
@@ -153,9 +174,18 @@ in
   # Don't let nixos-rebuild switch bounce running VMs - it would drop any
   # active claude/codex/gemini session. New config sits on disk; pick it
   # up with `claude-restart` etc. or `ai-restart-all` when convenient.
-  systemd.services = lib.genAttrs
-    (map (n: "microvm@${n}") (lib.attrNames agents))
-    (_: { restartIfChanged = false; });
+  # preStart drops the decrypted tailscale auth key into the per-VM
+  # secrets dir that's virtiofs-shared into the guest as /run/host-secrets.
+  systemd.services = lib.mapAttrs' (name: _:
+    lib.nameValuePair "microvm@${name}" {
+      restartIfChanged = false;
+      preStart = ''
+        install -m 0400 ${config.age.secrets.ai-agent-tailscale-authkey.path} \
+          ${userHomeState}/${name}-secrets/tailscale-authkey
+      '';
+      serviceConfig.PermissionsStartOnly = true;
+    }
+  ) agents;
 
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
 }
