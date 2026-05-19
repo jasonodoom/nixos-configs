@@ -12,6 +12,94 @@
 
 let
   cfg = config.my.aiAgent;
+
+  # ~/peers is the shared parent ai-agents dir. A "_inbox" subdir there
+  # acts as a message queue between the three guests: each ask writes
+  # _inbox/<to>/<id>.json, the recipient's watcher invokes its local
+  # CLI and drops _inbox/<from>/<id>.response.json.
+  inboxDir = "/home/agent/peers/_inbox";
+
+  askPeer = pkgs.writeShellScriptBin "ask-peer" ''
+    set -eu
+    if [ $# -lt 2 ]; then
+      echo "usage: ask-peer <claude|codex|gemini> <prompt...>" >&2
+      exit 2
+    fi
+    to=$1; shift
+    prompt="$*"
+    self=$(${pkgs.inetutils}/bin/hostname | sed 's/^ai-//')
+
+    ${pkgs.coreutils}/bin/mkdir -p "${inboxDir}/$to" "${inboxDir}/$self"
+
+    id=$(${pkgs.util-linux}/bin/uuidgen)
+    req="${inboxDir}/$to/$id.json"
+    resp="${inboxDir}/$self/$id.response.json"
+
+    ${pkgs.jq}/bin/jq -n \
+      --arg id "$id" --arg from "$self" --arg to "$to" --arg p "$prompt" \
+      '{id:$id, from:$from, to:$to, prompt:$p, created_at: (now|todate)}' \
+      > "$req.tmp"
+    ${pkgs.coreutils}/bin/mv "$req.tmp" "$req"
+
+    for _ in $(seq 1 300); do
+      if [ -f "$resp" ]; then
+        ${pkgs.jq}/bin/jq -r '.response' "$resp"
+        ${pkgs.coreutils}/bin/rm -f "$resp"
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "ask-peer: timeout waiting for $to" >&2
+    exit 1
+  '';
+
+  inboxWatcher = pkgs.writeShellScriptBin "ai-peer-inbox-watcher" ''
+    set -u
+    self=$(${pkgs.inetutils}/bin/hostname | sed 's/^ai-//')
+    my_inbox=${inboxDir}/$self
+    ${pkgs.coreutils}/bin/mkdir -p "$my_inbox"
+
+    case "$self" in
+      claude) invoke() { claude -p "$1" 2>&1; } ;;
+      codex)  invoke() { codex exec  "$1" 2>&1; } ;;
+      gemini) invoke() { gemini -p   "$1" 2>&1; } ;;
+      *) echo "unknown agent $self" >&2; exit 1 ;;
+    esac
+
+    process() {
+      req=$1
+      [ -f "$req" ] || return
+      case "$req" in *.response.json|*.processing) return ;; esac
+
+      processing="''${req%.json}.processing"
+      ${pkgs.coreutils}/bin/mv "$req" "$processing" 2>/dev/null || return
+
+      id=$(${pkgs.jq}/bin/jq -r '.id' "$processing")
+      from=$(${pkgs.jq}/bin/jq -r '.from' "$processing")
+      prompt=$(${pkgs.jq}/bin/jq -r '.prompt' "$processing")
+
+      response=$(invoke "$prompt" || true)
+
+      out=${inboxDir}/$from
+      ${pkgs.coreutils}/bin/mkdir -p "$out"
+      ${pkgs.jq}/bin/jq -n \
+        --arg id "$id" --arg from "$self" --arg to "$from" --arg r "$response" \
+        '{id:$id, from:$from, to:$to, response:$r, created_at: (now|todate)}' \
+        > "$out/$id.response.json.tmp"
+      ${pkgs.coreutils}/bin/mv "$out/$id.response.json.tmp" "$out/$id.response.json"
+
+      ${pkgs.coreutils}/bin/rm -f "$processing"
+    }
+
+    # Drain anything already pending at startup.
+    for f in "$my_inbox"/*.json; do process "$f"; done
+
+    ${pkgs.inotify-tools}/bin/inotifywait -m -e close_write,moved_to \
+        --format '%w%f' "$my_inbox" \
+    | while read -r f; do
+        process "$f"
+      done
+  '';
 in
 {
   options.my.aiAgent = {
@@ -83,7 +171,25 @@ in
       httpie
       tldr
       ripgrep-all
+      # Peer messaging
+      inotify-tools
+      askPeer
     ]);
+
+    systemd.services.ai-peer-inbox-watcher = {
+      description = "Watch peer inbox for messages from other AI agents";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      path = cfg.packages;
+      serviceConfig = {
+        Type = "simple";
+        User = "agent";
+        Group = "agent";
+        ExecStart = "${inboxWatcher}/bin/ai-peer-inbox-watcher";
+        Restart = "always";
+        RestartSec = "5s";
+      };
+    };
 
     # Required to run claude-code (Bun standalone) without patching it -
     # the binary's PT_INTERP is /lib64/ld-linux-x86-64.so.2 and patchelf
