@@ -107,6 +107,15 @@ let
             tag = "agent-secrets";
             proto = "virtiofs";
           }
+          # Persist tailscaled state so the VM keeps the same tailnet
+          # node identity across restarts; without this each restart
+          # registers a fresh node and the hostname gets a -N suffix.
+          {
+            source = "${userHomeState}/${name}-tailscale";
+            mountPoint = "/var/lib/tailscale";
+            tag = "agent-tailscale";
+            proto = "virtiofs";
+          }
         ];
 
         writableStoreOverlay = "/nix/.rwstore";
@@ -150,6 +159,9 @@ in
     "d ${userHomeState}/claude-secrets 0700 root root -"
     "d ${userHomeState}/codex-secrets  0700 root root -"
     "d ${userHomeState}/gemini-secrets 0700 root root -"
+    "d ${userHomeState}/claude-tailscale 0700 root root -"
+    "d ${userHomeState}/codex-tailscale  0700 root root -"
+    "d ${userHomeState}/gemini-tailscale 0700 root root -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];
