@@ -168,29 +168,28 @@ jobs:
       - name: Open or update tracking issue
         if: steps.vulnix.outputs.rc == '2' && inputs.pr_number == ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT with issues:write on jasonodoom/nixos-vulnix-private.
+          # GITHUB_TOKEN can't write cross-repo.
+          GH_TOKEN: ${{ secrets.VULNIX_REPO_TOKEN }}
           HOST_NAME: ${{ inputs.host_name }}
+          REPO: jasonodoom/nixos-vulnix-private
         run: |
           set -eu
           TITLE="vulnix: CVEs detected on ${HOST_NAME}"
-          gh label create security --color B60205 --description "Security-related issue" 2>/dev/null || true
-          gh label create automated --color BFD4F2 --description "Created by automation" 2>/dev/null || true
-          # Dedup across ALL states — if a tracking issue exists (open OR
-          # closed), reopen it and add a comment instead of opening a fresh
-          # one each run. This lets you close the issue when CVEs are
-          # acknowledged without spawning duplicates the next day.
-          EXISTING=$(gh issue list --label security --state all \
+          gh label create security  --repo "$REPO" --color B60205 --description "Security-related issue" 2>/dev/null || true
+          gh label create automated --repo "$REPO" --color BFD4F2 --description "Created by automation"  2>/dev/null || true
+          EXISTING=$(gh issue list --repo "$REPO" --label security --state all \
             --search "in:title \"${TITLE}\"" \
             --json number,state --jq '.[0]')
           if [ -n "$EXISTING" ]; then
             NUM=$(echo "$EXISTING" | jq -r .number)
             STATE=$(echo "$EXISTING" | jq -r .state)
             if [ "$STATE" = "CLOSED" ]; then
-              gh issue reopen "$NUM"
+              gh issue reopen "$NUM" --repo "$REPO"
             fi
-            gh issue comment "$NUM" --body-file findings-body.md
+            gh issue comment "$NUM" --repo "$REPO" --body-file findings-body.md
           else
-            gh issue create \
+            gh issue create --repo "$REPO" \
               --title "$TITLE" \
               --body-file findings-body.md \
               --label security \
