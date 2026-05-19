@@ -61,6 +61,7 @@ in
       python3
       openssh
       gnupg
+      gh
     ]);
 
     # Required to run claude-code (Bun standalone) without patching it -
