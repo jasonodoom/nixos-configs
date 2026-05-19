@@ -267,6 +267,8 @@ in
         # hooksPath at an empty dir to skip them; run pre-commit manually
         # before opening a PR.
         hooksPath = /var/empty
+      [url "ssh://git@perdurabo.ussuri-elevator.ts.net:2222/"]
+        insteadOf = git@perdurabo.ussuri-elevator.ts.net:
     '';
 
     services.openssh = {
