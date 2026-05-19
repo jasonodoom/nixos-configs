@@ -62,6 +62,27 @@ in
       openssh
       gnupg
       gh
+      # Editor + pager + modern coreutils
+      vim
+      less
+      bat
+      fd
+      # JS / Cloudflare Workers stack
+      wrangler
+      bun
+      direnv
+      gnumake
+      delta
+      yq-go
+      sqlite
+      # Nix repo work
+      agenix-cli
+      nixpkgs-fmt
+      alejandra
+      # Shell quality-of-life
+      httpie
+      tldr
+      ripgrep-all
     ]);
 
     # Required to run claude-code (Bun standalone) without patching it -
