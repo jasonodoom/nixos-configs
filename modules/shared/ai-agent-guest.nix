@@ -70,7 +70,10 @@ let
         fi
       } ;;
       codex)  invoke() {
-        if [ -n "$1" ]; then codex exec resume "$1" "$2" 2>&1
+        # --all disables codex's cwd-based session filter so sessions
+        # recorded in any directory remain resumable from this daemon's
+        # working dir (/home/agent).
+        if [ -n "$1" ]; then codex exec resume --all "$1" "$2" 2>&1
         else                  codex exec "$2" 2>&1
         fi
       } ;;
