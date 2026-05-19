@@ -70,11 +70,12 @@ let
         fi
       } ;;
       codex)  invoke() {
-        # --all disables codex's cwd-based session filter so sessions
-        # recorded in any directory remain resumable from this daemon's
-        # working dir (/home/agent).
-        if [ -n "$1" ]; then codex exec resume --all "$1" "$2" 2>&1
-        else                  codex exec "$2" 2>&1
+        # /home/agent isn't a git repo; bypass flag skips approval prompts
+        # that would hang a non-interactive exec. --all so sessions
+        # recorded in any cwd remain resumable.
+        FLAGS="--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check"
+        if [ -n "$1" ]; then codex exec $FLAGS resume --all "$1" "$2" 2>&1
+        else                  codex exec $FLAGS "$2" 2>&1
         fi
       } ;;
       gemini) invoke() { gemini -p "$2" 2>&1; } ;;
