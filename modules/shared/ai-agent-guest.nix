@@ -87,6 +87,22 @@ in
       PATH = [ "$HOME/.local/bin" ];
     };
 
+    # Sign commits via SSH using the YubiKey-backed key forwarded by the
+    # host's ssh-agent. The pubkey is dropped into ~/.ssh/signing-key.pub
+    # out-of-band (it has to match a key the agent serves; we don't have
+    # the secret here). Adding the same pubkey on GitHub as a "signing"
+    # key is what makes the verified badge appear.
+    environment.etc."gitconfig".text = ''
+      [gpg]
+        format = ssh
+      [user]
+        signingkey = ~/.ssh/signing-key.pub
+      [commit]
+        gpgsign = true
+      [tag]
+        gpgsign = true
+    '';
+
     services.openssh = {
       enable = true;
       ports = [ cfg.sshPort ];
