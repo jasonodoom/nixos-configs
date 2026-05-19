@@ -101,6 +101,12 @@ in
         gpgsign = true
       [tag]
         gpgsign = true
+      [core]
+        # Repo hooks are nix-store-pinned to whichever host ran
+        # pre-commit install, so their shebangs are unusable here. Point
+        # hooksPath at an empty dir to skip them; run pre-commit manually
+        # before opening a PR.
+        hooksPath = /var/empty
     '';
 
     services.openssh = {
