@@ -79,6 +79,14 @@ in
       DISABLE_AUTOUPDATER = "1";
     };
 
+    # claude-code still nags "Native installation exists but ~/.local/bin
+    # is not in your PATH" on every startup even with the autoupdater off.
+    # Putting the dir on PATH satisfies the check; it stays empty because
+    # the autoupdater can't write to it.
+    environment.sessionVariables = {
+      PATH = [ "$HOME/.local/bin" ];
+    };
+
     services.openssh = {
       enable = true;
       ports = [ cfg.sshPort ];
