@@ -61,6 +61,7 @@
           ./modules/ghostty.nix
           ./modules/determinate-nix-update.nix
           ./modules/darwin-auto-update.nix
+          ./modules/sync-ai-history.nix
           ./modules/homebrew.nix
           ./modules/container.nix
           ./modules/dock.nix

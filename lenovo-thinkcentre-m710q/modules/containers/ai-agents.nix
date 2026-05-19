@@ -21,10 +21,14 @@ let
   ];
 
   agents = {
-    claude = { hostAddress = "10.0.43.1";  localAddress = "10.0.43.2";  sshPort = 2201; package = pkgs.claude-code; };
-    codex  = { hostAddress = "10.0.43.5";  localAddress = "10.0.43.6";  sshPort = 2202; package = pkgs.codex; };
-    gemini = { hostAddress = "10.0.43.9";  localAddress = "10.0.43.10"; sshPort = 2203; package = pkgs.gemini-cli; };
+    claude = { hostAddress = "10.0.43.1";  localAddress = "10.0.43.2";  sshPort = 2201; };
+    codex  = { hostAddress = "10.0.43.5";  localAddress = "10.0.43.6";  sshPort = 2202; };
+    gemini = { hostAddress = "10.0.43.9";  localAddress = "10.0.43.10"; sshPort = 2203; };
   };
+
+  # Each guest gets every agent CLI so claude can shell out to codex/gemini
+  # and vice versa.
+  allAgentPackages = with pkgs; [ claude-code codex gemini-cli ];
 
   mkContainer = name: agent: {
     autoStart = false;
@@ -41,6 +45,12 @@ let
         hostPath = codeDir;
         isReadOnly = false;
       };
+      # Mount the parent dir so each guest can read the others'
+      # ~/.claude/projects, ~/.codex/sessions, etc. at ~/peers/<agent>/.
+      "/home/agent/peers" = {
+        hostPath = userHomeState;
+        isReadOnly = false;
+      };
     };
 
     config = { config, pkgs, lib, ... }: {
@@ -51,7 +61,7 @@ let
 
       my.aiAgent = {
         inherit name;
-        packages = [ agent.package ];
+        packages = allAgentPackages;
         sshPort = agent.sshPort;
         hostPublicKeys = hostAuthorizedKeys;
       };

@@ -8,12 +8,27 @@ in
   # `claude` / `codex` / `gemini` on perdurabo always SSH into the matching
   # microvm. The wrapper detects the bypass flag in the user's args and
   # colors the Ghostty tab (OSC passes through SSH) only in that case.
+  #
+  # /home/jason/code is virtiofs-shared into the guests as /home/agent/code,
+  # so when the user invokes an agent from anywhere under that tree we cd
+  # to the equivalent guest path first - otherwise the agent lands at
+  # /home/agent and /resume can't find project-scoped history.
   programs.bash.interactiveShellInit = lib.mkAfter ''
     ${yolo.shellSnippet}
 
-    claude() { __yolo_wrap claude "ssh -qt ai-claude claude" "$@"; }
-    codex()  { __yolo_wrap codex  "ssh -qt ai-codex codex"   "$@"; }
-    gemini() { __yolo_wrap gemini "ssh -qt ai-gemini gemini" "$@"; }
+    __ai_remote_cmd() {
+      local cmd="$1"
+      case "$PWD" in
+        /home/jason/code|/home/jason/code/*)
+          printf 'cd %q && exec %s' "/home/agent''${PWD#/home/jason}" "$cmd" ;;
+        *)
+          printf 'exec %s' "$cmd" ;;
+      esac
+    }
+
+    claude() { __yolo_wrap claude "ssh -qt ai-claude $(printf '%q' "$(__ai_remote_cmd claude)")" "$@"; }
+    codex()  { __yolo_wrap codex  "ssh -qt ai-codex  $(printf '%q' "$(__ai_remote_cmd codex)")"  "$@"; }
+    gemini() { __yolo_wrap gemini "ssh -qt ai-gemini $(printf '%q' "$(__ai_remote_cmd gemini)")" "$@"; }
   '';
 
   programs.bash.shellAliases = {
@@ -78,6 +93,10 @@ in
     # AI agents in sandboxed microvms: `claude`/`codex`/`gemini` are defined
     # as functions above (see interactiveShellInit) so they can detect
     # bypass flags and tint the Ghostty tab. No alias needed here.
+    "claude-restart" = "doas systemctl restart microvm@claude";
+    "codex-restart"  = "doas systemctl restart microvm@codex";
+    "gemini-restart" = "doas systemctl restart microvm@gemini";
+    "ai-restart-all" = "doas systemctl restart microvm@claude microvm@codex microvm@gemini";
 
     # File generation utilities
     "100mb" = "dd if=/dev/zero of=100mb.file bs=100 count=1024000";

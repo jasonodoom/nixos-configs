@@ -20,10 +20,14 @@ let
   ];
 
   agents = {
-    claude = { mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; package = pkgs.claude-code; };
-    codex  = { mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; package = pkgs.codex; };
-    gemini = { mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; package = pkgs.gemini-cli; };
+    claude = { mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
+    codex  = { mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
+    gemini = { mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
   };
+
+  # Each guest gets every agent CLI so claude can shell out to codex/gemini
+  # and vice versa.
+  allAgentPackages = with pkgs; [ claude-code codex gemini-cli ];
 
   mkAgentVm = name: agent: {
     specialArgs = { inherit inputs; };
@@ -41,7 +45,7 @@ let
 
       my.aiAgent = {
         inherit name;
-        packages = [ agent.package ];
+        packages = allAgentPackages;
         sshPort = agent.sshPort;
         hostPublicKeys = hostAuthorizedKeys;
       };
@@ -78,7 +82,28 @@ let
             tag = "agent-sshd";
             proto = "virtiofs";
           }
+          # Mount the parent dir so each guest can read the others'
+          # ~/.claude/projects, ~/.codex/sessions, etc. at ~/peers/<agent>/.
+          # Same uid mapping (1000 on host = agent in guest) means perms
+          # carry through cleanly.
+          {
+            source = userHomeState;
+            mountPoint = "/home/agent/peers";
+            tag = "agent-peers";
+            proto = "virtiofs";
+          }
+          # Persistent upper layer for the writable /nix/store overlay.
+          # Lets nix-shell / nix develop materialize derivations inside
+          # the VM; survives VM restarts since it lives on the host.
+          {
+            source = "${userHomeState}/${name}-rwstore";
+            mountPoint = "/nix/.rwstore";
+            tag = "agent-rwstore";
+            proto = "virtiofs";
+          }
         ];
+
+        writableStoreOverlay = "/nix/.rwstore";
       };
 
       networking.useNetworkd = true;
@@ -101,6 +126,9 @@ in
     "d ${userHomeState}/claude-sshd  0700 root  root  -"
     "d ${userHomeState}/codex-sshd   0700 root  root  -"
     "d ${userHomeState}/gemini-sshd  0700 root  root  -"
+    "d ${userHomeState}/claude-rwstore 0700 root root -"
+    "d ${userHomeState}/codex-rwstore  0700 root root -"
+    "d ${userHomeState}/gemini-rwstore 0700 root root -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];
@@ -121,6 +149,13 @@ in
   '';
 
   microvm.vms = lib.mapAttrs mkAgentVm agents;
+
+  # Don't let nixos-rebuild switch bounce running VMs - it would drop any
+  # active claude/codex/gemini session. New config sits on disk; pick it
+  # up with `claude-restart` etc. or `ai-restart-all` when convenient.
+  systemd.services = lib.genAttrs
+    (map (n: "microvm@${n}") (lib.attrNames agents))
+    (_: { restartIfChanged = false; });
 
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
 }

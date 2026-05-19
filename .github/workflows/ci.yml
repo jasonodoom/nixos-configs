@@ -33,37 +33,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    # Three microvm closures + their erofs images blow past the default
+    # ~14 GB free on ubuntu-latest. jlumbroso/free-disk-space frees ~32 GB
+    # by removing dotnet, android sdks, haskell, llvm and the toolcache.
     - name: Free up disk space
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        echo "Disk usage before cleanup:"
-        df -h
-        # More aggressive cleanup for framework-desktop builds
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /usr/local/lib/android
-        sudo rm -rf /opt/ghc
-        sudo rm -rf /opt/hostedtoolcache/CodeQL
-        sudo rm -rf /usr/local/share/boost
-        sudo rm -rf /usr/local/graalvm
-        sudo rm -rf /usr/local/share/chromium
-        sudo rm -rf /usr/local/share/powershell
-        sudo rm -rf /opt/microsoft
-        sudo rm -rf /usr/share/swift
-        sudo rm -rf /usr/local/share/vcpkg
-        sudo rm -rf /usr/local/share/cmake
-        sudo rm -rf /opt/az
-        sudo rm -rf /usr/share/gradle
-        sudo docker image prune --all --force
-        sudo docker system prune --all --force --volumes
-        sudo apt-get autoremove -y
-        sudo apt-get autoclean
-        sudo apt-get clean
-        # Remove large language packs
-        sudo rm -rf /usr/share/locale
-        sudo rm -rf /usr/share/doc
-        sudo rm -rf /usr/share/man
-        echo "Disk usage after cleanup:"
-        df -h
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
 
     - name: Install Nix with cache configuration (Perdurabo)
       if: matrix.config == 'perdurabo'

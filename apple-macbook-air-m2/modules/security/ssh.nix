@@ -30,6 +30,11 @@
       HostName perdurabo
       IdentityFile ~/.ssh/id_ed25519
       IdentitiesOnly yes
+      # Forward gpg-agent's ssh socket (holds the YubiKey-backed identity)
+      # so commits made inside perdurabo's AI-agent microvms can be signed
+      # by the card that lives on this Mac.
+      IdentityAgent ~/.gnupg/S.gpg-agent.ssh
+      ForwardAgent yes
 
     Host congo
       HostName congo
