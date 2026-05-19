@@ -23,6 +23,7 @@ let
     set -eu
     if [ $# -lt 2 ]; then
       echo "usage: ask-peer <claude|codex|gemini> <prompt...>" >&2
+      echo "       ask-peer <claude|codex> 'resume:<session-id> <prompt...>'" >&2
       exit 2
     fi
     to=$1; shift
@@ -59,10 +60,21 @@ let
     my_inbox=${inboxDir}/$self
     ${pkgs.coreutils}/bin/mkdir -p "$my_inbox"
 
+    # A prompt prefixed with "resume:<session-id> ..." continues that recorded
+    # session instead of starting a fresh one. gemini has no resume concept,
+    # so the prefix is stripped and ignored there.
     case "$self" in
-      claude) invoke() { claude -p "$1" 2>&1; } ;;
-      codex)  invoke() { codex exec  "$1" 2>&1; } ;;
-      gemini) invoke() { gemini -p   "$1" 2>&1; } ;;
+      claude) invoke() {
+        if [ -n "$1" ]; then claude --resume "$1" -p "$2" 2>&1
+        else                  claude -p "$2" 2>&1
+        fi
+      } ;;
+      codex)  invoke() {
+        if [ -n "$1" ]; then codex exec resume "$1" "$2" 2>&1
+        else                  codex exec "$2" 2>&1
+        fi
+      } ;;
+      gemini) invoke() { gemini -p "$2" 2>&1; } ;;
       *) echo "unknown agent $self" >&2; exit 1 ;;
     esac
 
@@ -78,7 +90,16 @@ let
       from=$(${pkgs.jq}/bin/jq -r '.from' "$processing")
       prompt=$(${pkgs.jq}/bin/jq -r '.prompt' "$processing")
 
-      response=$(invoke "$prompt" || true)
+      sid=""
+      case "$prompt" in
+        resume:*' '*)
+          rest=''${prompt#resume:}
+          sid=''${rest%% *}
+          prompt=''${rest#* }
+          ;;
+      esac
+
+      response=$(invoke "$sid" "$prompt" || true)
 
       out=${inboxDir}/$from
       ${pkgs.coreutils}/bin/mkdir -p "$out"
