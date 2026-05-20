@@ -124,14 +124,19 @@ let
       services.tailscale = {
         enable = true;
         authKeyFile = "/run/host-secrets/tailscale-authkey";
-        extraUpFlags = [ "--ssh" "--hostname=ai-${name}" ];
+        # --accept-dns=false stops tailscaled from pushing the tailnet's
+        # broken ts.net split-route to systemd-resolved. The route below
+        # in extraConfig sends ts.net queries to 100.100.100.100 directly.
+        extraUpFlags = [ "--ssh" "--hostname=ai-${name}" "--accept-dns=false" ];
         openFirewall = true;
       };
 
-      # Required for tailscale MagicDNS to handle .ts.net queries via
-      # split-DNS; without systemd-resolved tailscaled can't register
-      # 100.100.100.100 as the resolver for the tailnet search domain.
       services.resolved.enable = true;
+      services.resolved.extraConfig = ''
+        [Resolve]
+        DNS=100.100.100.100
+        Domains=~ts.net
+      '';
 
       networking.useNetworkd = true;
       networking.useDHCP = false;
