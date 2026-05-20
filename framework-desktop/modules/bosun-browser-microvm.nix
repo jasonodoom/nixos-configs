@@ -37,6 +37,7 @@ in
     "d ${runnerStateDir}                                    0755 jason users -"
     "d ${runnerStateDir}/node_modules                       0755 1000  1000  -"
     "d /home/jason/.local/state/bosun/browser-runner-secrets 0700 root  root  -"
+    "d /home/jason/.local/state/bosun/browser-runner-rwstore 0700 root  root  -"
   ];
 
   microvm.vms.bosun-browser = {
@@ -74,7 +75,15 @@ in
             tag = "bosun-runner-secrets";
             proto = "virtiofs";
           }
+          {
+            source = "/home/jason/.local/state/bosun/browser-runner-rwstore";
+            mountPoint = "/nix/.rwstore";
+            tag = "bosun-runner-rwstore";
+            proto = "virtiofs";
+          }
         ];
+
+        writableStoreOverlay = "/nix/.rwstore";
       };
 
       networking.useNetworkd = true;
