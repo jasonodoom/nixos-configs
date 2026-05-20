@@ -53,7 +53,8 @@ in
       microvm = {
         hypervisor = "qemu";
         vcpu = 2;
-        mem = 2048;
+        mem = 4096;
+        balloon = true;
 
         interfaces = [{
           type = "bridge";
