@@ -41,4 +41,7 @@ in
 
   # Tailscale auth key for AI agent microvms (claude/codex/gemini)
   "ai-agent-tailscale-authkey.age".publicKeys = all;
+
+  # Bearer token bosun sends to the browser-runner microvm
+  "bosun-browser-runner-token.age".publicKeys = all;
 }
