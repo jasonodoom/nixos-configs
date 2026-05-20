@@ -19,6 +19,15 @@
       IdentitiesOnly yes
       StrictHostKeyChecking yes
 
+    # Adastra-org GitHub repos use an on-disk ed25519 key so autonomous
+    # pushes don't require a YubiKey touch per commit.
+    Host github-adastra.com
+      HostName github.com
+      User git
+      IdentityFile ~/.ssh/id_ed25519_adastra
+      IdentitiesOnly yes
+      StrictHostKeyChecking yes
+
     Host github.com
       HostName github.com
       PubkeyAuthentication yes
