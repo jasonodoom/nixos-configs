@@ -86,44 +86,13 @@ in
         dns = [ "1.1.1.1" "8.8.8.8" ];
       };
 
-      # Hard egress allowlist. The runner also enforces per-template
-      # route allowlists inside Playwright; this is the outer fence.
+      # Defense in depth comes from the microvm boundary itself in v0.
+      # Egress allowlist via nftables collides with NixOS's firewall
+      # module on this kernel; revisit once playwright templates do
+      # real flows behind credentials.
       networking.firewall = {
         enable = true;
         allowedTCPPorts = [ 8755 ];
-        # Block all outbound by default, allow only the template hosts.
-        # nftables config below replaces the simple firewall.
-      };
-      networking.nftables = {
-        enable = true;
-        ruleset = ''
-          table inet filter {
-            chain output {
-              type filter hook output priority 0; policy drop;
-              # Loopback always allowed.
-              oif "lo" accept
-              # DNS to the configured resolvers.
-              udp dport 53 ip daddr { 1.1.1.1, 8.8.8.8 } accept
-              tcp dport 53 ip daddr { 1.1.1.1, 8.8.8.8 } accept
-              # Established traffic.
-              ct state established,related accept
-              # Per-template egress hosts. Resolved at boot via the host
-              # firewall's set definitions; for the runner we just allow
-              # 443 to anything since Playwright already enforces the
-              # per-template route allowlist. The combination of
-              # in-Playwright filter + per-host VM means a compromised
-              # template can only reach hosts it was scripted to reach.
-              tcp dport 443 accept
-            }
-            chain input {
-              type filter hook input priority 0; policy drop;
-              iif "lo" accept
-              ct state established,related accept
-              tcp dport 8755 accept
-            }
-            chain forward { type filter hook forward priority 0; policy drop; }
-          }
-        '';
       };
 
       environment.systemPackages = with pkgs; [ nodejs_20 ];
