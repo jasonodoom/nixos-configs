@@ -128,6 +128,11 @@ let
         openFirewall = true;
       };
 
+      # Required for tailscale MagicDNS to handle .ts.net queries via
+      # split-DNS; without systemd-resolved tailscaled can't register
+      # 100.100.100.100 as the resolver for the tailnet search domain.
+      services.resolved.enable = true;
+
       networking.useNetworkd = true;
       networking.useDHCP = false;
       systemd.network.networks."10-eth" = {
