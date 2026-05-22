@@ -38,15 +38,55 @@ let
       exit 0
     fi
 
-    # claude: iterate /Users/jason/code/* projects, rewrite encoded path.
+    # claude: only the ai-claude microvm runs claude on perdurabo
+    # (the host has no claude binary). Sync targets the microvm's
+    # mounted home at /home/jason/.local/state/ai-agents/claude/.claude/.
+    # Inside the microvm the same dir is at /home/agent/.claude/.
+    #
+    # Two encoded-path rewrites:
+    #   -Users-jason-code-<X> → -home-agent-code-<X>   (subdir sessions)
+    #   -Users-jason-code     → -home-agent-code       (bare ~/code sessions)
+    # The earlier sync only handled the first case, so any session
+    # started from /Users/jason/code itself never reached the microvm
+    # (e.g. b96b0ec0 / soul-as-a-service).
+    #
+    # Additionally, each bare ~/code session is mirrored into every
+    # per-project dir on the remote, so `claude --resume <id>` from
+    # any /home/agent/code/<project>/ cwd in the microvm finds it.
     if [ -d "$HOME/.claude/projects" ]; then
       for dir in "$HOME"/.claude/projects/-Users-jason-code-*/; do
         [ -d "$dir" ] || continue
         name=$(basename "$dir")
         target="''${name/-Users-jason-code-/-home-agent-code-}"
         ${pkgs.rsync}/bin/rsync -a --partial -e "$SSH" \
-          "$dir" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/$target/"
+          "$dir/" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/$target/" || true
       done
+      bare="$HOME/.claude/projects/-Users-jason-code"
+      if [ -d "$bare" ]; then
+        ${pkgs.rsync}/bin/rsync -a --partial -e "$SSH" \
+          "$bare/" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/-home-agent-code/" || true
+        # Mirror into each per-project dir on the remote so resume
+        # works from any /home/agent/code/<project>/ cwd, not just bare ~/code.
+        remote_projects=$($SSH "$REMOTE" "ls $REMOTE_BASE/claude/.claude/projects/ 2>/dev/null | grep '^-home-agent-code-' || true")
+        for p in $remote_projects; do
+          ${pkgs.rsync}/bin/rsync -a --partial -e "$SSH" \
+            "$bare/" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/$p/" || true
+        done
+      fi
+
+      # history.jsonl is the registry claude --resume actually uses
+      # to scope sessions to projects. Sync it AND rewrite the
+      # "project" field on the remote so /Users/jason/code paths
+      # become /home/agent/code paths. Without this rewrite,
+      # claude --resume <id> from a project dir says "no
+      # conversation found" even when the .jsonl is in the right
+      # project dir.
+      if [ -f "$HOME/.claude/history.jsonl" ]; then
+        ${pkgs.rsync}/bin/rsync -a --partial -e "$SSH" \
+          "$HOME/.claude/history.jsonl" \
+          "$REMOTE:$REMOTE_BASE/claude/.claude/history.jsonl" || true
+        $SSH "$REMOTE" "${pkgs.gnused}/bin/sed -i 's|\"project\":\"/Users/jason/code\"|\"project\":\"/home/agent/code\"|g; s|\"project\":\"/Users/jason/code/|\"project\":\"/home/agent/code/|g' $REMOTE_BASE/claude/.claude/history.jsonl" || true
+      fi
     fi
 
     sync() {
