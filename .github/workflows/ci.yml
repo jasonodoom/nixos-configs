@@ -48,6 +48,16 @@ jobs:
         docker-images: true
         swap-storage: true
 
+    # /mnt is the ~75 GB ephemeral disk on ubuntu-latest. Bind-mounting /nix
+    # there gives builds headroom; without it perdurabo's microvm closures
+    # intermittently fail with "No space left on device" on /.
+    - name: Relocate /nix to /mnt
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo mkdir -p /mnt/nix /nix
+        sudo mount --bind /mnt/nix /nix
+        df -h /nix /
+
     - name: Install Nix with cache configuration (Perdurabo)
       if: matrix.config == 'perdurabo'
       uses: DeterminateSystems/nix-installer-action@v22
