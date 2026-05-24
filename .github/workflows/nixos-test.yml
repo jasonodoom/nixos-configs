@@ -290,12 +290,14 @@ jobs:
           fi
 
           cd ${{ matrix.host }}
-          # Match real failures only. Strip "warning: error: ... retrying"
-          # noise from transient substituter 5xx responses, which always
-          # includes the word "error:" even though the fetch succeeded on
-          # a subsequent attempt.
-          if grep -E "error:|failed|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null \
-               | grep -vE "warning: error:|retrying" \
+          # I drop any line starting with `warning:` before scanning for
+          # failure patterns. Nix surfaces transient substituter fallbacks
+          # (e.g. a github.com 401 followed by a successful cache.nixos.org
+          # fetch) as a single-line warning that embeds the words "error:"
+          # and "Failed" in its prose. The build exit codes above are the
+          # authoritative signal; this grep is just defense-in-depth.
+          if grep -hE "error:|failed|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null \
+               | grep -vE "^warning:|warning: error:|retrying" \
                | grep -q .; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
