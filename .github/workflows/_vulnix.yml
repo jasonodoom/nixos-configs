@@ -157,25 +157,34 @@ jobs:
             echo "_Output truncated to fit GitHub's 65 KB body limit. Full report in the workflow run artifact: ${RUN_URL}_"
           } >> findings-body.md
 
-      - name: Comment on PR
-        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-        run: |
-          gh pr comment "${PR_NUMBER}" --body-file findings-body.md
-
-      - name: Open or update tracking issue
-        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number == ''
+      - name: Open or update tracking issue in private repo
+        id: private_issue
+        if: steps.vulnix.outputs.rc == '2'
         env:
           # PAT with issues:write on jasonodoom/nixos-vulnix-private.
           # GITHUB_TOKEN can't write cross-repo.
           GH_TOKEN: ${{ secrets.VULNIX_REPO_TOKEN }}
           HOST_NAME: ${{ inputs.host_name }}
+          PR_NUMBER: ${{ inputs.pr_number }}
           REPO: jasonodoom/nixos-vulnix-private
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -eu
-          TITLE="vulnix: CVEs detected on ${HOST_NAME}"
+          # PR context gets its own issue per PR so reviewers see only
+          # the CVEs introduced by that change. Scheduled scans share a
+          # single host-scoped tracking issue.
+          if [ -n "$PR_NUMBER" ]; then
+            TITLE="vulnix: CVEs in PR #${PR_NUMBER} on ${HOST_NAME}"
+            BACKREF="_Source: ${{ github.repository }} PR #${PR_NUMBER} — ${RUN_URL}_"
+          else
+            TITLE="vulnix: CVEs detected on ${HOST_NAME}"
+            BACKREF="_Source: scheduled scan — ${RUN_URL}_"
+          fi
+          {
+            echo "$BACKREF"
+            echo
+            cat findings-body.md
+          } > issue-body.md
           gh label create security  --repo "$REPO" --color B60205 --description "Security-related issue" 2>/dev/null || true
           gh label create automated --repo "$REPO" --color BFD4F2 --description "Created by automation"  2>/dev/null || true
           EXISTING=$(gh issue list --repo "$REPO" --label security --state all \
@@ -187,12 +196,29 @@ jobs:
             if [ "$STATE" = "CLOSED" ]; then
               gh issue reopen "$NUM" --repo "$REPO"
             fi
-            gh issue comment "$NUM" --repo "$REPO" --body-file findings-body.md
+            gh issue comment "$NUM" --repo "$REPO" --body-file issue-body.md
           else
-            gh issue create --repo "$REPO" \
+            NUM=$(gh issue create --repo "$REPO" \
               --title "$TITLE" \
-              --body-file findings-body.md \
+              --body-file issue-body.md \
               --label security \
               --label automated \
-              --assignee jasonodoom
+              --assignee jasonodoom | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+')
           fi
+          echo "issue_number=$NUM" >> "$GITHUB_OUTPUT"
+          echo "issue_url=https://github.com/${REPO}/issues/$NUM" >> "$GITHUB_OUTPUT"
+
+      - name: Pointer comment on public PR
+        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          HOST_NAME: ${{ inputs.host_name }}
+          ISSUE_URL: ${{ steps.private_issue.outputs.issue_url }}
+        run: |
+          set -eu
+          # Reviewer-facing pointer only — CVE details live in the
+          # private repo to avoid publishing a full vulnerability map
+          # of running infra on a public PR.
+          BODY="vulnix found CVEs in this PR's closure for **${HOST_NAME}**. Details (private): ${ISSUE_URL}"
+          gh pr comment "${PR_NUMBER}" --body "$BODY"
