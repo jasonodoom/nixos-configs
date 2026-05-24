@@ -16,6 +16,10 @@
 
     inputs = {
       nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+      # Pinned just for wrangler. 4.93.0 on current nixpkgs-unstable
+      # fails to build on macos (EBADF in pnpm tsup). Will drop
+      # when nixpkgs ships a working wrangler.
+      nixpkgs-wrangler-pin.url = "github:NixOS/nixpkgs/8a1b0127302ea51e05bf4ea5a291743fac442406";
       nix-darwin = {
         url = "github:LnL7/nix-darwin";
         inputs.nixpkgs.follows = "nixpkgs";
