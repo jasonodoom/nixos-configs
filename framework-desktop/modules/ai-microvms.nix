@@ -52,8 +52,13 @@ let
 
       microvm = {
         hypervisor = "qemu";
-        vcpu = 2;
-        mem = 4096;
+        # 6 vCPU + 12GB per agent microvm. Default of 2/4096 ran
+        # out of CPU with 4 concurrent claude sessions and load
+        # spiked past 11 on a 2-core guest, which correlates with
+        # observed hard crashes. Host has 32 cores / 62GB so three
+        # of these still leaves room for the host + bosun-browser.
+        vcpu = 6;
+        mem = 12288;
         balloon = true;
 
         interfaces = [{
