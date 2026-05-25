@@ -211,7 +211,11 @@ jobs:
       - name: Pointer comment on public PR
         if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Dependabot-triggered runs ship a read-only GITHUB_TOKEN
+          # that can't post PR comments. The VULNIX_REPO_TOKEN PAT
+          # has pull-requests:write on this repo, so use it for both
+          # the private-repo issue and the public-PR pointer comment.
+          GH_TOKEN: ${{ secrets.VULNIX_REPO_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number }}
           HOST_NAME: ${{ inputs.host_name }}
           ISSUE_URL: ${{ steps.private_issue.outputs.issue_url }}
