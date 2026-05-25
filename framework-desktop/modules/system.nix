@@ -13,6 +13,12 @@
       sandbox = true;
       builders-use-substitutes = true;
       trusted-users = [ "root" ];
+      # Inline gc trigger: when free space drops below min-free,
+      # daemon collects garbage until it reaches max-free. Catches
+      # build-time fills (microvm rebuilds, large derivations) that
+      # the scheduled timer would miss.
+      min-free = 5 * 1024 * 1024 * 1024;
+      max-free = 25 * 1024 * 1024 * 1024;
       substituters = [
         "https://cache.nixos.org/"
         "https://cache.garnix.io"
@@ -26,9 +32,26 @@
     };
     gc = {
       automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 14d";
+      dates = "daily";
+      options = "--delete-older-than 7d";
     };
+  };
+
+  # Hourly disk-pressure warning. Catches non-nix fills (user code,
+  # build caches under /home) that nix gc cannot help with.
+  systemd.services.disk-pressure-warn = {
+    serviceConfig.Type = "oneshot";
+    script = ''
+      used=$(${pkgs.coreutils}/bin/df --output=pcent / | tail -1 | tr -dc '0-9')
+      if [ "$used" -ge 90 ]; then
+        ${pkgs.systemd}/bin/systemd-cat -t disk-pressure -p warning \
+          echo "/ is $used% full"
+      fi
+    '';
+  };
+  systemd.timers.disk-pressure-warn = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = { OnCalendar = "hourly"; Persistent = true; };
   };
 
   # Boot configuration

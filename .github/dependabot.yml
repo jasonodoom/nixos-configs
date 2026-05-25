@@ -71,3 +71,6 @@ updates:
     reviewers:
       - "jasonodoom"
     open-pull-requests-limit: 5
+    ignore:
+      # I bump this pin by hand only; auto-bumps reintroduce the broken wrangler 4.93.0 on macos.
+      - dependency-name: "nixpkgs-wrangler-pin"
