@@ -205,8 +205,10 @@ jobs:
           # dev gh calls eat. The REST search endpoint has its own
           # 5000/hr budget and uses /search/issues. Same for create
           # and comment (REST POST /repos/.../issues and .../comments).
-          gh label create security  --repo "$REPO" --color B60205 --description "Security-related issue" 2>/dev/null || true
-          gh label create automated --repo "$REPO" --color BFD4F2 --description "Created by automation"  2>/dev/null || true
+          # gh label create uses GraphQL internally; go straight to REST.
+          # 422 on duplicate is fine — that's "label exists already".
+          gh api -X POST "repos/${REPO}/labels" -f name=security  -f color=B60205 -f description="Security-related issue" 2>/dev/null || true
+          gh api -X POST "repos/${REPO}/labels" -f name=automated -f color=BFD4F2 -f description="Created by automation"  2>/dev/null || true
           # URL-encode the title for the search query.
           Q=$(printf '%s' "$TITLE" | jq -sRr @uri)
           EXISTING_NUM=$(gh api "search/issues?q=repo:${REPO}+is:issue+label:security+in:title+\"${Q}\"" --jq '.items[0].number // empty')
