@@ -30,3 +30,9 @@ jobs:
       host_dir: ${{ matrix.dir }}
       host_name: ${{ matrix.host }}
       pr_number: ${{ github.event.pull_request.number && format('{0}', github.event.pull_request.number) || '' }}
+    # Reusable workflows don't see caller secrets by default; the
+    # vulnix scan needs VULNIX_REPO_TOKEN (PAT with cross-repo write
+    # to nixos-vulnix-private) for the tracking-issue + pointer-
+    # comment steps. Without this line both steps fail with empty
+    # GH_TOKEN even though the secret is set at the repo level.
+    secrets: inherit
