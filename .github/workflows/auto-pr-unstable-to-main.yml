@@ -48,7 +48,13 @@ jobs:
       - name: Check if PR already exists
         id: check-pr
         run: |
-          PR_EXISTS=$(gh pr list --head unstable --base main --state open --json number --jq 'length')
+          # REST instead of GraphQL: `gh pr list` uses GraphQL which
+          # shares the same 5000/hr per-user budget that ad-hoc dev
+          # work eats. The REST `/pulls` endpoint has its own
+          # 5000/hr core budget. Failing this step skips the entire
+          # auto-PR (and the operator has to open by hand) which is
+          # exactly what bit us on 2026-05-26.
+          PR_EXISTS=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq 'length')
           echo "pr_exists=$PR_EXISTS" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
@@ -183,8 +189,9 @@ jobs:
       - name: Create Pull Request
         if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
         run: |
-          # Check if PR already exists (guard against race conditions)
-          EXISTING_PR=$(gh pr list --head unstable --base main --state open --json number --jq '.[0].number // empty')
+          # Check if PR already exists (guard against race conditions).
+          # REST instead of GraphQL — see "Check if PR already exists" step.
+          EXISTING_PR=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq '.[0].number // empty')
           if [ -n "$EXISTING_PR" ]; then
             echo "PR #$EXISTING_PR already exists, skipping creation"
             exit 0
@@ -257,5 +264,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           sleep 2
-          PR_NUMBER=$(gh pr list --head unstable --base main --json number -q '.[0].number')
+          PR_NUMBER=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq '.[0].number')
           gh pr merge "${PR_NUMBER}" --auto --merge
