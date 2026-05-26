@@ -29,6 +29,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # GitHub-hosted ubuntu-latest ships with ~14GB free on /. The
+      # NixOS toplevel build pulls many GB of derivations and has
+      # blown disk on real PRs (PR #404 today: "No space left on
+      # device" mid-build). Drop unused tooling and the .NET cache
+      # before nix touches the disk. Frees ~30GB on typical runners.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: false
+
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
         with:
