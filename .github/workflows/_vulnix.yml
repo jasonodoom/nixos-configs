@@ -29,6 +29,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # GitHub-hosted ubuntu-latest ships with ~14GB free on /. The
+      # NixOS toplevel build pulls many GB of derivations and has
+      # blown disk on real PRs (PR #404 today: "No space left on
+      # device" mid-build). Drop unused tooling and the .NET cache
+      # before nix touches the disk. Frees ~30GB on typical runners.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: false
+
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
         with:
@@ -185,25 +200,32 @@ jobs:
             echo
             cat findings-body.md
           } > issue-body.md
-          gh label create security  --repo "$REPO" --color B60205 --description "Security-related issue" 2>/dev/null || true
-          gh label create automated --repo "$REPO" --color BFD4F2 --description "Created by automation"  2>/dev/null || true
-          EXISTING=$(gh issue list --repo "$REPO" --label security --state all \
-            --search "in:title \"${TITLE}\"" \
-            --json number,state --jq '.[0]')
-          if [ -n "$EXISTING" ]; then
-            NUM=$(echo "$EXISTING" | jq -r .number)
-            STATE=$(echo "$EXISTING" | jq -r .state)
-            if [ "$STATE" = "CLOSED" ]; then
-              gh issue reopen "$NUM" --repo "$REPO"
+          # REST instead of GraphQL: `gh issue list --search` uses
+          # GraphQL which shares the per-user 5000/hr cap that ad-hoc
+          # dev gh calls eat. The REST search endpoint has its own
+          # 5000/hr budget and uses /search/issues. Same for create
+          # and comment (REST POST /repos/.../issues and .../comments).
+          # gh label create uses GraphQL internally; go straight to REST.
+          # 422 on duplicate is fine — that's "label exists already".
+          gh api -X POST "repos/${REPO}/labels" -f name=security  -f color=B60205 -f description="Security-related issue" 2>/dev/null || true
+          gh api -X POST "repos/${REPO}/labels" -f name=automated -f color=BFD4F2 -f description="Created by automation"  2>/dev/null || true
+          # URL-encode the title for the search query.
+          Q=$(printf '%s' "$TITLE" | jq -sRr @uri)
+          EXISTING_NUM=$(gh api "search/issues?q=repo:${REPO}+is:issue+label:security+in:title+\"${Q}\"" --jq '.items[0].number // empty')
+          EXISTING_STATE=$(gh api "search/issues?q=repo:${REPO}+is:issue+label:security+in:title+\"${Q}\"" --jq '.items[0].state // empty')
+          if [ -n "$EXISTING_NUM" ]; then
+            NUM="$EXISTING_NUM"
+            if [ "$EXISTING_STATE" = "closed" ]; then
+              gh api -X PATCH "repos/${REPO}/issues/${NUM}" -f state=open >/dev/null
             fi
-            gh issue comment "$NUM" --repo "$REPO" --body-file issue-body.md
+            gh api -X POST "repos/${REPO}/issues/${NUM}/comments" -f body="$(cat issue-body.md)" >/dev/null
           else
-            NUM=$(gh issue create --repo "$REPO" \
-              --title "$TITLE" \
-              --body-file issue-body.md \
-              --label security \
-              --label automated \
-              --assignee jasonodoom | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+')
+            NUM=$(gh api -X POST "repos/${REPO}/issues" \
+              -f title="$TITLE" \
+              -f body="$(cat issue-body.md)" \
+              -f 'labels[]=security' \
+              -f 'labels[]=automated' \
+              -f 'assignees[]=jasonodoom' --jq '.number')
           fi
           echo "issue_number=$NUM" >> "$GITHUB_OUTPUT"
           echo "issue_url=https://github.com/${REPO}/issues/$NUM" >> "$GITHUB_OUTPUT"
@@ -225,4 +247,7 @@ jobs:
           # private repo to avoid publishing a full vulnerability map
           # of running infra on a public PR.
           BODY="vulnix found CVEs in this PR's closure for **${HOST_NAME}**. Details (private): ${ISSUE_URL}"
-          gh pr comment "${PR_NUMBER}" --body "$BODY"
+          # REST instead of GraphQL gh pr comment (uses /repos/.../issues/N/comments;
+          # PRs are issues under the hood).
+          gh api -X POST "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            -f body="$BODY" >/dev/null
