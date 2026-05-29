@@ -229,25 +229,3 @@ jobs:
           fi
           echo "issue_number=$NUM" >> "$GITHUB_OUTPUT"
           echo "issue_url=https://github.com/${REPO}/issues/$NUM" >> "$GITHUB_OUTPUT"
-
-      - name: Pointer comment on public PR
-        if: steps.vulnix.outputs.rc == '2' && inputs.pr_number != ''
-        env:
-          # Dependabot-triggered runs ship a read-only GITHUB_TOKEN
-          # that can't post PR comments. The VULNIX_REPO_TOKEN PAT
-          # has pull-requests:write on this repo, so use it for both
-          # the private-repo issue and the public-PR pointer comment.
-          GH_TOKEN: ${{ secrets.VULNIX_REPO_TOKEN }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          HOST_NAME: ${{ inputs.host_name }}
-          ISSUE_URL: ${{ steps.private_issue.outputs.issue_url }}
-        run: |
-          set -eu
-          # Reviewer-facing pointer only — CVE details live in the
-          # private repo to avoid publishing a full vulnerability map
-          # of running infra on a public PR.
-          BODY="vulnix found CVEs in this PR's closure for **${HOST_NAME}**. Details (private): ${ISSUE_URL}"
-          # REST instead of GraphQL gh pr comment (uses /repos/.../issues/N/comments;
-          # PRs are issues under the hood).
-          gh api -X POST "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
-            -f body="$BODY" >/dev/null
