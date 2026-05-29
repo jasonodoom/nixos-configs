@@ -105,14 +105,14 @@ in
         allowedTCPPorts = [ 8755 ];
       };
 
-      environment.systemPackages = with pkgs; [ nodejs_20 ];
+      environment.systemPackages = with pkgs; [ nodejs_22 ];
 
       systemd.services.bosun-browser-runner = {
         description = "Bosun Phase 3 Playwright runner";
         wantedBy = [ "multi-user.target" ];
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
-        path = with pkgs; [ nodejs_20 playwright-driver.browsers ];
+        path = with pkgs; [ nodejs_22 playwright-driver.browsers ];
         environment = {
           NODE_ENV = "production";
           LISTEN = "0.0.0.0";
