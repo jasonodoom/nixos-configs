@@ -26,9 +26,10 @@ let
         pkgs.qt5.qtquickcontrols2
         pkgs.qt5.qtsvg
         pkgs.qt5.qtmultimedia
-        # Cursor theme packages to fix "Could not setup default cursor"
-        pkgs.libsForQt5.breeze-qt5
-        pkgs.libsForQt5.breeze-icons
+        # Cursor theme packages to fix "Could not setup default cursor".
+        # libsForQt5 was retired upstream in nixpkgs 26.05; kdePackages
+        # breeze-icons covers Qt5 + Qt6 apps via XDG discovery.
+        pkgs.kdePackages.breeze-icons
       ];
     };
 
@@ -103,8 +104,7 @@ in {
       pkgs.papirus-icon-theme      # Modern colorful icons (best app coverage)
       pkgs.tela-icon-theme         # Flat modern icons
       pkgs.numix-icon-theme        # Popular flat icons
-      pkgs.kdePackages.breeze-icons  # KDE icons for compatibility
-      pkgs.libsForQt5.breeze-icons # Qt5 breeze icons
+      pkgs.kdePackages.breeze-icons  # KDE icons (Qt5 + Qt6 via XDG)
       pkgs.gnome-themes-extra      # Additional GNOME icons
 
       # GTK themes for modern dark aesthetic
