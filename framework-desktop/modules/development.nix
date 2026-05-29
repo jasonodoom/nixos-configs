@@ -2,10 +2,10 @@
 { config, pkgs, pkgs-unstable, ... }:
 
 {
-  # Development programs
-  programs = {
-    adb.enable = false;
-  };
+  # programs.adb was removed in nixpkgs 26.05 — systemd 258 handles
+  # uaccess automatically. The previous value here was `enable =
+  # false` so this is a no-op rather than a dropped capability;
+  # adding `pkgs.android-tools` to systemPackages remains optional.
 
   # Development packages
   environment.systemPackages = with pkgs; [

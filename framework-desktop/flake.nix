@@ -217,10 +217,10 @@
         node = pkgs.mkShell {
           buildInputs = with pkgs; [
             nodejs
-            nodePackages.typescript
-            nodePackages.typescript-language-server
-            nodePackages.prettier
-            nodePackages.eslint
+            typescript
+            typescript-language-server
+            prettier
+            eslint
           ];
           shellHook = ''
             echo "🟢 Node.js development environment loaded"
