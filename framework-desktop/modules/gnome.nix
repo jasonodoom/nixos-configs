@@ -15,10 +15,11 @@ in
 
     desktopManager.gnome.enable = useGnomeAsDefault;
 
-    # Use GDM display manager when GNOME is enabled
+    # Use GDM display manager when GNOME is enabled. GDM `wayland`
+    # toggle was removed in nixpkgs 26.05 (GNOME 50 is Wayland-only);
+    # the X11/Wayland choice is now made by defaultSession below.
     displayManager.gdm = lib.mkIf useGnomeAsDefault {
       enable = true;
-      wayland = useWayland;
       # Disable automatic login to force manual entry
       autoSuspend = false;
     };

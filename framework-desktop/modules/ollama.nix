@@ -14,7 +14,10 @@
 {
   services.ollama = {
     enable = true;
-    acceleration = false;
+    # acceleration was removed in nixpkgs 26.05; set package to the
+    # cpu build instead. Existing env (HIP_VISIBLE_DEVICES="",
+    # OLLAMA_LLM_LIBRARY="cpu") already pinned this to CPU-only.
+    package = pkgs.ollama-cpu;
     host = "0.0.0.0";
     environmentVariables = {
       HIP_VISIBLE_DEVICES = "";

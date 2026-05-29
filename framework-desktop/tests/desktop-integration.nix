@@ -59,9 +59,9 @@ pkgs.testers.nixosTest {
         videoDrivers = [ "modesetting" ];
       };
 
-      # Use X11 session for VM stability (Wayland can crash in CI VMs)
-      # When gdm.wayland=false, GNOME automatically runs on X11
-      services.displayManager.gdm.wayland = lib.mkForce false;
+      # GNOME 50 in nixpkgs 26.05 is Wayland-only; the gdm.wayland=false
+      # workaround no longer applies. If CI VMs crash, force the
+      # session via services.displayManager.defaultSession instead.
 
       # Optimized VM configuration for GitHub Actions runner
       virtualisation = {
