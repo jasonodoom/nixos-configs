@@ -80,6 +80,15 @@
         cd "$REPO_DIR"
       fi
 
+      # The script runs under launchd as root; signature verification
+      # runs as `su - jason` to pick up jason's gnupg keyring. Without
+      # jason ownership on the freshly-written objects, the verify
+      # exits with "Permission denied" before gpg ever sees the
+      # signature. chown rather than chmod g+rX so the repo stays
+      # private (only jason + root can read) even if I move the
+      # repo to a private GitHub URL later.
+      ${pkgs.coreutils}/bin/chown -R jason:staff "$REPO_DIR"
+
       CURRENT_COMMIT=$(${pkgs.git}/bin/git rev-parse --short HEAD)
       log "Current commit: $CURRENT_COMMIT"
 
