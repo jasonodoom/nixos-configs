@@ -41,6 +41,14 @@
 
   outputs = { self, nixpkgs, nixpkgs-unstable, agenix, determinate, nixos-hardware, flake-utils, microvm, ... }@inputs:
   let
+    # Single source of truth for the Node.js runtime used by host
+    # tooling (devshells, microvm runners, etc.). Bump here when the
+    # current LTS rolls over; modules consume it via specialArgs as
+    # `nodejsPkg` and the devShell below reads the same attr, so only
+    # this line moves on the next bump.
+    nodejsAttr = "nodejs_24";
+    nodejsPkgFor = system: (import nixpkgs-unstable { inherit system; }).${nodejsAttr};
+
     mkSystem = system: nixpkgs.lib.nixosSystem {
       system = system;
       specialArgs = {
@@ -49,6 +57,7 @@
         pkgs-unstable = import nixpkgs-unstable {
           system = system;
         };
+        nodejsPkg = nodejsPkgFor system;
       };
       modules = [
         ({ config, pkgs, ... }: {
@@ -213,18 +222,16 @@
           '';
         };
 
-        # Node.js/TypeScript development environment. nixpkgs 26.05's
-        # default `nodejs` resolved to 20.x which hit EOL and is marked
-        # insecure. Pin to the current LTS explicitly so dependabot
-        # bumps don't drift the unpinned default back into insecure
-        # territory.
+        # Node.js/TypeScript development environment. Pinned to the
+        # `nodejsAttr` defined at the top of this flake so the devShell
+        # and the microvm modules stay on the same major.
         node = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            nodejs_22
-            typescript
-            typescript-language-server
-            prettier
-            eslint
+          buildInputs = [
+            (nodejsPkgFor system)
+            pkgs.typescript
+            pkgs.typescript-language-server
+            pkgs.prettier
+            pkgs.eslint
           ];
           shellHook = ''
             echo "🟢 Node.js development environment loaded"
