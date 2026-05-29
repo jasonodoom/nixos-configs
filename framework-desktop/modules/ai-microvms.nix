@@ -140,11 +140,14 @@ let
       };
 
       services.resolved.enable = true;
-      services.resolved.extraConfig = ''
-        [Resolve]
-        DNS=100.100.100.100
-        Domains=~ts.net
-      '';
+      # extraConfig was retired in nixpkgs 26.05; settings takes the
+      # same INI sections as a structured attrset.
+      services.resolved.settings = {
+        Resolve = {
+          DNS = "100.100.100.100";
+          Domains = "~ts.net";
+        };
+      };
 
       networking.useNetworkd = true;
       networking.useDHCP = false;

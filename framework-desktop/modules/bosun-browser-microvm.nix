@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, nodejsPkg, ... }:
 
 # Bosun Phase 3 Playwright runner microvm.
 #
@@ -41,8 +41,8 @@ in
   ];
 
   microvm.vms.bosun-browser = {
-    specialArgs = { inherit inputs; };
-    config = { config, pkgs, lib, ... }: {
+    specialArgs = { inherit inputs nodejsPkg; };
+    config = { config, pkgs, lib, nodejsPkg, ... }: {
       imports = [ inputs.microvm.nixosModules.microvm ];
 
       nixpkgs.overlays = [ (import ../overlays/default.nix { inherit inputs; }) ];
@@ -105,14 +105,14 @@ in
         allowedTCPPorts = [ 8755 ];
       };
 
-      environment.systemPackages = with pkgs; [ nodejs_20 ];
+      environment.systemPackages = [ nodejsPkg ];
 
       systemd.services.bosun-browser-runner = {
         description = "Bosun Phase 3 Playwright runner";
         wantedBy = [ "multi-user.target" ];
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
-        path = with pkgs; [ nodejs_20 playwright-driver.browsers ];
+        path = [ nodejsPkg pkgs.playwright-driver.browsers ];
         environment = {
           NODE_ENV = "production";
           LISTEN = "0.0.0.0";
