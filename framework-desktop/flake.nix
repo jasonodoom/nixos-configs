@@ -258,10 +258,14 @@
           '';
         };
 
-        # Infrastructure/DevOps environment
+        # Infrastructure/DevOps environment. Uses opentofu instead of
+        # terraform because Hashicorp's BSL license marked terraform
+        # unfree in nixpkgs, which trips Garnix's allowUnfree=false
+        # evaluator. opentofu is the OSS Apache-2.0 fork and is a
+        # drop-in CLI replacement.
         devops = pkgs.mkShell {
           buildInputs = with pkgs; [
-            terraform
+            opentofu
             terraform-ls
             kubectl
             k9s
@@ -277,8 +281,8 @@
           ]);
           shellHook = ''
             echo "☁️ DevOps development environment loaded"
-            echo "Terraform version: $(terraform --version)"
-            echo "Available tools: terraform, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
+            echo "OpenTofu version: $(tofu --version | head -1)"
+            echo "Available tools: tofu, terraform-ls, ansible, kubectl, k9s, kustomize, docker-compose, helm, awscli2, eksctl"
           '';
         };
       };
