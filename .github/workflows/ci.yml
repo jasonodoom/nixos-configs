@@ -31,14 +31,17 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    # Three microvm closures + their erofs images blow past the default
+    # perdurabo ships five microvm closures + erofs images (bosun-browser,
+    # forgejo-runner, claude, codex, gemini). Blows past the default
     # ~14 GB free on ubuntu-latest. jlumbroso/free-disk-space frees ~32 GB
     # by removing dotnet, android sdks, haskell, llvm and the toolcache.
+    # The min-free knob on the nix build below handles the rest by
+    # auto-purging intermediate paths between microvm derivations.
     - name: Free up disk space
       if: matrix.os == 'ubuntu-latest'
-      uses: jlumbroso/free-disk-space@main
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       with:
         tool-cache: true
         android: true
@@ -48,19 +51,9 @@ jobs:
         docker-images: true
         swap-storage: true
 
-    # /mnt is the ~75 GB ephemeral disk on ubuntu-latest. Bind-mounting /nix
-    # there gives builds headroom; without it perdurabo's microvm closures
-    # intermittently fail with "No space left on device" on /.
-    - name: Relocate /nix to /mnt
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo mkdir -p /mnt/nix /nix
-        sudo mount --bind /mnt/nix /nix
-        df -h /nix /
-
     - name: Install Nix with cache configuration (Perdurabo)
       if: matrix.config == 'perdurabo'
-      uses: DeterminateSystems/nix-installer-action@v22
+      uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -71,7 +64,7 @@ jobs:
 
     - name: Install Nix with cache configuration (Congo)
       if: matrix.config == 'congo'
-      uses: DeterminateSystems/nix-installer-action@v22
+      uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -82,7 +75,7 @@ jobs:
 
     - name: Install Nix with cache configuration (macOS)
       if: matrix.os == 'macos-14'
-      uses: DeterminateSystems/nix-installer-action@v22
+      uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -93,13 +86,13 @@ jobs:
 
     - name: Setup Cachix
       if: matrix.config != 'perdurabo'
-      uses: cachix/cachix-action@v17
+      uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
       with:
         name: odoom-nixos-configs
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
     - name: Check flake health
-      uses: DeterminateSystems/flake-checker-action@v12
+      uses: DeterminateSystems/flake-checker-action@3164002371bc90729c68af0e24d5aacf20d7c9f6 # v12
       with:
         flake-lock-path: ${{ matrix.host }}/flake.lock
 
@@ -128,7 +121,10 @@ jobs:
           CORES=2
         fi
 
-        # Build with resource limits and cache optimization
+        # min-free/max-free auto-purges intermediate build outputs once /
+        # crosses the threshold, which is the difference between perdurabo
+        # (five microvm closures + their erofs images built sequentially)
+        # fitting on the runner or not. Numbers in bytes; 5 GiB / 15 GiB.
         nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.toplevel \
           --accept-flake-config \
           --option max-jobs $MAX_JOBS \
@@ -136,6 +132,8 @@ jobs:
           --option keep-going false \
           --option substitute true \
           --option builders-use-substitutes true \
+          --option min-free $((5 * 1024 * 1024 * 1024)) \
+          --option max-free $((15 * 1024 * 1024 * 1024)) \
           --impure
 
         # Immediate cleanup after build
@@ -214,10 +212,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@v22
+      uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       with:
         source-tag: "v3.12.1"
         extra-conf: |
@@ -240,7 +238,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Basic security audit
       run: |
