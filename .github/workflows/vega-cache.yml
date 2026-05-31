@@ -1,0 +1,59 @@
+# Build each host and push its novel store paths to the Vega cache (tenant tier).
+# SEPARATE from ci.yml and triggered ONLY on push / manual dispatch, never on
+# pull_request: the OIDC signing credential (id-token) must not exist on a run
+# that builds untrusted PR code (an --impure eval could read the token env).
+name: Cache to Vega
+on:
+  push:
+    branches: [ main, unstable ]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+concurrency:
+  group: vega-cache-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: framework-desktop
+            attr: nixosConfigurations.perdurabo.config.system.build.toplevel
+            os: ubuntu-latest
+          - host: lenovo-thinkcentre-m710q
+            attr: nixosConfigurations.congo.config.system.build.toplevel
+            os: ubuntu-latest
+          - host: apple-macbook-air-m2
+            attr: darwinConfigurations.theophany.system
+            os: macos-14
+    # NAR dumps + nix build temp go to /mnt on ubuntu (the small / disk is why
+    # ci.yml relocates /nix to /mnt). macOS uses the default runner temp.
+    env:
+      TMPDIR: ${{ matrix.os == 'ubuntu-latest' && '/mnt/vega-tmp' || runner.temp }}
+    steps:
+      - name: Make /mnt scratch (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo mkdir -p /mnt/nix /nix /mnt/vega-tmp
+          sudo mount --bind /mnt/nix /nix
+          sudo chown "$(id -u):$(id -g)" /mnt/vega-tmp
+      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          tool-cache: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      # The agent installs Nix, builds the installable, and pushes only paths the
+      # upstream cache does not already serve.
+      - uses: Ad-Astra-Computing/vega-agent/agent@c372bf623636d72c890df494696b86ed4fd10262
+        with:
+          installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
+          control-plane: https://vega-cache.dev
+          skip-upstream: "true"
