@@ -30,9 +30,10 @@ jobs:
             attr: darwinConfigurations.theophany.system
             os: macos-14
     # NAR dumps + nix build temp go to /mnt on ubuntu (the small / disk is why
-    # ci.yml relocates /nix to /mnt). macOS uses the default runner temp.
+    # ci.yml relocates /nix to /mnt). macOS has room on the default /tmp. (The
+    # runner context is not available in job-level env, so use a literal here.)
     env:
-      TMPDIR: ${{ matrix.os == 'ubuntu-latest' && '/mnt/vega-tmp' || runner.temp }}
+      TMPDIR: ${{ matrix.os == 'ubuntu-latest' && '/mnt/vega-tmp' || '/tmp' }}
     steps:
       - name: Make /mnt scratch (ubuntu)
         if: matrix.os == 'ubuntu-latest'
