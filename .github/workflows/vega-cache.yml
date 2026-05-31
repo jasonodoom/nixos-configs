@@ -16,6 +16,8 @@ concurrency:
 jobs:
   cache:
     runs-on: ${{ matrix.os }}
+    # Fail fast rather than idle a runner for hours if a build hangs or OOMs.
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +55,7 @@ jobs:
           persist-credentials: false
       # The agent installs Nix, builds the installable, and pushes only paths the
       # upstream cache does not already serve.
-      - uses: Ad-Astra-Computing/vega-agent/agent@51fce9baabdfec111264269a02d13062158f95b9
+      - uses: Ad-Astra-Computing/vega-agent/agent@2a319fa1423e66648407ee3924bbd8a62a15def1
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
