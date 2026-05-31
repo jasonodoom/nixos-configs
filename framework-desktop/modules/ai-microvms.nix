@@ -48,7 +48,27 @@ let
         packages = allAgentPackages;
         sshPort = agent.sshPort;
         hostPublicKeys = hostAuthorizedKeys;
+        # The gemini CLI authenticates via GEMINI_API_KEY at every
+        # invocation; the peer inbox watcher runs as a system service
+        # so it does not source ~/.bashrc and never sees the token.
+        # Activation script below converts the operator's bash-shape
+        # ~/.gemini-token into a systemd EnvironmentFile and points
+        # the watcher at it. Only gemini needs this; claude uses an
+        # OAuth keyring and codex authenticates from ~/.codex/auth.json.
+        envFile = if name == "gemini" then "/run/agent-env/gemini.env" else null;
       };
+
+      system.activationScripts.gemini-env-prep = lib.mkIf (name == "gemini") (lib.stringAfter [ "users" ] ''
+        install -d -m 0700 -o agent -g agent /run/agent-env
+        if [ -r /home/agent/.gemini-token ]; then
+          ${pkgs.gnused}/bin/sed -E 's/^[[:space:]]*export[[:space:]]+//' \
+            /home/agent/.gemini-token > /run/agent-env/gemini.env
+          chmod 0400 /run/agent-env/gemini.env
+          chown agent:agent /run/agent-env/gemini.env
+        else
+          echo "WARNING: /home/agent/.gemini-token missing; ai-peer-inbox-watcher will have no GEMINI_API_KEY" >&2
+        fi
+      '');
 
       microvm = {
         hypervisor = "qemu";

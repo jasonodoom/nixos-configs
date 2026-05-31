@@ -148,6 +148,17 @@ in
       default = [];
       description = "SSH public keys authorized to shell in as the agent user.";
     };
+    envFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = ''
+        Optional systemd-style environment file (KEY=VAL per line, no
+        `export`) loaded by the ai-peer-inbox-watcher service. Used to
+        give the watcher API keys the agent CLI needs when invoked
+        non-interactively (the service is neither login nor interactive,
+        so ~/.bashrc and ~/.profile are not sourced).
+      '';
+    };
   };
 
   config = {
@@ -215,6 +226,8 @@ in
         ExecStart = "${inboxWatcher}/bin/ai-peer-inbox-watcher";
         Restart = "always";
         RestartSec = "5s";
+      } // lib.optionalAttrs (cfg.envFile != null) {
+        EnvironmentFile = cfg.envFile;
       };
     };
 
