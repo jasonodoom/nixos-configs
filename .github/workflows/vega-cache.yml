@@ -12,7 +12,7 @@ permissions:
   contents: read
 concurrency:
   group: vega-cache-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   cache:
     runs-on: ${{ matrix.os }}
@@ -55,7 +55,7 @@ jobs:
           persist-credentials: false
       # The agent installs Nix, builds the installable, and pushes only paths the
       # upstream cache does not already serve.
-      - uses: Ad-Astra-Computing/vega-agent/agent@620fb2b6c95feb52f6a50df8be82c9d0a019852a
+      - uses: Ad-Astra-Computing/vega-agent/agent@376688ed160aca2236ddf848d438826181439635
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
