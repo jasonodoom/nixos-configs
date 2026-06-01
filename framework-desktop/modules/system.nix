@@ -50,8 +50,8 @@
   # Run Nix builds at idle CPU + IO priority so a heavy build yields to
   # interactive use instead of making the machine unresponsive.
   systemd.services.nix-daemon.serviceConfig = {
-    CPUSchedulingPolicy = "idle";
-    IOSchedulingClass = "idle";
+    CPUSchedulingPolicy = lib.mkForce "idle";
+    IOSchedulingClass = lib.mkForce "idle";
   };
 
   # Hourly disk-pressure warning. Catches non-nix fills (user code,
