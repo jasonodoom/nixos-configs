@@ -55,7 +55,7 @@ jobs:
           persist-credentials: false
       # The agent installs Nix, builds the installable, and pushes only paths the
       # upstream cache does not already serve.
-      - uses: Ad-Astra-Computing/vega-agent/agent@2a319fa1423e66648407ee3924bbd8a62a15def1
+      - uses: Ad-Astra-Computing/vega-agent/agent@621de574292f9fbf8830a6ee1d250a0f76d7d230
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
