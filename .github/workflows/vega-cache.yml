@@ -16,8 +16,11 @@ concurrency:
 jobs:
   cache:
     runs-on: ${{ matrix.os }}
-    # Fail fast rather than idle a runner for hours if a build hangs or OOMs.
-    timeout-minutes: 90
+    # The job timeout is the single source of truth for "too long" (the agent's
+    # own VEGA_BUILD_TIMEOUT_MS is set high below so it never pre-empts this).
+    # Raised to fit one cold build of a heavy closure (e.g. codex from source) on
+    # the free hosted runner; reuse-cache substitutes it on later runs.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +39,9 @@ jobs:
     # runner context is not available in job-level env, so use a literal here.)
     env:
       TMPDIR: ${{ matrix.os == 'ubuntu-latest' && '/mnt/vega-tmp' || '/tmp' }}
+      # Defer to the job timeout-minutes above (6h ceiling); the agent must not
+      # SIGTERM a long build before the job does and discard all built paths.
+      VEGA_BUILD_TIMEOUT_MS: "21600000"
     steps:
       - name: Make /mnt scratch (ubuntu)
         if: matrix.os == 'ubuntu-latest'
@@ -60,3 +66,7 @@ jobs:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
           skip-upstream: "true"
+          # Substitute this repo's own prior Vega pushes before building, so a
+          # cold runner pulls cached paths (e.g. codex) instead of rebuilding.
+          # Safe here: these are tenant-cache jobs, not shared-tier reproducers.
+          reuse-cache: "true"
