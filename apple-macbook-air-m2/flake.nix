@@ -163,8 +163,12 @@
           enable = true;
           customSettings = {
             trusted-users = ["root" "jason"];
-            cores = 0;
-            max-jobs = "auto";
+            cores = 4;
+            max-jobs = 4;
+            max-silent-time = 1800; # kill a build that emits nothing for 30 min
+            timeout = 6 * 60 * 60; # hard cap any single build at 6 h
+            connect-timeout = 5; # fail fast on an unreachable substituter
+            stalled-download-timeout = 300; # fail a download stalled 5 min
             substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org https://vega-cache.dev";
             trusted-public-keys = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ=";
             builders-use-substitutes = true;
