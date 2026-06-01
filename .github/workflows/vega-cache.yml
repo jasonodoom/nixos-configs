@@ -15,34 +15,42 @@ concurrency:
   cancel-in-progress: false
 jobs:
   cache:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     # The job timeout is the single source of truth for "too long" (the agent's
     # own VEGA_BUILD_TIMEOUT_MS is set high below so it never pre-empts this).
-    # Raised to fit one cold build of a heavy closure (e.g. codex from source) on
-    # the free hosted runner; reuse-cache substitutes it on later runs.
+    # Raised to fit one cold build of a heavy closure on the free hosted runner;
+    # reuse-cache substitutes it on later runs.
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
         include:
+          # perdurabo builds on its own self-hosted Vega runner (a persistent
+          # container that already ships nix + the agent), not a free GitHub
+          # runner, so the heavy desktop closure is not subject to preemption.
           - host: framework-desktop
             attr: nixosConfigurations.perdurabo.config.system.build.toplevel
-            os: ubuntu-latest
+            runner: [ self-hosted, vega-perdurabo ]
+            selfhosted: true
           - host: lenovo-thinkcentre-m710q
             attr: nixosConfigurations.congo.config.system.build.toplevel
+            runner: ubuntu-latest
             os: ubuntu-latest
           - host: apple-macbook-air-m2
             attr: darwinConfigurations.theophany.system
+            runner: macos-14
             os: macos-14
     # NAR dumps + nix build temp go to /mnt on ubuntu (the small / disk is why
-    # ci.yml relocates /nix to /mnt). macOS has room on the default /tmp. (The
-    # runner context is not available in job-level env, so use a literal here.)
+    # ci.yml relocates /nix to /mnt). macOS and the self-hosted container have room
+    # on /tmp. (The runner context is not available in job-level env, use a literal.)
     env:
       TMPDIR: ${{ matrix.os == 'ubuntu-latest' && '/mnt/vega-tmp' || '/tmp' }}
       # Defer to the job timeout-minutes above (6h ceiling); the agent must not
       # SIGTERM a long build before the job does and discard all built paths.
       VEGA_BUILD_TIMEOUT_MS: "21600000"
     steps:
+      # Host prep only for the ephemeral GitHub-hosted ubuntu runner (congo), not
+      # the macOS or self-hosted container runners.
       - name: Make /mnt scratch (ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -59,14 +67,28 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      # The agent installs Nix, builds the installable, and pushes only paths the
-      # upstream cache does not already serve.
-      - uses: Ad-Astra-Computing/vega-agent/agent@3326085b14503a6a86bd482a140c68fc54f2d0a0
+
+      # Hosted runners (congo, theophany): the action installs Nix, builds the
+      # installable, and pushes only paths the upstream cache does not already serve.
+      - name: Build and publish (hosted runner)
+        if: ${{ !matrix.selfhosted }}
+        uses: Ad-Astra-Computing/vega-agent/agent@3326085b14503a6a86bd482a140c68fc54f2d0a0
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
           skip-upstream: "true"
-          # Substitute this repo's own prior Vega pushes before building, so a
-          # cold runner pulls cached paths (e.g. codex) instead of rebuilding.
-          # Safe here: these are tenant-cache jobs, not shared-tier reproducers.
+          # Substitute this repo's own prior Vega pushes before building, so a cold
+          # runner pulls cached paths instead of rebuilding. Safe here: tenant-cache
+          # jobs, not shared-tier reproducers.
           reuse-cache: "true"
+
+      # Self-hosted runner (perdurabo): the container already ships nix + the agent,
+      # so call the baked agent directly rather than the install-everything action
+      # (which would re-run a systemd-based Nix installer the container lacks).
+      - name: Build and publish (self-hosted, baked agent)
+        if: ${{ matrix.selfhosted }}
+        run: vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
+        env:
+          VEGA_URL: https://vega-cache.dev
+          VEGA_SKIP_UPSTREAM: "true"
+          VEGA_REUSE_CACHE: "true"

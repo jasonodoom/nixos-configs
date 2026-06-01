@@ -1,0 +1,24 @@
+# Manual smoke test for the self-hosted Vega builder runner on perdurabo.
+# Runs the BAKED agent in the container on a tiny installable (nixpkgs#hello) to
+# prove the runner + agent + Vega upload/attest path end to end, without the heavy
+# perdurabo closure. Trigger from the Actions tab (Run workflow). Safe to delete
+# once the runner is trusted.
+name: Vega runner test
+on:
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  smoke:
+    runs-on: [self-hosted, vega-perdurabo]
+    timeout-minutes: 30
+    steps:
+      # The container already ships nix + the vega agent, so call the baked agent
+      # directly (no install-everything action). GitHub injects the OIDC request
+      # env because of `id-token: write`.
+      - name: Build + attest a tiny output via the baked agent
+        run: vega-attest "nixpkgs#hello"
+        env:
+          VEGA_URL: https://vega-cache.dev
+          VEGA_SKIP_UPSTREAM: "false"
