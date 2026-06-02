@@ -92,3 +92,7 @@ jobs:
           VEGA_URL: https://vega-cache.dev
           VEGA_SKIP_UPSTREAM: "true"
           VEGA_REUSE_CACHE: "true"
+          # Upload one NAR at a time: the agent buffers each compressed NAR in
+          # memory, so the default of 4 OOM-kills the container on this heavy
+          # closure. Can be raised once the agent streams uploads (vega-agent).
+          VEGA_UPLOAD_CONCURRENCY: "1"
