@@ -27,6 +27,7 @@ let
     "f7d199a761ec689d0ffa960f852b8f4eb1eba6c8"  # 2026-04-21 chore: update flake.lock files
     "4df13208ce74c05ce34ec46289834227e82c2922"  # 2026-04-22 chore: update flake.lock files
     "b5bf556a74567d91016bf6cdb641e1dcd3d53730"  # 2026-05-08 Update Claude Code to 2.1.133
+    "256d43aef93bbe290d2252bad04238ef759c7d02"  # 2026-06-01 Update Claude Code to 2.1.156 (last unsigned auto-PR commit before 68e19b4 fixed signing)
   ];
 in
 {
