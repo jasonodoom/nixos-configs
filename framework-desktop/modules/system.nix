@@ -19,6 +19,14 @@
       # the scheduled timer would miss.
       min-free = 5 * 1024 * 1024 * 1024;
       max-free = 25 * 1024 * 1024 * 1024;
+      # Cap build parallelism and time out stuck builds so a build cannot exhaust
+      # the machine. Tune max-jobs/cores to the RAM the microVMs leave free.
+      max-jobs = 4;
+      cores = 4;
+      max-silent-time = 1800; # kill a build that emits nothing for 30 min
+      timeout = 6 * 60 * 60; # hard cap any single build at 6 h
+      connect-timeout = 5; # fail fast on an unreachable substituter
+      stalled-download-timeout = 300; # fail a download stalled 5 min
       substituters = [
         "https://cache.nixos.org/"
         "https://vega-cache.dev"
@@ -37,6 +45,13 @@
       dates = "daily";
       options = "--delete-older-than 7d";
     };
+  };
+
+  # Run Nix builds at idle CPU + IO priority so a heavy build yields to
+  # interactive use instead of making the machine unresponsive.
+  systemd.services.nix-daemon.serviceConfig = {
+    CPUSchedulingPolicy = lib.mkForce "idle";
+    IOSchedulingClass = lib.mkForce "idle";
   };
 
   # Hourly disk-pressure warning. Catches non-nix fills (user code,
