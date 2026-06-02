@@ -61,7 +61,13 @@ jobs:
           HOST_NAME: ${{ inputs.host_name }}
         run: |
           set -eu
+          # Same min-free/max-free dance ci.yml uses for perdurabo:
+          # the five microvm closures + their erofs images are built
+          # sequentially and won't fit on the runner without nix
+          # auto-purging intermediate paths between them.
           OUT=$(nix build --no-link --print-out-paths \
+            --option min-free $((5 * 1024 * 1024 * 1024)) \
+            --option max-free $((15 * 1024 * 1024 * 1024)) \
             ".#nixosConfigurations.${HOST_NAME}.config.system.build.toplevel")
           echo "toplevel=$OUT" >> "$GITHUB_OUTPUT"
 
