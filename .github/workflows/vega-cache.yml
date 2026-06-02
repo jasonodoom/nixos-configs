@@ -72,7 +72,7 @@ jobs:
       # installable, and pushes only paths the upstream cache does not already serve.
       - name: Build and publish (hosted runner)
         if: ${{ !matrix.selfhosted }}
-        uses: Ad-Astra-Computing/vega-agent/agent@c67e3d0b5eea171ae20d438c6a22b47805f1960a # v0.3.0
+        uses: Ad-Astra-Computing/vega-agent/agent@296443d6e94039fb7352b0b4784913d8202d4873 # v0.4.0
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
