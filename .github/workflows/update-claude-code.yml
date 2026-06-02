@@ -200,21 +200,53 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           VERSION="${{ steps.version.outputs.target }}"
           BRANCH="update-claude-code-${VERSION}"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git fetch origin
-          if git ls-remote --heads origin "${BRANCH}" | grep -q "${BRANCH}"; then
-            git push origin --delete "${BRANCH}" || true
-          fi
+          BASE_OID="$(git rev-parse origin/unstable)"
 
-          git checkout -b "${BRANCH}"
-          git add framework-desktop/overlays/claude-code.nix apple-macbook-air-m2/overlays/claude-code.nix lenovo-thinkcentre-m710q/overlays/claude-code.nix
-          git commit -m "Update Claude Code to ${VERSION}"
-          git push origin "${BRANCH}"
+          # Drop any leftover branch from an earlier failed run, then
+          # create a fresh ref pointing at unstable HEAD via the API.
+          if git ls-remote --heads origin "${BRANCH}" | grep -q "${BRANCH}"; then
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${BRANCH}" || true
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/heads/${BRANCH}" \
+            -f sha="${BASE_OID}" >/dev/null
+
+          # Commit via the createCommitOnBranch GraphQL mutation, NOT
+          # via `git commit && git push`. Commits made through the
+          # GitHub API with GITHUB_TOKEN are signed by GitHub on
+          # behalf of github-actions[bot] (Verified badge). The
+          # previous `git commit` path produced unsigned commits
+          # that perdurabo's auto-upgrade signature check refused —
+          # see issue #432.
+          INPUT=$(jq -n \
+            --arg repo "${GITHUB_REPOSITORY}" \
+            --arg branch "${BRANCH}" \
+            --arg msg "Update Claude Code to ${VERSION}" \
+            --arg oid "${BASE_OID}" \
+            --rawfile fwd framework-desktop/overlays/claude-code.nix \
+            --rawfile mac apple-macbook-air-m2/overlays/claude-code.nix \
+            --rawfile lnv lenovo-thinkcentre-m710q/overlays/claude-code.nix \
+            '{
+              branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+              message: { headline: $msg },
+              expectedHeadOid: $oid,
+              fileChanges: {
+                additions: [
+                  { path: "framework-desktop/overlays/claude-code.nix",       contents: ($fwd | @base64) },
+                  { path: "apple-macbook-air-m2/overlays/claude-code.nix",    contents: ($mac | @base64) },
+                  { path: "lenovo-thinkcentre-m710q/overlays/claude-code.nix", contents: ($lnv | @base64) }
+                ]
+              }
+            }')
+
+          gh api graphql \
+            -f query='mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url oid } } }' \
+            -F input="${INPUT}" >/dev/null
 
           gh pr create \
             --title "Update Claude Code to ${VERSION}" \
