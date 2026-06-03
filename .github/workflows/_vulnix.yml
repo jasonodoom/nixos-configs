@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       # GitHub-hosted ubuntu-latest ships with ~14GB free on /. The
       # NixOS toplevel build pulls many GB of derivations and has
@@ -35,7 +35,7 @@ jobs:
       # device" mid-build). Drop unused tooling and the .NET cache
       # before nix touches the disk. Frees ~30GB on typical runners.
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -45,7 +45,7 @@ jobs:
           swap-storage: false
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           source-tag: "v3.12.1"
           extra-conf: |
@@ -143,7 +143,7 @@ jobs:
 
       - name: Upload findings artifact
         if: steps.vulnix.outputs.rc == '2'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: vulnix-${{ inputs.host_name }}
           path: |

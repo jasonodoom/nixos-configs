@@ -37,9 +37,11 @@ in
   "forgejo-runner-token.age".publicKeys = all;
 
   # Tailscale auth key for the forgejo-runner microvm
+  # Expires: TODO (rotation date not tracked; tailscale-key-expiry workflow flags)
   "forgejo-runner-tailscale-authkey.age".publicKeys = all;
 
   # Tailscale auth key for AI agent microvms (claude/codex/gemini)
+  # Expires: TODO (rotation date not tracked; tailscale-key-expiry workflow flags)
   "ai-agent-tailscale-authkey.age".publicKeys = all;
 
   # Bearer token bosun sends to the browser-runner microvm

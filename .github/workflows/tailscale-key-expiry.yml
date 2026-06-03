@@ -1,5 +1,11 @@
 name: Check Tailscale Auth Key Expiry
 
+# Scans every agenix-managed `*tailscale*` secret across both
+# hosts (#78). Each secret should carry an `# Expires: YYYY-MM-DD`
+# comment on the line immediately before the `.age` entry. Secrets
+# without an Expires comment are surfaced as `expiry-not-tracked`
+# so the operator knows their rotation cadence is unmonitored.
+
 on:
   schedule:
     # Check weekly on Monday at 9 AM
@@ -14,100 +20,158 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Check auth key expiry date
-        id: check
+      - name: Scan every tailscale .age secret for an Expires comment
+        id: scan
         run: |
-          # Read expiry dates from both Congo and Perdurabo secrets.nix
-          CONGO_EXPIRY=$(grep -B1 "tailscale-initrd-key" lenovo-thinkcentre-m710q/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
-          PERDURABO_EXPIRY=$(grep -B1 "tailscale-initrd-key" framework-desktop/secrets/secrets.nix | grep -oP "Expires: \K\d{4}-\d{2}-\d{2}" || echo "")
+          set -euo pipefail
+          : > /tmp/keys.tsv
+          : > /tmp/untracked.txt
 
-          # Find the earliest expiring key
-          EXPIRY_DATE=""
-          HOST=""
+          scan_host() {
+            local host="$1" secrets_file="$2"
+            [ -f "$secrets_file" ] || return 0
+            # awk reads the file looking for *tailscale*.age entries
+            # and the most-recent Expires: line before them. If no
+            # Expires comment appears between the previous entry and
+            # the current one, mark the key as untracked.
+            awk -v host="$host" -v file="$secrets_file" '
+              /^[[:space:]]*#[[:space:]]*Expires:/ {
+                match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}/, m)
+                if (m[0] != "") last_expiry = m[0]
+                else last_expiry = "TODO"
+                next
+              }
+              /tailscale[a-zA-Z_-]*\.age/ {
+                match($0, /"([^"]+\.age)"/, n)
+                if (n[1] != "") {
+                  if (last_expiry == "") last_expiry = ""
+                  printf "%s\t%s\t%s\n", host, n[1], last_expiry
+                  last_expiry = ""
+                }
+              }
+              /\.age/ && !/tailscale/ {
+                # Non-tailscale entry resets the carried Expires so
+                # it doesnt get attributed to a later tailscale key.
+                last_expiry = ""
+              }
+            ' "$secrets_file" >> /tmp/keys.tsv
+          }
 
-          if [ -n "$CONGO_EXPIRY" ] && [ -n "$PERDURABO_EXPIRY" ]; then
-            CONGO_EPOCH=$(date -d "$CONGO_EXPIRY" +%s)
-            PERDURABO_EPOCH=$(date -d "$PERDURABO_EXPIRY" +%s)
-            if [ $CONGO_EPOCH -lt $PERDURABO_EPOCH ]; then
-              EXPIRY_DATE="$CONGO_EXPIRY"
-              HOST="Congo"
-            else
-              EXPIRY_DATE="$PERDURABO_EXPIRY"
-              HOST="Perdurabo"
+          scan_host "congo"     "lenovo-thinkcentre-m710q/secrets/secrets.nix"
+          scan_host "perdurabo" "framework-desktop/secrets/secrets.nix"
+
+          echo "Scanned tailscale keys:"
+          cat /tmp/keys.tsv
+
+          # Compute earliest expiring + collect untracked.
+          earliest_date=""
+          earliest_host=""
+          earliest_key=""
+          while IFS=$'\t' read -r host key expiry; do
+            if [ -z "$expiry" ] || [ "$expiry" = "TODO" ]; then
+              echo "$host  $key  (no Expires comment)" >> /tmp/untracked.txt
+              continue
             fi
-          elif [ -n "$CONGO_EXPIRY" ]; then
-            EXPIRY_DATE="$CONGO_EXPIRY"
-            HOST="Congo"
-          elif [ -n "$PERDURABO_EXPIRY" ]; then
-            EXPIRY_DATE="$PERDURABO_EXPIRY"
-            HOST="Perdurabo"
+            if [ -z "$earliest_date" ] || [ "$(date -d "$expiry" +%s)" -lt "$(date -d "$earliest_date" +%s)" ]; then
+              earliest_date="$expiry"
+              earliest_host="$host"
+              earliest_key="$key"
+            fi
+          done < /tmp/keys.tsv
+
+          untracked_count=$(wc -l < /tmp/untracked.txt | tr -d ' ')
+          untracked_block=""
+          if [ "$untracked_count" -gt 0 ]; then
+            untracked_block=$(cat /tmp/untracked.txt)
           fi
 
-          if [ -z "$EXPIRY_DATE" ]; then
-            echo "No expiry date found in secrets.nix files"
+          {
+            echo "earliest_date=$earliest_date"
+            echo "earliest_host=$earliest_host"
+            echo "earliest_key=$earliest_key"
+            echo "untracked_count=$untracked_count"
+            echo "untracked_block<<EOF"
+            echo "$untracked_block"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+          if [ -z "$earliest_date" ]; then
+            echo "No tracked expiry dates; nothing to warn about (but $untracked_count untracked keys)."
+            echo "days_left=999" >> $GITHUB_OUTPUT
+            echo "warning=false" >> $GITHUB_OUTPUT
+            echo "followup=false" >> $GITHUB_OUTPUT
+            # If every key is untracked, that's itself worth a
+            # reminder so it doesn't sit silently for months.
+            if [ "$untracked_count" -gt 0 ]; then
+              echo "untracked_only_warning=true" >> $GITHUB_OUTPUT
+            else
+              echo "untracked_only_warning=false" >> $GITHUB_OUTPUT
+            fi
             exit 0
           fi
 
-          EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s)
-          TODAY_EPOCH=$(date +%s)
-          DAYS_LEFT=$(( ($EXPIRY_EPOCH - $TODAY_EPOCH) / 86400 ))
+          earliest_epoch=$(date -d "$earliest_date" +%s)
+          today_epoch=$(date +%s)
+          days_left=$(( ($earliest_epoch - $today_epoch) / 86400 ))
 
-          echo "days_left=$DAYS_LEFT" >> $GITHUB_OUTPUT
-          echo "expiry_date=$EXPIRY_DATE" >> $GITHUB_OUTPUT
-          echo "host=$HOST" >> $GITHUB_OUTPUT
-          echo "congo_expiry=$CONGO_EXPIRY" >> $GITHUB_OUTPUT
-          echo "perdurabo_expiry=$PERDURABO_EXPIRY" >> $GITHUB_OUTPUT
-
-          if [ $DAYS_LEFT -le 7 ]; then
+          echo "days_left=$days_left" >> $GITHUB_OUTPUT
+          if [ "$days_left" -le 7 ]; then
             echo "warning=true" >> $GITHUB_OUTPUT
           else
             echo "warning=false" >> $GITHUB_OUTPUT
           fi
-
-          # Check if this is a follow-up (3 days before)
-          if [ $DAYS_LEFT -le 3 ]; then
+          if [ "$days_left" -le 3 ]; then
             echo "followup=true" >> $GITHUB_OUTPUT
           else
             echo "followup=false" >> $GITHUB_OUTPUT
           fi
+          echo "untracked_only_warning=false" >> $GITHUB_OUTPUT
 
       - name: Create reminder issue
-        if: steps.check.outputs.warning == 'true'
-        uses: actions/github-script@v9
+        if: steps.scan.outputs.warning == 'true' || steps.scan.outputs.untracked_only_warning == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
-            const daysLeft = ${{ steps.check.outputs.days_left }};
-            const expiryDate = '${{ steps.check.outputs.expiry_date }}';
-            const host = '${{ steps.check.outputs.host }}';
-            const congoExpiry = '${{ steps.check.outputs.congo_expiry }}';
-            const perduraboExpiry = '${{ steps.check.outputs.perdurabo_expiry }}';
+            const daysLeft   = parseInt('${{ steps.scan.outputs.days_left }}', 10);
+            const expiry     = '${{ steps.scan.outputs.earliest_date }}';
+            const host       = '${{ steps.scan.outputs.earliest_host }}';
+            const key        = '${{ steps.scan.outputs.earliest_key }}';
+            const untracked  = parseInt('${{ steps.scan.outputs.untracked_count }}', 10);
+            const untrackedBlock = `${{ steps.scan.outputs.untracked_block }}`;
+            const untrackedOnly = '${{ steps.scan.outputs.untracked_only_warning }}' === 'true';
 
-            const title = `[URGENT] Tailscale initrd auth key expires in ${daysLeft} days`;
+            const title = untrackedOnly
+              ? `Tailscale auth keys with no Expires tracking (${untracked} untracked)`
+              : `[URGENT] Tailscale auth key expires in ${daysLeft} days (${host}/${key})`;
 
-            let expiryInfo = '';
-            if (congoExpiry && perduraboExpiry) {
-              expiryInfo = `
-            **Congo:** ${congoExpiry}
-            **Perdurabo:** ${perduraboExpiry}
+            const expiryInfo = untrackedOnly
+              ? `No tailscale auth key has a tracked Expires comment.`
+              : `**Next to expire:** \`${host}/${key}\` on **${expiry}** (${daysLeft} days)`;
 
-            Next to expire: **${host}** on **${expiryDate}** (${daysLeft} days)`;
-            } else {
-              expiryInfo = `The Tailscale auth key for ${host} initrd will expire on **${expiryDate}** (${daysLeft} days).`;
+            let untrackedSection = '';
+            if (untracked > 0) {
+              untrackedSection = `
+
+            ### Untracked keys (${untracked})
+
+            These tailscale auth keys have no \`# Expires: YYYY-MM-DD\` comment in secrets.nix, so the workflow can't warn you when they expire. Add one when you next rotate:
+
+            \`\`\`
+            ${untrackedBlock}
+            \`\`\``;
             }
 
-            const body = `## Tailscale Auth Key Expiring Soon
+            const body = `## Tailscale Auth Key Expiry Status
 
-            ${expiryInfo}
+            ${expiryInfo}${untrackedSection}
 
-            > This key will expire on ${expiryDate}. If you'll then want to continue using an auth key, you'll need to generate a new one.
-
-            ### Action Required:
+            ### Action Required (for soon-to-expire keys)
 
             1. Generate a new reusable auth key at https://login.tailscale.com/admin/settings/keys
                - Reusable: ✓
-               - Ephemeral: ✓ (removes device when initrd stops)
+               - Ephemeral: ✓ (where appropriate; initrd keys want ephemeral)
                - Pre-authorized: ✓
                - Expiry: 90 days
 
@@ -117,43 +181,29 @@ jobs:
                tailscale lock sign "$AUTH_KEY"
                \`\`\`
 
-            3. For **Congo**:
+            3. Rotate the agenix secret for the matching key:
                \`\`\`bash
-               cd /etc/nixos/lenovo-thinkcentre-m710q
-               RULES=secrets/secrets.nix ragenix -e secrets/tailscale-initrd-key.age
-               # Paste the pre-signed key when prompted
-               # Update expiry date in lenovo-thinkcentre-m710q/secrets/secrets.nix
-               age --decrypt -i ~/.ssh/id_ed25519 secrets/tailscale-initrd-key.age | doas tee /etc/secrets/initrd/tailscale-auth-key
-               doas chmod 400 /etc/secrets/initrd/tailscale-auth-key
-               doas nixos-rebuild switch --flake .#congo
+               cd /etc/nixos/<host-dir>
+               RULES=secrets/secrets.nix ragenix -e secrets/<key>.age
+               # Paste the pre-signed key when prompted.
+               # Update the \`# Expires: YYYY-MM-DD\` comment in secrets.nix.
                \`\`\`
 
-            4. For **Perdurabo**:
-               \`\`\`bash
-               cd /etc/nixos/framework-desktop
-               RULES=secrets/secrets.nix ragenix -e secrets/tailscale-initrd-key.age
-               # Paste the pre-signed key when prompted
-               # Update expiry date in framework-desktop/secrets/secrets.nix
-               age --decrypt -i ~/.ssh/id_ed25519 secrets/tailscale-initrd-key.age | sudo tee /etc/secrets/initrd/tailscale-auth-key
-               sudo chmod 400 /etc/secrets/initrd/tailscale-auth-key
-               sudo nixos-rebuild switch --flake .#perdurabo
-               \`\`\`
+            4. Redeploy the host so the new secret takes effect.
 
             @jasonodoom`;
 
-            // Check if issue already exists
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
               labels: 'tailscale,security'
             });
-
             const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Tailscale auth key') ||
               issue.title.includes('Tailscale initrd auth key')
             );
-
-            const isFollowup = '${{ steps.check.outputs.followup }}' === 'true';
+            const isFollowup = '${{ steps.scan.outputs.followup }}' === 'true';
 
             if (!existingIssue) {
               await github.rest.issues.create({
@@ -165,11 +215,10 @@ jobs:
                 assignees: ['jasonodoom']
               });
             } else if (isFollowup && existingIssue.state === 'open') {
-              // Follow-up comment on existing open issue
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existingIssue.number,
-                body: `**Follow-up reminder**: Only **${daysLeft} days** left until key expires on ${expiryDate}!`
+                body: `**Follow-up reminder**: Only **${daysLeft} days** left until \`${host}/${key}\` expires on ${expiry}!`
               });
             }
