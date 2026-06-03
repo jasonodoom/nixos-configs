@@ -12,7 +12,13 @@
       auto-optimise-store = true;
       sandbox = true;
       builders-use-substitutes = true;
-      trusted-users = [ "root" ];
+      # jason is trusted so theophany can use perdurabo as a remote builder:
+      # Determinate Nix refuses input-addressed builds from untrusted users, so
+      # without this an offloaded `nix build` fails with "not privileged to
+      # build input-addressed derivations". Trusted users can also add
+      # substituters and import unsigned paths, so this is a deliberate grant to
+      # an account already holding SSH build access.
+      trusted-users = [ "root" "jason" ];
       # Inline gc trigger: when free space drops below min-free,
       # daemon collects garbage until it reaches max-free. Catches
       # build-time fills (microvm rebuilds, large derivations) that

@@ -172,7 +172,12 @@
             substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org https://vega-cache.dev";
             trusted-public-keys = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ=";
             builders-use-substitutes = true;
-            builders = "ssh://jason@perdurabo x86_64-linux - 8 1 big-parallel,nixos-test";
+            # Fields (space-separated): uri system ssh-key max-jobs speed-factor
+            # supported-features required-features base64-host-key. The 8th field
+            # pins perdurabo's host key so the root nix-daemon can verify the
+            # builder without an entry in root's known_hosts (it offloads as
+            # root, not as the logged-in user).
+            builders = "ssh://jason@perdurabo x86_64-linux - 8 1 big-parallel,nixos-test - c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUZYeVFvV1lzQWQ3OTZoV3M2UlJyOVJNbFRib2U0S0J4cWs2bVMrSWE4cUo=";
           };
         };
 
