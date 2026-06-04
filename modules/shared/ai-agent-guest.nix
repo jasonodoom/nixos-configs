@@ -261,6 +261,41 @@ in
       PATH = [ "$HOME/.local/bin" ];
     };
 
+    # Per-agent memory files documenting the local `ask-peer` command
+    # so the agent knows it exists and how to use it (without this,
+    # the binary is on PATH but the agent never calls it). One source
+    # of truth in /etc, symlinked into each agent's per-user config
+    # dir on every rebuild via systemd-tmpfiles. Only the file
+    # matching the running agent's CLI is read; the other two are
+    # harmless overhead.
+    environment.etc."ai-agent/peer-doc.md".text = ''
+      # Peer agents
+
+      You can consult the codex or gemini agent running in a sibling microvm
+      via the `ask-peer` command:
+
+          ask-peer <claude|codex|gemini> "<prompt>"
+          ask-peer <claude|codex> "resume:<session-id> <prompt>"
+
+      The call blocks until the peer responds (default 5min timeout). Use it
+      when you need a second opinion, a different model's reasoning, or to
+      continue a recorded session on another agent.
+
+      The peer bus is a JSON inbox at `~/peers/_inbox/<to>/`. Do not write to
+      it directly — always use `ask-peer`. The inbox watcher
+      (`ai-peer-inbox-watcher.service`) dispatches incoming asks to the
+      local CLI and writes the response back.
+    '';
+
+    systemd.tmpfiles.rules = [
+      "d /home/agent/.claude 0700 agent users -"
+      "d /home/agent/.codex  0700 agent users -"
+      "d /home/agent/.gemini 0700 agent users -"
+      "L+ /home/agent/.claude/CLAUDE.md - - - - /etc/ai-agent/peer-doc.md"
+      "L+ /home/agent/.codex/AGENTS.md  - - - - /etc/ai-agent/peer-doc.md"
+      "L+ /home/agent/.gemini/GEMINI.md - - - - /etc/ai-agent/peer-doc.md"
+    ];
+
     # OpenPGP signing with the key in ~/.gnupg is the default. SSH signing
     # is opt-in per-invocation when the host's ssh-agent is forwarded:
     #   git -c gpg.format=ssh -c user.signingkey=~/.ssh/signing-key.pub \
