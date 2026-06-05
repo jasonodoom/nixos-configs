@@ -43,9 +43,6 @@
     # Virtualization
     "vagrant"
 
-    # Security tools
-    "burpsuite"
-
     # DevOps tools
     "terraform"
   ];
