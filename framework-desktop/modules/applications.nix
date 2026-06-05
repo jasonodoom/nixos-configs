@@ -94,7 +94,6 @@
     google-chrome
     discord
     dbeaver-bin
-    burpsuite
     postman
     appimage-run
 
