@@ -301,3 +301,13 @@ jobs:
               --label "automated" \
               --assignee jasonodoom
           fi
+
+      - name: Close failure issue on success
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --state open --label "bug" --label "automated" --search "Claude Code update workflow failed" --json number -q '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "Resolved by run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} (target ${{ steps.version.outputs.target }})."
+          fi
