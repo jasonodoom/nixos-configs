@@ -19,10 +19,17 @@ let
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwLk94aSzaUrpxHZ6BHbxMaF3054VZJh6rUF8cdSHIm jason@perdurabo"
   ];
 
+  # The attribute key is the systemd unit instance: microvm@ai-claude etc.
+  # That matches the inner unit names the microvm flake derives from
+  # hostName, so /var/lib/microvms/ai-<name> is consistent across the
+  # top-level VM unit, microvm-set-booted@, and microvm-virtiofsd@.
+  # `short` keys the per-agent state under ${userHomeState} so the
+  # large persistent dirs (~/.claude, ~/.codex, ~/.gemini) keep their
+  # existing paths and need no migration.
   agents = {
-    claude = { mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
-    codex  = { mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
-    gemini = { mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
+    ai-claude = { short = "claude"; mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
+    ai-codex  = { short = "codex";  mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
+    ai-gemini = { short = "gemini"; mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
   };
 
   # Each guest gets every agent CLI so claude can shell out to codex/gemini
@@ -41,10 +48,10 @@ let
       nixpkgs.overlays = [ (import ../overlays/default.nix { inherit inputs; }) ];
 
       system.stateVersion = "25.11";
-      networking.hostName = "ai-${name}";
+      networking.hostName = name;
 
       my.aiAgent = {
-        inherit name;
+        name = agent.short;
         packages = allAgentPackages;
         sshPort = agent.sshPort;
         hostPublicKeys = hostAuthorizedKeys;
@@ -55,13 +62,13 @@ let
         # ~/.gemini-token into a systemd EnvironmentFile and points
         # the watcher at it. Only gemini needs this; claude uses an
         # OAuth keyring and codex authenticates from ~/.codex/auth.json.
-        envFile = if name == "gemini" then "/run/agent-env/gemini.env" else null;
+        envFile = if agent.short == "gemini" then "/run/agent-env/gemini.env" else null;
       };
 
       # Runs after the virtiofs share for /home/agent is up. As an activation
       # script (earlier attempt) the token file wasn't readable yet and the
       # watcher booted without GEMINI_API_KEY.
-      systemd.services.gemini-env-prep = lib.mkIf (name == "gemini") {
+      systemd.services.gemini-env-prep = lib.mkIf (agent.short == "gemini") {
         description = "Materialize /run/agent-env/gemini.env from ~/.gemini-token";
         requiredBy = [ "ai-peer-inbox-watcher.service" ];
         before     = [ "ai-peer-inbox-watcher.service" ];
@@ -97,14 +104,14 @@ let
 
         interfaces = [{
           type = "bridge";
-          id = "vm-${name}";
+          id = "vm-${agent.short}";
           mac = agent.mac;
           bridge = "virbr-ai";
         }];
 
         shares = [
           {
-            source = "${userHomeState}/${name}";
+            source = "${userHomeState}/${agent.short}";
             mountPoint = "/home/agent";
             tag = "agent-home";
             proto = "virtiofs";
@@ -116,7 +123,7 @@ let
             proto = "virtiofs";
           }
           {
-            source = "${userHomeState}/${name}-sshd";
+            source = "${userHomeState}/${agent.short}-sshd";
             mountPoint = "/var/lib/sshd-hostkeys";
             tag = "agent-sshd";
             proto = "virtiofs";
@@ -135,13 +142,13 @@ let
           # Lets nix-shell / nix develop materialize derivations inside
           # the VM; survives VM restarts since it lives on the host.
           {
-            source = "${userHomeState}/${name}-rwstore";
+            source = "${userHomeState}/${agent.short}-rwstore";
             mountPoint = "/nix/.rwstore";
             tag = "agent-rwstore";
             proto = "virtiofs";
           }
           {
-            source = "${userHomeState}/${name}-secrets";
+            source = "${userHomeState}/${agent.short}-secrets";
             mountPoint = "/run/host-secrets";
             tag = "agent-secrets";
             proto = "virtiofs";
@@ -150,7 +157,7 @@ let
           # node identity across restarts; without this each restart
           # registers a fresh node and the hostname gets a -N suffix.
           {
-            source = "${userHomeState}/${name}-tailscale";
+            source = "${userHomeState}/${agent.short}-tailscale";
             mountPoint = "/var/lib/tailscale";
             tag = "agent-tailscale";
             proto = "virtiofs";
@@ -168,7 +175,7 @@ let
         # in extraConfig sends ts.net queries to 100.100.100.100 directly.
         # extraUpFlags runs only on initial registration; extraSetFlags
         # is what re-applies every activation.
-        extraUpFlags = [ "--ssh" "--hostname=ai-${name}" ];
+        extraUpFlags = [ "--ssh" "--hostname=${name}" ];
         extraSetFlags = [ "--accept-dns=false" ];
         openFirewall = true;
       };
@@ -241,18 +248,40 @@ in
   # Don't let nixos-rebuild switch bounce running VMs - it would drop any
   # active claude/codex/gemini session. New config sits on disk; pick it
   # up with `claude-restart` etc. or `ai-restart-all` when convenient.
-  # preStart drops the decrypted tailscale auth key into the per-VM
-  # secrets dir that's virtiofs-shared into the guest as /run/host-secrets.
-  systemd.services = lib.mapAttrs' (name: _:
+  # The unit name matches microvm.vms.<name>, which after the rename is
+  # microvm@ai-claude etc. preStart drops the decrypted tailscale auth
+  # key into the per-VM secrets dir that's virtiofs-shared into the
+  # guest as /run/host-secrets.
+  systemd.services = lib.mapAttrs' (name: agent:
     lib.nameValuePair "microvm@${name}" {
       restartIfChanged = false;
       preStart = ''
         install -m 0400 ${config.age.secrets.ai-agent-tailscale-authkey.path} \
-          ${userHomeState}/${name}-secrets/tailscale-authkey
+          ${userHomeState}/${agent.short}-secrets/tailscale-authkey
       '';
       serviceConfig.PermissionsStartOnly = true;
     }
   ) agents;
+
+  # One-time migration for hosts that still have the pre-rename layout.
+  # The microvm flake's runtime dir uses the unit name, so the old
+  # /var/lib/microvms/<short> dirs need to be reachable under the new
+  # ai-<short> path. Symlink instead of moving so a running VM keeps
+  # working without restart; the next planned restart picks up either
+  # layout transparently. Also drains stale virtiofsd@<short> instances
+  # from the prior generation that systemd would otherwise leave running.
+  system.activationScripts.aiMicrovmRename = lib.stringAfter [ "etc" ] ''
+    for short in claude codex gemini; do
+      old="/var/lib/microvms/$short"
+      new="/var/lib/microvms/ai-$short"
+      if [ -d "$old" ] && [ ! -e "$new" ]; then
+        ln -s "$short" "$new"
+      fi
+      if ${pkgs.systemd}/bin/systemctl is-active --quiet "microvm-virtiofsd@$short.service" 2>/dev/null; then
+        ${pkgs.systemd}/bin/systemctl stop "microvm-virtiofsd@$short.service" || true
+      fi
+    done
+  '';
 
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];
 }
