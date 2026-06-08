@@ -2,14 +2,10 @@
 { config, pkgs, lib, ... }:
 
 let
-  jasonodoomKey = builtins.fetchurl {
-    url = "https://github.com/jasonodoom.gpg";
-    sha256 = "sha256-4hboVMmEdIcxfWpe4mizxp2A4ZZuRtB0MnQuyvnJt9U=";
-  };
-  webFlowKey = builtins.fetchurl {
-    url = "https://github.com/web-flow.gpg";
-    sha256 = "sha256-bor2h/YM8/QDFRyPsbJuleb55CTKYMyPN4e9RGaj74Q=";
-  };
+  # Vendored: a github.com 504 used to fail nix evaluation. The
+  # fingerprint check below still rejects a stale or wrong file.
+  jasonodoomKey = ../../../modules/shared/keys/jasonodoom.gpg;
+  webFlowKey    = ../../../modules/shared/keys/web-flow.gpg;
 
   jasonodoomFingerprint = "F3DD4A7B465A4EB1823E2EE268CCAF80768A91A5";
   webFlowFingerprints = [
