@@ -10,7 +10,7 @@ let
   hostName = cfg.networking.hostName;
 
   vms = cfg.microvm.vms or {};
-  expected = [ "claude" "codex" "gemini" ];
+  expected = [ "ai-claude" "ai-codex" "ai-gemini" ];
 
   vmOf = name: vms.${name} or null;
   guestOf = name:
@@ -40,22 +40,22 @@ let
     }) expected)
     ++
     [
-      { name = "claude guest has claude-code package";
-        ok = hasPackage "claude" "claude-code"; }
-      { name = "codex guest has codex package";
-        ok = hasPackage "codex" "codex"; }
-      { name = "gemini guest has gemini-cli package";
-        ok = hasPackage "gemini" "gemini-cli"; }
+      { name = "ai-claude guest has claude-code package";
+        ok = hasPackage "ai-claude" "claude-code"; }
+      { name = "ai-codex guest has codex package";
+        ok = hasPackage "ai-codex" "codex"; }
+      { name = "ai-gemini guest has gemini-cli package";
+        ok = hasPackage "ai-gemini" "gemini-cli"; }
 
-      { name = "claude guest sshd listens on 2201";
-        ok = hasSshPort "claude" 2201; }
-      { name = "codex guest sshd listens on 2202";
-        ok = hasSshPort "codex" 2202; }
-      { name = "gemini guest sshd listens on 2203";
-        ok = hasSshPort "gemini" 2203; }
+      { name = "ai-claude guest sshd listens on 2201";
+        ok = hasSshPort "ai-claude" 2201; }
+      { name = "ai-codex guest sshd listens on 2202";
+        ok = hasSshPort "ai-codex" 2202; }
+      { name = "ai-gemini guest sshd listens on 2203";
+        ok = hasSshPort "ai-gemini" 2203; }
 
-      { name = "claude guest shares /home/jason/code";
-        ok = hasShare "claude" "/home/jason/code"; }
+      { name = "ai-claude guest shares /home/jason/code";
+        ok = hasShare "ai-claude" "/home/jason/code"; }
 
       { name = "virbr-ai bridge is declared on host";
         ok = cfg.networking.bridges ? virbr-ai; }
