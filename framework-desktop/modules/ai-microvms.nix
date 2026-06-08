@@ -58,17 +58,31 @@ let
         envFile = if name == "gemini" then "/run/agent-env/gemini.env" else null;
       };
 
-      system.activationScripts.gemini-env-prep = lib.mkIf (name == "gemini") (lib.stringAfter [ "users" ] ''
-        install -d -m 0700 -o agent -g agent /run/agent-env
-        if [ -r /home/agent/.gemini-token ]; then
-          ${pkgs.gnused}/bin/sed -E 's/^[[:space:]]*export[[:space:]]+//' \
-            /home/agent/.gemini-token > /run/agent-env/gemini.env
-          chmod 0400 /run/agent-env/gemini.env
-          chown agent:agent /run/agent-env/gemini.env
-        else
-          echo "WARNING: /home/agent/.gemini-token missing; ai-peer-inbox-watcher will have no GEMINI_API_KEY" >&2
-        fi
-      '');
+      # Runs after the virtiofs share for /home/agent is up. As an activation
+      # script (earlier attempt) the token file wasn't readable yet and the
+      # watcher booted without GEMINI_API_KEY.
+      systemd.services.gemini-env-prep = lib.mkIf (name == "gemini") {
+        description = "Materialize /run/agent-env/gemini.env from ~/.gemini-token";
+        requiredBy = [ "ai-peer-inbox-watcher.service" ];
+        before     = [ "ai-peer-inbox-watcher.service" ];
+        after      = [ "home-agent.mount" "local-fs.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          install -d -m 0700 -o agent -g agent /run/agent-env
+          if [ -r /home/agent/.gemini-token ]; then
+            ${pkgs.gnused}/bin/sed -E 's/^[[:space:]]*export[[:space:]]+//' \
+              /home/agent/.gemini-token > /run/agent-env/gemini.env
+            chmod 0400 /run/agent-env/gemini.env
+            chown agent:agent /run/agent-env/gemini.env
+          else
+            echo "gemini-env-prep: /home/agent/.gemini-token missing" >&2
+            exit 1
+          fi
+        '';
+      };
 
       microvm = {
         hypervisor = "qemu";
