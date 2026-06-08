@@ -8,7 +8,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.gpg$|\.age$'
       - id: end-of-file-fixer
+        exclude: '\.gpg$|\.age$'
       - id: check-yaml
       - id: check-added-large-files
         args: ['--maxkb=500']
