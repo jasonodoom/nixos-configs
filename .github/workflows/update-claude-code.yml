@@ -244,9 +244,15 @@ jobs:
               }
             }')
 
-          gh api graphql \
-            -f query='mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url oid } } }' \
-            -F input="${INPUT}" >/dev/null
+          # gh's -F flag stringifies its value, so a nested JSON object
+          # (CreateCommitOnBranchInput!) gets passed as a string and the
+          # mutation rejects it with "provided invalid value". Build the
+          # full {query, variables} body and pipe through --input - so
+          # the input variable arrives as a proper object.
+          jq -n --argjson input "${INPUT}" '{
+            query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url oid } } }",
+            variables: { input: $input }
+          }' | gh api graphql --input - >/dev/null
 
           gh pr create \
             --title "Update Claude Code to ${VERSION}" \
