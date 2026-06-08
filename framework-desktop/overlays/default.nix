@@ -19,4 +19,20 @@ final: prev: {
   # pkgs.claude-code.
   codex = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.codex;
   gemini-cli = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.gemini-cli;
+
+  # The .deb unpack tries to preserve the setuid bit on chrome-sandbox,
+  # which fails outside a CAP_FSETID context (any nix build sandbox,
+  # incl. our CI runner and Hydra). --no-same-permissions drops the
+  # setuid bit. Chrome on modern kernels uses the user-namespace
+  # sandbox instead of the SUID sandbox, so the bit is not required
+  # at runtime. Drop this overlay once Hydra publishes a cached
+  # google-chrome-149+ build that I can substitute instead.
+  google-chrome = prev.google-chrome.overrideAttrs (old: {
+    unpackPhase = ''
+      runHook preUnpack
+      ${prev.binutils-unwrapped}/bin/ar x $src
+      tar xf data.tar.xz --no-same-permissions
+      runHook postUnpack
+    '';
+  });
 }
