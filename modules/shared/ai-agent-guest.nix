@@ -21,8 +21,12 @@ let
 
   askPeer = pkgs.writeShellScriptBin "ask-peer" ''
     set -eu
+    share_context=0
+    if [ "''${1:-}" = "--share-context" ]; then
+      share_context=1; shift
+    fi
     if [ $# -lt 2 ]; then
-      echo "usage: ask-peer <claude|codex|gemini> <prompt...>" >&2
+      echo "usage: ask-peer [--share-context] <claude|codex|gemini> <prompt...>" >&2
       echo "       ask-peer <claude|codex> 'resume:<session-id> <prompt...>'" >&2
       exit 2
     fi
@@ -36,9 +40,25 @@ let
     req="${inboxDir}/$to/$id.json"
     resp="${inboxDir}/$self/$id.response.json"
 
+    # Each section is byte-bounded; the recipient prepends the whole bundle
+    # to the prompt before invoking its CLI.
+    context_json=null
+    if [ "$share_context" = "1" ]; then
+      cwd=$(${pkgs.coreutils}/bin/pwd)
+      branch=$(${pkgs.git}/bin/git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+      status=$(${pkgs.git}/bin/git -C "$cwd" status --short 2>/dev/null | ${pkgs.coreutils}/bin/head -c 4096 || true)
+      diffstat=$(${pkgs.git}/bin/git -C "$cwd" diff --stat 2>/dev/null | ${pkgs.coreutils}/bin/head -c 2048 || true)
+      log=$(${pkgs.git}/bin/git -C "$cwd" log -5 --oneline 2>/dev/null || true)
+      context_json=$(${pkgs.jq}/bin/jq -n \
+        --arg cwd "$cwd" --arg branch "$branch" --arg status "$status" \
+        --arg diffstat "$diffstat" --arg log "$log" \
+        '{cwd:$cwd, branch:$branch, git_status:$status, git_diff_stat:$diffstat, recent_commits:$log}')
+    fi
+
     ${pkgs.jq}/bin/jq -n \
       --arg id "$id" --arg from "$self" --arg to "$to" --arg p "$prompt" \
-      '{id:$id, from:$from, to:$to, prompt:$p, created_at: (now|todate)}' \
+      --argjson context "$context_json" \
+      '{id:$id, from:$from, to:$to, prompt:$p, context:$context, created_at: (now|todate)}' \
       > "$req.tmp"
     ${pkgs.coreutils}/bin/mv "$req.tmp" "$req"
 
@@ -93,6 +113,7 @@ let
       id=$(${pkgs.jq}/bin/jq -r '.id' "$processing")
       from=$(${pkgs.jq}/bin/jq -r '.from' "$processing")
       prompt=$(${pkgs.jq}/bin/jq -r '.prompt' "$processing")
+      has_context=$(${pkgs.jq}/bin/jq -r '.context != null' "$processing" 2>/dev/null || echo false)
 
       sid=""
       case "$prompt" in
@@ -102,6 +123,21 @@ let
           prompt=''${rest#* }
           ;;
       esac
+
+      # Empty git sections are dropped from the preamble.
+      if [ "$has_context" = "true" ]; then
+        preamble=$(${pkgs.jq}/bin/jq -r '
+          .context as $c |
+          "## Shared context from " + .from + "\n\n" +
+          "**cwd**: " + ($c.cwd // "(unknown)") + "\n" +
+          (if ($c.branch // "") != "" then "**branch**: " + $c.branch + "\n" else "" end) +
+          (if ($c.git_status // "") != "" then "\n### git status\n```\n" + $c.git_status + "\n```\n" else "" end) +
+          (if ($c.git_diff_stat // "") != "" then "\n### diff stat\n```\n" + $c.git_diff_stat + "\n```\n" else "" end) +
+          (if ($c.recent_commits // "") != "" then "\n### recent commits\n```\n" + $c.recent_commits + "\n```\n" else "" end) +
+          "\n---\n\n"
+        ' "$processing")
+        prompt="''${preamble}''${prompt}"
+      fi
 
       response=$(invoke "$sid" "$prompt" || true)
 
@@ -277,10 +313,17 @@ in
 
           ask-peer <claude|codex|gemini> "<prompt>"
           ask-peer <claude|codex> "resume:<session-id> <prompt>"
+          ask-peer --share-context <claude|codex|gemini> "<prompt>"
 
       The call blocks until the peer responds (default 5min timeout). Use it
       when you need a second opinion, a different model's reasoning, or to
       continue a recorded session on another agent.
+
+      The `--share-context` flag attaches a snapshot of your current working
+      state (cwd, git branch, `git status --short`, `git diff --stat`, last
+      5 commits) to the prompt. The peer sees this as a markdown preamble.
+      Use it when the peer needs to reason about the code you're editing.
+      Otherwise leave it off to keep the prompt short.
 
       The peer bus is a JSON inbox at `~/peers/_inbox/<to>/`. Do not write to
       it directly — always use `ask-peer`. The inbox watcher
