@@ -195,6 +195,7 @@ in
       # JS / Cloudflare Workers stack
       wrangler
       bun
+      flyctl
       direnv
       gnumake
       delta
