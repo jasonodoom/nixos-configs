@@ -39,6 +39,16 @@ let
   mkAgentVm = name: agent: {
     specialArgs = { inherit inputs; };
 
+    # The microvm flake's own restartIfChanged option (NOT the NixOS
+    # systemd.services one we were setting before). The flake writes
+    # the X-RestartIfChanged drop-in via serviceConfig.X-RestartIfChanged
+    # = [ "" microvmConfig.restartIfChanged ], which lays down "" then
+    # the boolean — so the only way to make `true` not appear is to
+    # set THIS option to false. Verified 9 June on perdurabo: the prior
+    # systemd-level override produced three lines (false / empty /
+    # true) and the last one won, bouncing the VMs on every rebuild.
+    restartIfChanged = false;
+
     config = { config, pkgs, lib, inputs, ... }: {
       imports = [
         inputs.microvm.nixosModules.microvm
@@ -252,9 +262,11 @@ in
   # microvm@ai-claude etc. preStart drops the decrypted tailscale auth
   # key into the per-VM secrets dir that's virtiofs-shared into the
   # guest as /run/host-secrets.
+  # The microvm-level restartIfChanged is set inside mkAgentVm.
+  # This block still attaches preStart logic that drops the tailscale
+  # auth key into the per-VM secrets share before the VM boots.
   systemd.services = lib.mapAttrs' (name: agent:
     lib.nameValuePair "microvm@${name}" {
-      restartIfChanged = false;
       preStart = ''
         install -m 0400 ${config.age.secrets.ai-agent-tailscale-authkey.path} \
           ${userHomeState}/${agent.short}-secrets/tailscale-authkey
