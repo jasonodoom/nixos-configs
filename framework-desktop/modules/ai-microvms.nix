@@ -60,6 +60,13 @@ let
       system.stateVersion = "25.11";
       networking.hostName = name;
 
+      nix.gc = {
+        automatic = true;
+        dates = "weekly";
+        randomizedDelaySec = "30m";
+        options = "--delete-older-than 14d";
+      };
+
       my.aiAgent = {
         name = agent.short;
         packages = allAgentPackages;
