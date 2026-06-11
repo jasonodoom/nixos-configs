@@ -2,9 +2,9 @@
 
 # bosun supervisor — runs the tmux AI-agent supervisor as a
 # systemd user service so it survives logout/login. The binary
-# itself is currently deployed out-of-band to ~/.local/bin/bosun
-# (private repo, jasonodoom has read access); when I add bosun as
-# a flake input the ExecStart path moves to ${bosunPkg}/bin/bosun.
+# itself is currently deployed out-of-band to ~/.local/bin/bosun.
+# When I add bosun as a flake input the ExecStart path moves to
+# ${bosunPkg}/bin/bosun.
 #
 # The unit content mirrors what `bosun service install --manager
 # systemd` writes when bosun owns the file. Keeping it declarative
