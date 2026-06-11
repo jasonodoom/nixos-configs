@@ -171,6 +171,54 @@ in
         ${config.age.secrets.forgejo-runner-tailscale-authkey.path} \
         ${stateDir}/secrets/tailscale-authkey
     '';
-    serviceConfig.PermissionsStartOnly = true;
+    serviceConfig = {
+      PermissionsStartOnly = true;
+      # Hard memory cap. Pairs with mem=8192 (qemu allocation)
+      # above; cgroup ceiling includes qemu overhead. CI jobs that
+      # would overrun (huge nix builds, vscode, etc.) get killed
+      # at the VM level rather than at the host level, where they
+      # would take everything else down with them.
+      MemoryMax = "10G";
+      MemorySwapMax = "0";
+    };
+  };
+
+  # Ping perdurabo-ci every 5 min; restart microvm@forgejo-runner
+  # after 3 consecutive misses.
+  systemd.services.perdurabo-ci-tailscale-watchdog = {
+    description = "Restart microvm@forgejo-runner if perdurabo-ci falls off the tailnet";
+    serviceConfig = {
+      Type = "oneshot";
+      # Counter file persists across timer fires within the same
+      # boot; /run is tmpfs so a reboot clears the count and we
+      # start fresh.
+      StateDirectory = "perdurabo-ci-watchdog";
+    };
+    path = [ pkgs.tailscale pkgs.systemd pkgs.coreutils ];
+    script = ''
+      counter=/var/lib/perdurabo-ci-watchdog/miss-count
+      [ -f "$counter" ] || echo 0 > "$counter"
+      n=$(cat "$counter")
+      if tailscale ping -c 1 --timeout 3s perdurabo-ci >/dev/null 2>&1; then
+        echo 0 > "$counter"
+        exit 0
+      fi
+      n=$((n + 1))
+      echo "$n" > "$counter"
+      if [ "$n" -ge 3 ]; then
+        echo "perdurabo-ci missed $n consecutive pings; restarting microvm@forgejo-runner" >&2
+        systemctl restart microvm@forgejo-runner
+        echo 0 > "$counter"
+      fi
+    '';
+  };
+  systemd.timers.perdurabo-ci-tailscale-watchdog = {
+    description = "Run perdurabo-ci-tailscale-watchdog every 5 minutes";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "5min";
+      AccuracySec = "30s";
+    };
   };
 }

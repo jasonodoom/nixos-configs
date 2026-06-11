@@ -109,7 +109,13 @@ let
         # observed hard crashes. Host has 32 cores / 62GB so three
         # of these still leaves room for the host + bosun-browser.
         vcpu = 6;
-        mem = 12288;
+        # Dropped from 12288 to 6144 on 11 June: claude/codex/gemini
+        # CLI agents observed under 3 GB in steady state; the old 12G
+        # ceiling left no host headroom and OOM-killed the box during
+        # a vscode/chromium build. balloon stays on so the VM can
+        # release further when idle. The systemd MemoryMax below is
+        # the hard cgroup cap that includes qemu's own overhead.
+        mem = 6144;
         balloon = true;
 
         interfaces = [{
@@ -271,7 +277,18 @@ in
         install -m 0400 ${config.age.secrets.ai-agent-tailscale-authkey.path} \
           ${userHomeState}/${agent.short}-secrets/tailscale-authkey
       '';
-      serviceConfig.PermissionsStartOnly = true;
+      serviceConfig = {
+        PermissionsStartOnly = true;
+        # Hard memory cap enforced by cgroup v2: the kernel kills
+        # the VM, not the host, if it tries to exceed. Pairs with
+        # mem=6144 above — this is the systemd-side ceiling that
+        # includes qemu's own overhead. ~1 GiB headroom over the
+        # guest RAM. MemorySwapMax=0 forbids swap usage entirely
+        # so VMs don't silently push the host into thrash during
+        # a build storm.
+        MemoryMax = "7G";
+        MemorySwapMax = "0";
+      };
     }
   ) agents;
 
