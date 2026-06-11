@@ -29,7 +29,12 @@ in
 {
   age.secrets.bosun-browser-runner-token = {
     file = ../secrets/bosun-browser-runner-token.age;
+    # jason needs read access so the bosun user-service can forward
+    # the dashboard /v1/browser/* proxy to the runner with this
+    # bearer. Owned by jason directly so the file stays user-
+    # confined; the microvm install copies it in separately.
     mode = "0400";
+    owner = "jason";
   };
 
   systemd.tmpfiles.rules = [

@@ -35,4 +35,18 @@ final: prev: {
       runHook postUnpack
     '';
   });
+
+  # vscode 1.119.0 isn't in cache.nixos.org yet either, and the .tar.gz
+  # ships its own bundled chromium with a setuid chrome-sandbox. tar
+  # default xf tries to preserve the suid bit and the build sandbox
+  # rejects it (no CAP_FSETID). --no-same-permissions drops the bit;
+  # vscode at runtime uses the user-namespace sandbox so the SUID one
+  # isn't needed. Drop this once vscode 1.119+ lands in Hydra.
+  vscode = prev.vscode.overrideAttrs (old: {
+    unpackPhase = ''
+      runHook preUnpack
+      tar xf $src --no-same-permissions
+      runHook postUnpack
+    '';
+  });
 }
