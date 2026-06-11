@@ -279,15 +279,13 @@ in
       '';
       serviceConfig = {
         PermissionsStartOnly = true;
-        # Hard memory cap enforced by cgroup v2: the kernel kills
-        # the VM, not the host, if it tries to exceed. Pairs with
-        # mem=6144 above — this is the systemd-side ceiling that
-        # includes qemu's own overhead. ~1 GiB headroom over the
-        # guest RAM. MemorySwapMax=0 forbids swap usage entirely
-        # so VMs don't silently push the host into thrash during
-        # a build storm.
-        MemoryMax = "7G";
-        MemorySwapMax = "0";
+        # Hard memory cap enforced by cgroup v2 that also accounts
+        # for qemu's shmem-rss for VirtIO devices. Sized at guest
+        # mem + ~3 GiB host overhead. MemorySwapMax tracks the
+        # ceiling so qemu can spill briefly under spikes without
+        # the cgroup OOM-killer taking the VM out.
+        MemoryMax = "9G";
+        MemorySwapMax = "9G";
       };
     }
   ) agents;
