@@ -385,5 +385,18 @@ in
     networking.firewall.allowedTCPPorts = [ cfg.sshPort ];
 
     time.timeZone = "UTC";
+
+    # Each agent guest carries its own /nix store. Without periodic
+    # GC the guest's store keeps every old generation forever, and
+    # since the host can't see inside the guest store, host-level
+    # GC won't help. Weekly is plenty for a sandbox that only gets
+    # nixos-rebuild touches. auto-optimise-store can't be enabled
+    # here because microvm.writableStoreOverlay isn't compatible
+    # with it.
+    nix.gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
   };
 }

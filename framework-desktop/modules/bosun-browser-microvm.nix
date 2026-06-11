@@ -50,6 +50,16 @@ in
       system.stateVersion = "25.11";
       networking.hostName = "bosun-browser";
 
+      # Periodic GC inside the guest store. Host-level GC can't
+      # reach in, so without this the guest store accumulates
+      # forever. auto-optimise-store can't run alongside the
+      # microvm writable store overlay.
+      nix.gc = {
+        automatic = true;
+        dates = "weekly";
+        options = "--delete-older-than 14d";
+      };
+
       microvm = {
         hypervisor = "qemu";
         vcpu = 2;

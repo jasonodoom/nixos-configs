@@ -124,6 +124,7 @@
         ./modules/services/forgejo-runner-vm.nix
         ./modules/ai-microvms.nix
         ./modules/bosun-browser-microvm.nix
+        ./modules/bosun.nix
       ];
     };
   in
