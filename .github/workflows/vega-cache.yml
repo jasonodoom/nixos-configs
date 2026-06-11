@@ -82,6 +82,13 @@ jobs:
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
 
+      # The self-hosted container builds with sandboxing off, so Nix uses
+      # /homeless-shelter as $HOME and refuses to start if a prior build left it
+      # behind. Clear it first so a leftover cannot fail the job.
+      - name: Clear leftover non-sandbox build home (self-hosted)
+        if: ${{ matrix.selfhosted }}
+        run: rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter
+
       # Self-hosted runner (perdurabo): the container already ships nix + the agent,
       # so call the baked agent directly rather than the install-everything action
       # (which would re-run a systemd-based Nix installer the container lacks).
