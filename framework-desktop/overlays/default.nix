@@ -50,4 +50,14 @@ final: prev: {
       ${prev.findutils}/bin/find . -type f \( -perm -4000 -o -perm -2000 \) -exec chmod ug-s {} +
     '';
   });
+
+  # The functional test suite calls `unshare` to set up per-test
+  # namespace sandboxes. CI runners that lack
+  # kernel.unprivileged_userns_clone (the self-hosted vega container)
+  # fail every test with "Operation not permitted". Disable the check
+  # phase so the closure can be built; nix itself is unaffected.
+  nix = prev.nix.overrideAttrs (old: {
+    doCheck = false;
+    doInstallCheck = false;
+  });
 }
