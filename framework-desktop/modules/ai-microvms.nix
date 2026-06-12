@@ -116,13 +116,11 @@ let
         # observed hard crashes. Host has 32 cores / 62GB so three
         # of these still leaves room for the host + bosun-browser.
         vcpu = 6;
-        # Dropped from 12288 to 6144 on 11 June: claude/codex/gemini
-        # CLI agents observed under 3 GB in steady state; the old 12G
-        # ceiling left no host headroom and OOM-killed the box during
-        # a vscode/chromium build. balloon stays on so the VM can
-        # release further when idle. The systemd MemoryMax below is
-        # the hard cgroup cap that includes qemu's own overhead.
-        mem = 6144;
+        # 8 GiB per guest. 12 GiB was too generous (no host headroom
+        # for vscode/chromium builds), 6 GiB was too tight (claude
+        # crashed via guest-kernel OOM during long agentic sessions).
+        # balloon stays on so the VM releases when idle.
+        mem = 8192;
         balloon = true;
 
         interfaces = [{
@@ -291,8 +289,8 @@ in
         # mem + ~3 GiB host overhead. MemorySwapMax tracks the
         # ceiling so qemu can spill briefly under spikes without
         # the cgroup OOM-killer taking the VM out.
-        MemoryMax = "9G";
-        MemorySwapMax = "9G";
+        MemoryMax = "11G";
+        MemorySwapMax = "11G";
       };
     }
   ) agents;
