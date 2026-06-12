@@ -67,6 +67,16 @@ let
         options = "--delete-older-than 14d";
       };
 
+      # Compressed in-memory swap absorbs claude's transient spikes
+      # before the guest OOM killer fires. Sized at 50% of guest RAM;
+      # the zstd-compressed pages typically expand 3-4x, giving the
+      # guest effective headroom well beyond its allocation.
+      zramSwap = {
+        enable = true;
+        algorithm = "zstd";
+        memoryPercent = 50;
+      };
+
       my.aiAgent = {
         name = agent.short;
         packages = allAgentPackages;
