@@ -117,6 +117,9 @@
       ssh = {
         enable = true;
         port = 6666;
+        extraConfig = ''
+          ForceCommand /bin/unlock-wrapper
+        '';
         hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
         authorizedKeys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQRbcTH0OZCQciQLgFXDqqqbc0383pXA/65JlZqpCyQ jason@scalene.local"
@@ -128,10 +131,15 @@
 
     # Automatic LUKS unlock wrapper script for SSH
     systemd.services.create-unlock-script = {
+      wantedBy = [ "initrd.target" ];
       requiredBy = [ "sshd.service" ];
       before = [ "sshd.service" ];
       unitConfig.DefaultDependencies = false;
-      serviceConfig.Type = "oneshot";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        StandardOutput = "journal+console";
+      };
       script = ''
         mkdir -p /bin
         cat > /bin/unlock-wrapper << 'EOF'
@@ -150,6 +158,7 @@ else
 fi
 EOF
         chmod +x /bin/unlock-wrapper
+        echo "[INITRD] /bin/unlock-wrapper created at $(date)" | tee -a /run/initrd.log
       '';
     };
 

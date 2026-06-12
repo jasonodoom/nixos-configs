@@ -60,6 +60,23 @@ let
       system.stateVersion = "25.11";
       networking.hostName = name;
 
+      nix.gc = {
+        automatic = true;
+        dates = "weekly";
+        randomizedDelaySec = "30m";
+        options = "--delete-older-than 14d";
+      };
+
+      # Compressed in-memory swap absorbs claude's transient spikes
+      # before the guest OOM killer fires. Sized at 50% of guest RAM;
+      # the zstd-compressed pages typically expand 3-4x, giving the
+      # guest effective headroom well beyond its allocation.
+      zramSwap = {
+        enable = true;
+        algorithm = "zstd";
+        memoryPercent = 50;
+      };
+
       my.aiAgent = {
         name = agent.short;
         packages = allAgentPackages;
@@ -109,7 +126,11 @@ let
         # observed hard crashes. Host has 32 cores / 62GB so three
         # of these still leaves room for the host + bosun-browser.
         vcpu = 6;
-        mem = 12288;
+        # 8 GiB per guest. 12 GiB was too generous (no host headroom
+        # for vscode/chromium builds), 6 GiB was too tight (claude
+        # crashed via guest-kernel OOM during long agentic sessions).
+        # balloon stays on so the VM releases when idle.
+        mem = 8192;
         balloon = true;
 
         interfaces = [{
@@ -271,7 +292,16 @@ in
         install -m 0400 ${config.age.secrets.ai-agent-tailscale-authkey.path} \
           ${userHomeState}/${agent.short}-secrets/tailscale-authkey
       '';
-      serviceConfig.PermissionsStartOnly = true;
+      serviceConfig = {
+        PermissionsStartOnly = true;
+        # Hard memory cap enforced by cgroup v2 that also accounts
+        # for qemu's shmem-rss for VirtIO devices. Sized at guest
+        # mem + ~3 GiB host overhead. MemorySwapMax tracks the
+        # ceiling so qemu can spill briefly under spikes without
+        # the cgroup OOM-killer taking the VM out.
+        MemoryMax = "11G";
+        MemorySwapMax = "11G";
+      };
     }
   ) agents;
 

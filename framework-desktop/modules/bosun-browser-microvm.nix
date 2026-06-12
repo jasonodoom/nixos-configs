@@ -29,7 +29,12 @@ in
 {
   age.secrets.bosun-browser-runner-token = {
     file = ../secrets/bosun-browser-runner-token.age;
+    # jason needs read access so the bosun user-service can forward
+    # the dashboard /v1/browser/* proxy to the runner with this
+    # bearer. Owned by jason directly so the file stays user-
+    # confined; the microvm install copies it in separately.
     mode = "0400";
+    owner = "jason";
   };
 
   systemd.tmpfiles.rules = [
@@ -177,6 +182,14 @@ in
       install -m 0400 ${config.age.secrets.bosun-browser-runner-token.path} \
         /home/jason/.local/state/bosun/browser-runner-secrets/runner-token
     '';
-    serviceConfig.PermissionsStartOnly = true;
+    serviceConfig = {
+      PermissionsStartOnly = true;
+      # Hard memory cap. Pairs with mem=4096 (qemu allocation)
+      # above; cgroup ceiling includes qemu overhead. Chromium
+      # peaks well under this in normal operation; the VM should
+      # crash on overrun rather than steal host RAM.
+      MemoryMax = "5G";
+      MemorySwapMax = "0";
+    };
   };
 }

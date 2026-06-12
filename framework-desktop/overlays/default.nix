@@ -35,4 +35,29 @@ final: prev: {
       runHook postUnpack
     '';
   });
+
+  # Bundled chrome-sandbox has setuid; tar default xf fails in any
+  # nix build sandbox (no CAP_FSETID). --no-same-permissions alone
+  # broke later phases that needed read perms on resources/app/*.
+  # Restore a permissive default mask + clear setuid/setgid after.
+  # Override only the bit that fails (tar setting setuid). Then let
+  # the stock genericBuild logic find sourceRoot and cd into it; the
+  # default unpackPhase resets sourceRoot to the dir tar created.
+  vscode = prev.vscode.overrideAttrs (old: {
+    unpackCmd = ''
+      tar xf $curSrc --no-same-permissions
+      ${prev.findutils}/bin/find . -type d -exec chmod a+rx {} +
+      ${prev.findutils}/bin/find . -type f \( -perm -4000 -o -perm -2000 \) -exec chmod ug-s {} +
+    '';
+  });
+
+  # The functional test suite calls `unshare` to set up per-test
+  # namespace sandboxes. CI runners that lack
+  # kernel.unprivileged_userns_clone (the self-hosted vega container)
+  # fail every test with "Operation not permitted". Disable the check
+  # phase so the closure can be built; nix itself is unaffected.
+  nix = prev.nix.overrideAttrs (old: {
+    doCheck = false;
+    doInstallCheck = false;
+  });
 }

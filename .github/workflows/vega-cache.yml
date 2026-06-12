@@ -82,19 +82,24 @@ jobs:
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
 
-      # The self-hosted container builds with sandboxing off, so Nix uses
-      # /homeless-shelter as $HOME and refuses to start if a prior build left it
-      # behind. Clear it first so a leftover cannot fail the job.
-      - name: Clear leftover non-sandbox build home (self-hosted)
-        if: ${{ matrix.selfhosted }}
-        run: rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter
-
-      # Self-hosted runner (perdurabo): the container already ships nix + the agent,
-      # so call the baked agent directly rather than the install-everything action
-      # (which would re-run a systemd-based Nix installer the container lacks).
+      # The self-hosted container builds with sandboxing off. Without a
+      # sandbox, Nix sets HOME=/homeless-shelter for each build and
+      # refuses to start if the directory already exists from a prior
+      # build. Use Nix's pre-build-hook to clean it before each
+      # derivation starts — runs at the right moment, doesn't race
+      # against builds in flight.
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
-        run: vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
+        run: |
+          rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter || true
+          HOOK=/tmp/nix-pre-build-clean-shelter.sh
+          cat > "$HOOK" <<'SH'
+          #!/bin/sh
+          rm -rf /homeless-shelter 2>/dev/null || true
+          SH
+          chmod +x "$HOOK"
+          export NIX_CONFIG="pre-build-hook = $HOOK"
+          vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
         env:
           VEGA_URL: https://vega-cache.dev
           VEGA_SKIP_UPSTREAM: "true"
