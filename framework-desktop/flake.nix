@@ -143,6 +143,7 @@
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
         ./modules/agentic-tmux.nix
+        { services.agenticTmux.enable = true; }
       ];
     };
   in
