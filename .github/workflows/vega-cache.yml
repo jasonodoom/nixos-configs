@@ -83,26 +83,22 @@ jobs:
           reuse-cache: "true"
 
       # The self-hosted container builds with sandboxing off. Without a
-      # sandbox, Nix sets HOME=/homeless-shelter for each build and refuses
-      # to start if the directory already exists. Mid-closure derivations
-      # (vscode, chromium) create it during their builds, so a one-time
-      # pre-clear isn't enough — the next derivation hits the same check.
-      # Run a tight background reaper alongside the build that nukes the
-      # path whenever it reappears, kept alive only for this step.
+      # sandbox, Nix sets HOME=/homeless-shelter for each build and
+      # refuses to start if the directory already exists from a prior
+      # build. Use Nix's pre-build-hook to clean it before each
+      # derivation starts — runs at the right moment, doesn't race
+      # against builds in flight.
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
         run: |
           rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter || true
-          (
-            while true; do
-              if [ -e /homeless-shelter ]; then
-                rm -rf /homeless-shelter 2>/dev/null || sudo rm -rf /homeless-shelter 2>/dev/null || true
-              fi
-              sleep 1
-            done
-          ) &
-          REAPER_PID=$!
-          trap 'kill "$REAPER_PID" 2>/dev/null || true' EXIT
+          HOOK=/tmp/nix-pre-build-clean-shelter.sh
+          cat > "$HOOK" <<'SH'
+          #!/bin/sh
+          rm -rf /homeless-shelter 2>/dev/null || true
+          SH
+          chmod +x "$HOOK"
+          export NIX_CONFIG="pre-build-hook = $HOOK"
           vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
         env:
           VEGA_URL: https://vega-cache.dev
