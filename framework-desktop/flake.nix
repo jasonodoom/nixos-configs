@@ -62,10 +62,27 @@
         nodejsPkg = nodejsPkgFor system;
       };
       modules = [
-        ({ config, pkgs, ... }: {
+        ({ config, lib, pkgs, ... }: {
           nixpkgs.overlays = [
             self.overlays.default
           ];
+
+          # The Determinate NixOS module assigns
+          # `nix.package = inputs.nix.packages.<system>.default` (its
+          # own nix-src build). That nix's functional test suite needs
+          # unprivileged user namespaces to drive `unshare`, which the
+          # self-hosted vega container can't give it — the tests crash
+          # and Nix leaves /homeless-shelter behind. I reach into the
+          # same input Determinate uses and strip the check phase, so
+          # CI doesn't try to rebuild + test nix from source on the
+          # cache-miss path. Referencing config.nix.package here would
+          # self-recurse, so I source from the transitive flake input.
+          nix.package = lib.mkForce (
+            inputs.determinate.inputs.nix.packages.${pkgs.stdenv.system}.default.overrideAttrs (_: {
+              doCheck = false;
+              doInstallCheck = false;
+            })
+          );
         })
 
         # Hardware configuration
@@ -126,6 +143,7 @@
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
         ./modules/agentic-tmux.nix
+        { services.agenticTmux.enable = true; }
       ];
     };
   in

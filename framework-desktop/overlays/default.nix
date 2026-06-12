@@ -51,13 +51,14 @@ final: prev: {
     '';
   });
 
-  # The functional test suite calls `unshare` to set up per-test
-  # namespace sandboxes. CI runners that lack
-  # kernel.unprivileged_userns_clone (the self-hosted vega container)
-  # fail every test with "Operation not permitted". Disable the check
-  # phase so the closure can be built; nix itself is unaffected.
-  nix = prev.nix.overrideAttrs (old: {
+  # nixpkgs-review pulls nixpkgs' nix-2.34.7 into the closure (it
+  # shells out to nix during a review). That nix runs the same
+  # functional test suite under `unshare`, which fails on the
+  # sandbox-less vega container. Mirror the Determinate-nix override
+  # in framework-desktop/flake.nix for the nixpkgs nix too.
+  nix = prev.nix.overrideAttrs (_: {
     doCheck = false;
     doInstallCheck = false;
   });
+
 }
