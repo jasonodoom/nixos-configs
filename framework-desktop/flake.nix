@@ -125,6 +125,7 @@
         ./modules/ai-microvms.nix
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
+        ./modules/agentic-tmux.nix
       ];
     };
   in
