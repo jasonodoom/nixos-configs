@@ -65,6 +65,26 @@
         exit 0
       fi
 
+      # Pre-flight homebrew + masApps (#77). nix-darwin runs
+      # `brew bundle` during activation; if `mas` is missing, the
+      # App Store account is not signed in, or one of the masApps
+      # IDs is no longer purchasable, the whole rebuild fails.
+      # Log the situation up front so the eventual failure issue
+      # tells the operator exactly what to fix, and skip the
+      # rebuild rather than chasing a known-bad activation.
+      if [ -x /opt/homebrew/bin/mas ]; then
+        MAS_ACCOUNT=$(/opt/homebrew/bin/mas account 2>&1 || true)
+        if [ -z "$MAS_ACCOUNT" ] || echo "$MAS_ACCOUNT" | grep -qiE "not signed in|no account"; then
+          log "WARNING: mas account not signed in (output: $MAS_ACCOUNT)"
+          log "Skipping rebuild — masApps activation will fail until you sign in to the App Store"
+          create_failure_issue "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to create GitHub issue"
+          exit 0
+        fi
+        log "mas account: $MAS_ACCOUNT"
+      else
+        log "mas binary not yet installed (first activation will install it)"
+      fi
+
       log "Starting darwin auto-update"
 
       # Clone or update repo
@@ -114,7 +134,18 @@
       else
         log "darwin-rebuild failed"
         LOG_TAIL=$(tail -100 "$BUILD_OUTPUT")
-        create_failure_issue "$LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        # #77 classify the failure so the issue title points at the
+        # right culprit. brew/mas failures are common operator-
+        # actionable cases (App Store re-auth, masApp removed,
+        # cask name changed); a tagged title lets the operator
+        # triage at a glance instead of opening every nightly
+        # issue blind.
+        if echo "$LOG_TAIL" | grep -qE "mas (install|download).*(fail|error)|brew bundle.*(fail|error)|cask.*not found"; then
+          ISSUE_PREFIX="[homebrew]"
+        else
+          ISSUE_PREFIX="[rebuild]"
+        fi
+        create_failure_issue "$ISSUE_PREFIX $LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
         rm -f "$BUILD_OUTPUT"
         exit 1
       fi
