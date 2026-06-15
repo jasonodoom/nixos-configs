@@ -13,6 +13,14 @@
 let
   cfg = config.my.aiAgent;
 
+  # Shared OSC-tint helpers (background + tab + window title), the same
+  # snippet the perdurabo host uses. Sourced here so a `claude --yolo`
+  # invoked INSIDE the microvm (after `ssh ai-claude` already happened)
+  # still emits the red banner; otherwise the host wrapper only fires
+  # when the operator types `claude` at the local shell, and tmux send-
+  # keys or direct ssh sessions skip the tint entirely.
+  yoloHelpers = (import ./yolo-agent-wrappers.nix { inherit lib; }).shellSnippet;
+
   # ~/peers is the shared parent ai-agents dir. A "_inbox" subdir there
   # acts as a message queue between the three guests: each ask writes
   # _inbox/<to>/<id>.json, the recipient's watcher invokes its local
@@ -289,6 +297,21 @@ in
     environment.variables = {
       DISABLE_AUTOUPDATER = "1";
     };
+
+    # Shadow `claude`/`codex`/`gemini` in the guest's interactive shell
+    # with a function that fires the OSC red-tint when invoked with a
+    # permission-bypass flag. Only the function matching cfg.name is
+    # installed so the wrapper doesn't shadow CLIs that aren't really
+    # available in this microvm.
+    programs.bash.interactiveShellInit = ''
+      ${yoloHelpers}
+    '' + (lib.optionalString (cfg.name == "claude") ''
+      claude() { __yolo_wrap claude "command claude" "$@"; }
+    '') + (lib.optionalString (cfg.name == "codex") ''
+      codex()  { __yolo_wrap codex  "command codex"  "$@"; }
+    '') + (lib.optionalString (cfg.name == "gemini") ''
+      gemini() { __yolo_wrap gemini "command gemini" "$@"; }
+    '');
 
     # claude-code still nags "Native installation exists but ~/.local/bin
     # is not in your PATH" on every startup even with the autoupdater off.
