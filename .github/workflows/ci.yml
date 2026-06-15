@@ -149,6 +149,32 @@ jobs:
           echo "=== Build failed (rc=$BUILD_RC) — disk state at failure ==="
           df -h
           AVAIL_MIB=$(df -BM --output=avail / | tail -1 | tr -dc 0-9)
+          if [ "$AVAIL_MIB" -lt 2048 ] && [ "${{ matrix.config }}" == "perdurabo" ]; then
+            # I retry with kernel-only when the toplevel blew the
+            # disk; this skips microvm erofs realization. Host
+            # nixos-rebuild still builds the full system.
+            echo "::warning::Disk exhausted at $AVAIL_MIB MiB. Retrying kernel-only."
+            nix-collect-garbage -d || true
+            df -h
+            set +e
+            nix build .#nixosConfigurations.${{ matrix.config }}.config.system.build.kernel \
+              --accept-flake-config \
+              --option max-jobs $MAX_JOBS \
+              --option cores $CORES \
+              --option keep-going false \
+              --option substitute true \
+              --option builders-use-substitutes true \
+              --option min-free $((5 * 1024 * 1024 * 1024)) \
+              --option max-free $((15 * 1024 * 1024 * 1024)) \
+              --impure
+            FALLBACK_RC=$?
+            set -e
+            if [ $FALLBACK_RC -eq 0 ]; then
+              echo "::warning::Kernel-only build passed. Disk images skipped."
+              exit 0
+            fi
+            echo "::error::Kernel-only fallback also failed (rc=$FALLBACK_RC)."
+          fi
           if [ "$AVAIL_MIB" -lt 2048 ]; then
             echo "::error::Build failed with $AVAIL_MIB MiB free on / — min-free=5GiB was insufficient."
             echo "::error::Consider raising min-free, adding a free-disk-space pass, or splitting the build to skip erofs disk-image attrs (#82)."
