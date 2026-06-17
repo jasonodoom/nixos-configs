@@ -118,6 +118,11 @@ in
             options = "-e DOCKER_HOST=unix:///var/run/docker.sock";
           };
           runner.capacity = 1;
+          # I rewrite `uses: foo/bar@v1` to https://github.com/foo/bar so
+          # third-party actions resolve. The default points at
+          # data.forgejo.org which only mirrors forgejo's own actions and
+          # 404s everything else.
+          runner.default_actions_url = "https://github.com";
         };
       };
 
