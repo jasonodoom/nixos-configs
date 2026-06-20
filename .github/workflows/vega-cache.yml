@@ -82,12 +82,14 @@ jobs:
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
 
-      # The self-hosted container builds with sandboxing off. Without a
-      # sandbox, Nix sets HOME=/homeless-shelter for each build and
-      # refuses to start if the directory already exists from a prior
-      # build. Use Nix's pre-build-hook to clean it before each
-      # derivation starts — runs at the right moment, doesn't race
-      # against builds in flight.
+      # Enable the Nix sandbox on the self-hosted runner. Without a
+      # sandbox, Nix sets HOME=/homeless-shelter per build and refuses
+      # to start if the directory already exists from a previous
+      # build; under parallelism the pre-build-hook reaper lost the
+      # race (clear → derivation-A populates → derivation-B checks →
+      # fail). With sandbox=true Nix never uses /homeless-shelter at
+      # all. Pre-build-hook stays as a safety net for any derivation
+      # the container can't sandbox.
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
         run: |
@@ -98,7 +100,12 @@ jobs:
           rm -rf /homeless-shelter 2>/dev/null || true
           SH
           chmod +x "$HOOK"
-          export NIX_CONFIG="pre-build-hook = $HOOK"
+          # sandbox = relaxed falls back to no-sandbox per derivation if
+          # the kernel/container can't user-namespace it, so the build
+          # still proceeds on environments without CAP_SYS_ADMIN. Most
+          # derivations get the full isolation; the few that don't fall
+          # through to the pre-build-hook.
+          export NIX_CONFIG="sandbox = relaxed"$'\n'"pre-build-hook = $HOOK"
           vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
         env:
           VEGA_URL: https://vega-cache.dev
