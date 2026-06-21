@@ -114,7 +114,13 @@ in
             # directly. act_runner still bind-mounts /var/run/docker.sock
             # into the job container so testcontainers works.
             network = "bridge";
-            privileged = false;
+            # Docker 29's default profile blocks the user-namespace
+            # syscalls vega-builder needs to start its inner Nix
+            # sandbox. Without privileged the probe falls back to
+            # relaxed and isolation is lost. The runner already lives
+            # inside a microvm boundary so the marginal blast radius
+            # of privileged jobs is bounded to the throwaway VM.
+            privileged = true;
             options = "-e DOCKER_HOST=unix:///var/run/docker.sock";
           };
           runner.capacity = 1;
