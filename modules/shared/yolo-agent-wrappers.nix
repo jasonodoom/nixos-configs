@@ -1,13 +1,17 @@
 { lib, ... }:
 
-# Shell snippet that shadows the AI CLI entry points (claude/codex/gemini)
-# with bash/zsh-compatible functions that auto-detect permission-bypass
-# flags and visibly tint the terminal for the life of the session.
+# Shell snippet that shadows the AI CLI entry points
+# (claude/codex/antigravity) with bash/zsh-compatible functions that
+# auto-detect permission-bypass flags and visibly tint the terminal
+# for the life of the session.
 #
 # Detects these flags as "YOLO mode":
-#   claude --dangerously-skip-permissions
-#   codex  --dangerously-bypass-approvals-and-sandbox  (alias: --yolo)
-#   gemini --yolo | -y
+#   claude      --dangerously-skip-permissions
+#   codex       --dangerously-bypass-approvals-and-sandbox  (alias: --yolo)
+#   antigravity --dangerously-skip-permissions
+#
+# antigravity-cli ships as the `agy` binary; aliases call into this
+# wrapper with label="antigravity" so the tint + label stay uniform.
 #
 # Without a bypass flag, the functions just exec the real binary — no
 # color change.
@@ -51,7 +55,7 @@
         case "$label:$a" in
           claude:--dangerously-skip-permissions) echo yolo; return ;;
           codex:--dangerously-bypass-approvals-and-sandbox|codex:--yolo) echo yolo; return ;;
-          gemini:--yolo|gemini:-y) echo yolo; return ;;
+          antigravity:--dangerously-skip-permissions) echo yolo; return ;;
         esac
       done
     }

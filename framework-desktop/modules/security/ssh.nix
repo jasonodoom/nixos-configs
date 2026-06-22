@@ -82,7 +82,7 @@
       IdentityFile ~/.ssh/perdurabo_id_ed25519
       StrictHostKeyChecking accept-new
 
-    Host ai-gemini
+    Host ai-antigravity
       HostName 10.0.42.13
       Port 2203
       User agent

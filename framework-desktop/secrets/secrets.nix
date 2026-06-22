@@ -40,7 +40,7 @@ in
   # Expires: TODO (rotation date not tracked; tailscale-key-expiry workflow flags)
   "forgejo-runner-tailscale-authkey.age".publicKeys = all;
 
-  # Tailscale auth key for AI agent microvms (claude/codex/gemini)
+  # Tailscale auth key for AI agent microvms (claude/codex/antigravity)
   # Expires: TODO (rotation date not tracked; tailscale-key-expiry workflow flags)
   "ai-agent-tailscale-authkey.age".publicKeys = all;
 

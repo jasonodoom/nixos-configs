@@ -34,7 +34,7 @@ let
       share_context=1; shift
     fi
     if [ $# -lt 2 ]; then
-      echo "usage: ask-peer [--share-context] <claude|codex|gemini> <prompt...>" >&2
+      echo "usage: ask-peer [--share-context] <claude|codex|antigravity> <prompt...>" >&2
       echo "       ask-peer <claude|codex> 'resume:<session-id> <prompt...>'" >&2
       exit 2
     fi
@@ -88,9 +88,10 @@ let
     my_inbox=${inboxDir}/$self
     ${pkgs.coreutils}/bin/mkdir -p "$my_inbox"
 
-    # A prompt prefixed with "resume:<session-id> ..." continues that recorded
-    # session instead of starting a fresh one. gemini has no resume concept,
-    # so the prefix is stripped and ignored there.
+    # A prompt prefixed with "resume:<session-id> ..." continues that
+    # recorded session instead of starting a fresh one. antigravity-cli
+    # uses --continue for the most-recent session; per-id resume is via
+    # --conversation, mirrored here.
     case "$self" in
       claude) invoke() {
         if [ -n "$1" ]; then claude --resume "$1" -p "$2" 2>&1
@@ -106,7 +107,11 @@ let
         else                  codex exec $FLAGS "$2" 2>&1
         fi
       } ;;
-      gemini) invoke() { gemini -p "$2" 2>&1; } ;;
+      antigravity) invoke() {
+        if [ -n "$1" ]; then agy --conversation "$1" -p "$2" 2>&1
+        else                  agy -p "$2" 2>&1
+        fi
+      } ;;
       *) echo "unknown agent $self" >&2; exit 1 ;;
     esac
 
@@ -176,7 +181,7 @@ in
   options.my.aiAgent = {
     name = lib.mkOption {
       type = lib.types.str;
-      description = "Short name for this agent (claude, codex, gemini).";
+      description = "Short name for this agent (claude, codex, antigravity).";
     };
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
@@ -298,19 +303,22 @@ in
       DISABLE_AUTOUPDATER = "1";
     };
 
-    # Shadow `claude`/`codex`/`gemini` in the guest's interactive shell
-    # with a function that fires the OSC red-tint when invoked with a
-    # permission-bypass flag. Only the function matching cfg.name is
-    # installed so the wrapper doesn't shadow CLIs that aren't really
-    # available in this microvm.
+    # Shadow `claude`/`codex`/`antigravity` in the guest's interactive
+    # shell with a function that fires the OSC red-tint when invoked
+    # with a permission-bypass flag. Only the function matching
+    # cfg.name is installed so the wrapper doesn't shadow CLIs that
+    # aren't really available in this microvm. antigravity-cli ships
+    # as `agy`; the wrapper keeps the human-friendly label and aliases
+    # `agy` to the antigravity function so both names hit the tint.
     programs.bash.interactiveShellInit = ''
       ${yoloHelpers}
     '' + (lib.optionalString (cfg.name == "claude") ''
       claude() { __yolo_wrap claude "command claude" "$@"; }
     '') + (lib.optionalString (cfg.name == "codex") ''
       codex()  { __yolo_wrap codex  "command codex"  "$@"; }
-    '') + (lib.optionalString (cfg.name == "gemini") ''
-      gemini() { __yolo_wrap gemini "command gemini" "$@"; }
+    '') + (lib.optionalString (cfg.name == "antigravity") ''
+      antigravity() { __yolo_wrap antigravity "command agy" "$@"; }
+      agy()         { antigravity "$@"; }
     '');
 
     # claude-code still nags "Native installation exists but ~/.local/bin
@@ -331,12 +339,12 @@ in
     environment.etc."ai-agent/peer-doc.md".text = ''
       # Peer agents
 
-      You can consult the codex or gemini agent running in a sibling microvm
-      via the `ask-peer` command:
+      You can consult the codex or antigravity agent running in a sibling
+      microvm via the `ask-peer` command:
 
-          ask-peer <claude|codex|gemini> "<prompt>"
-          ask-peer <claude|codex> "resume:<session-id> <prompt>"
-          ask-peer --share-context <claude|codex|gemini> "<prompt>"
+          ask-peer <claude|codex|antigravity> "<prompt>"
+          ask-peer <claude|codex|antigravity> "resume:<session-id> <prompt>"
+          ask-peer --share-context <claude|codex|antigravity> "<prompt>"
 
       The call blocks until the peer responds (default 5min timeout). Use it
       when you need a second opinion, a different model's reasoning, or to
@@ -355,12 +363,12 @@ in
     '';
 
     systemd.tmpfiles.rules = [
-      "d /home/agent/.claude 0700 agent users -"
-      "d /home/agent/.codex  0700 agent users -"
-      "d /home/agent/.gemini 0700 agent users -"
-      "L+ /home/agent/.claude/CLAUDE.md - - - - /etc/ai-agent/peer-doc.md"
-      "L+ /home/agent/.codex/AGENTS.md  - - - - /etc/ai-agent/peer-doc.md"
-      "L+ /home/agent/.gemini/GEMINI.md - - - - /etc/ai-agent/peer-doc.md"
+      "d /home/agent/.claude       0700 agent users -"
+      "d /home/agent/.codex        0700 agent users -"
+      "d /home/agent/.antigravity  0700 agent users -"
+      "L+ /home/agent/.claude/CLAUDE.md            - - - - /etc/ai-agent/peer-doc.md"
+      "L+ /home/agent/.codex/AGENTS.md             - - - - /etc/ai-agent/peer-doc.md"
+      "L+ /home/agent/.antigravity/ANTIGRAVITY.md  - - - - /etc/ai-agent/peer-doc.md"
     ];
 
     # OpenPGP signing with the key in ~/.gnupg is the default. SSH signing

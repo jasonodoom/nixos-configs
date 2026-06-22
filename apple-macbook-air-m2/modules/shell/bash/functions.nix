@@ -9,9 +9,12 @@ in
     ${yolo.shellSnippet}
 
     # Shadow the AI CLI names; auto-detect bypass flags and tint the tab.
-    claude() { __yolo_wrap claude "command claude" "$@"; }
-    codex()  { __yolo_wrap codex  "command codex"  "$@"; }
-    gemini() { __yolo_wrap gemini "command gemini" "$@"; }
+    # antigravity-cli's binary is `agy`; the wrapper still keys on the
+    # human name so the Ghostty tint macro stays uniform across agents.
+    claude()      { __yolo_wrap claude      "command claude" "$@"; }
+    codex()       { __yolo_wrap codex       "command codex"  "$@"; }
+    antigravity() { __yolo_wrap antigravity "command agy"    "$@"; }
+    agy()         { antigravity "$@"; }
 
     # Extract archives
     extract() {

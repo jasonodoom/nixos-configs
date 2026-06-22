@@ -24,17 +24,18 @@ let
   # hostName, so /var/lib/microvms/ai-<name> is consistent across the
   # top-level VM unit, microvm-set-booted@, and microvm-virtiofsd@.
   # `short` keys the per-agent state under ${userHomeState} so the
-  # large persistent dirs (~/.claude, ~/.codex, ~/.gemini) keep their
-  # existing paths and need no migration.
+  # large persistent dirs (~/.claude, ~/.codex, ~/.antigravity) keep
+  # their paths stable.
   agents = {
-    ai-claude = { short = "claude"; mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
-    ai-codex  = { short = "codex";  mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
-    ai-gemini = { short = "gemini"; mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
+    ai-claude       = { short = "claude";      mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
+    ai-codex        = { short = "codex";       mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
+    ai-antigravity  = { short = "antigravity"; mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
   };
 
-  # Each guest gets every agent CLI so claude can shell out to codex/gemini
-  # and vice versa.
-  allAgentPackages = with pkgs; [ claude-code codex gemini-cli ];
+  # Each guest gets every agent CLI so claude can shell out to
+  # codex/antigravity and vice versa. Gemini was retired when Google
+  # rolled the CLI experience into Antigravity.
+  allAgentPackages = with pkgs; [ claude-code codex antigravity-cli ];
 
   mkAgentVm = name: agent: {
     specialArgs = { inherit inputs; };
@@ -89,40 +90,11 @@ let
         packages = allAgentPackages;
         sshPort = agent.sshPort;
         hostPublicKeys = hostAuthorizedKeys;
-        # The gemini CLI authenticates via GEMINI_API_KEY at every
-        # invocation; the peer inbox watcher runs as a system service
-        # so it does not source ~/.bashrc and never sees the token.
-        # Activation script below converts the operator's bash-shape
-        # ~/.gemini-token into a systemd EnvironmentFile and points
-        # the watcher at it. Only gemini needs this; claude uses an
-        # OAuth keyring and codex authenticates from ~/.codex/auth.json.
-        envFile = if agent.short == "gemini" then "/run/agent-env/gemini.env" else null;
-      };
-
-      # Runs after the virtiofs share for /home/agent is up. As an activation
-      # script (earlier attempt) the token file wasn't readable yet and the
-      # watcher booted without GEMINI_API_KEY.
-      systemd.services.gemini-env-prep = lib.mkIf (agent.short == "gemini") {
-        description = "Materialize /run/agent-env/gemini.env from ~/.gemini-token";
-        requiredBy = [ "ai-peer-inbox-watcher.service" ];
-        before     = [ "ai-peer-inbox-watcher.service" ];
-        after      = [ "home-agent.mount" "local-fs.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = ''
-          install -d -m 0700 -o agent -g agent /run/agent-env
-          if [ -r /home/agent/.gemini-token ]; then
-            ${pkgs.gnused}/bin/sed -E 's/^[[:space:]]*export[[:space:]]+//' \
-              /home/agent/.gemini-token > /run/agent-env/gemini.env
-            chmod 0400 /run/agent-env/gemini.env
-            chown agent:agent /run/agent-env/gemini.env
-          else
-            echo "gemini-env-prep: /home/agent/.gemini-token missing" >&2
-            exit 1
-          fi
-        '';
+        # antigravity-cli uses an OAuth login flow that caches creds
+        # under ~/.antigravity; claude does the same and codex reads
+        # ~/.codex/auth.json. No API-key envFile needed for any of
+        # the three after the gemini retirement.
+        envFile = null;
       };
 
       microvm = {
@@ -247,21 +219,21 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${userHomeState}              0750 jason users -"
-    "d ${userHomeState}/claude       0750 1000  1000  -"
-    "d ${userHomeState}/codex        0750 1000  1000  -"
-    "d ${userHomeState}/gemini       0750 1000  1000  -"
-    "d ${userHomeState}/claude-sshd  0700 root  root  -"
-    "d ${userHomeState}/codex-sshd   0700 root  root  -"
-    "d ${userHomeState}/gemini-sshd  0700 root  root  -"
-    "d ${userHomeState}/claude-rwstore 0700 root root -"
-    "d ${userHomeState}/codex-rwstore  0700 root root -"
-    "d ${userHomeState}/gemini-rwstore 0700 root root -"
-    "d ${userHomeState}/claude-secrets 0700 root root -"
-    "d ${userHomeState}/codex-secrets  0700 root root -"
-    "d ${userHomeState}/gemini-secrets 0700 root root -"
-    "d ${userHomeState}/claude-tailscale 0700 root root -"
-    "d ${userHomeState}/codex-tailscale  0700 root root -"
-    "d ${userHomeState}/gemini-tailscale 0700 root root -"
+    "d ${userHomeState}/claude              0750 1000  1000  -"
+    "d ${userHomeState}/codex               0750 1000  1000  -"
+    "d ${userHomeState}/antigravity         0750 1000  1000  -"
+    "d ${userHomeState}/claude-sshd         0700 root  root  -"
+    "d ${userHomeState}/codex-sshd          0700 root  root  -"
+    "d ${userHomeState}/antigravity-sshd    0700 root  root  -"
+    "d ${userHomeState}/claude-rwstore      0700 root root  -"
+    "d ${userHomeState}/codex-rwstore       0700 root root  -"
+    "d ${userHomeState}/antigravity-rwstore 0700 root root  -"
+    "d ${userHomeState}/claude-secrets      0700 root root  -"
+    "d ${userHomeState}/codex-secrets       0700 root root  -"
+    "d ${userHomeState}/antigravity-secrets 0700 root root  -"
+    "d ${userHomeState}/claude-tailscale    0700 root root  -"
+    "d ${userHomeState}/codex-tailscale     0700 root root  -"
+    "d ${userHomeState}/antigravity-tailscale 0700 root root -"
   ];
 
   networking.bridges.virbr-ai.interfaces = [];
@@ -284,8 +256,8 @@ in
   microvm.vms = lib.mapAttrs mkAgentVm agents;
 
   # Don't let nixos-rebuild switch bounce running VMs - it would drop any
-  # active claude/codex/gemini session. New config sits on disk; pick it
-  # up with `claude-restart` etc. or `ai-restart-all` when convenient.
+  # active claude/codex/antigravity session. New config sits on disk; pick
+  # it up with `claude-restart` etc. or `ai-restart-all` when convenient.
   # The unit name matches microvm.vms.<name>, which after the rename is
   # microvm@ai-claude etc. preStart drops the decrypted tailscale auth
   # key into the per-VM secrets dir that's virtiofs-shared into the
@@ -320,7 +292,7 @@ in
   # layout transparently. Also drains stale virtiofsd@<short> instances
   # from the prior generation that systemd would otherwise leave running.
   system.activationScripts.aiMicrovmRename = lib.stringAfter [ "etc" ] ''
-    for short in claude codex gemini; do
+    for short in claude codex antigravity; do
       old="/var/lib/microvms/$short"
       new="/var/lib/microvms/ai-$short"
       if [ -d "$old" ] && [ ! -e "$new" ]; then
@@ -330,6 +302,18 @@ in
         ${pkgs.systemd}/bin/systemctl stop "microvm-virtiofsd@$short.service" || true
       fi
     done
+    # Gemini retirement: stop the legacy unit + symlink the old runtime
+    # dir aside so a stale ai-gemini state directory does not block the
+    # new ai-antigravity slot from being created. The disk image itself
+    # is preserved (renamed to ai-gemini.retired) in case I need to
+    # recover anything; gc it manually once I confirm antigravity is
+    # healthy.
+    if ${pkgs.systemd}/bin/systemctl is-active --quiet microvm@ai-gemini.service 2>/dev/null; then
+      ${pkgs.systemd}/bin/systemctl stop microvm@ai-gemini.service || true
+    fi
+    if [ -d /var/lib/microvms/ai-gemini ] && [ ! -e /var/lib/microvms/ai-gemini.retired ]; then
+      mv /var/lib/microvms/ai-gemini /var/lib/microvms/ai-gemini.retired || true
+    fi
   '';
 
   environment.systemPackages = [ inputs.microvm.packages.x86_64-linux.microvm ];

@@ -21,14 +21,14 @@ let
   ];
 
   agents = {
-    claude = { hostAddress = "10.0.43.1";  localAddress = "10.0.43.2";  sshPort = 2201; };
-    codex  = { hostAddress = "10.0.43.5";  localAddress = "10.0.43.6";  sshPort = 2202; };
-    gemini = { hostAddress = "10.0.43.9";  localAddress = "10.0.43.10"; sshPort = 2203; };
+    claude      = { hostAddress = "10.0.43.1";  localAddress = "10.0.43.2";  sshPort = 2201; };
+    codex       = { hostAddress = "10.0.43.5";  localAddress = "10.0.43.6";  sshPort = 2202; };
+    antigravity = { hostAddress = "10.0.43.9";  localAddress = "10.0.43.10"; sshPort = 2203; };
   };
 
-  # Each guest gets every agent CLI so claude can shell out to codex/gemini
-  # and vice versa.
-  allAgentPackages = with pkgs; [ claude-code codex gemini-cli ];
+  # Each guest gets every agent CLI so claude can shell out to
+  # codex/antigravity and vice versa.
+  allAgentPackages = with pkgs; [ claude-code codex antigravity-cli ];
 
   mkContainer = name: agent: {
     autoStart = false;
@@ -87,7 +87,7 @@ in
     "d ${userHomeState}              0750 jason users -"
     "d ${userHomeState}/claude       0750 1000  1000  -"
     "d ${userHomeState}/codex        0750 1000  1000  -"
-    "d ${userHomeState}/gemini       0750 1000  1000  -"
+    "d ${userHomeState}/antigravity  0750 1000  1000  -"
   ];
 
   containers = lib.mapAttrs mkContainer agents;

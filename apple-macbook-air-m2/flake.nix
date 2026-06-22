@@ -81,7 +81,7 @@
           bash-completion
           coreutils-full
           claude-code
-          llm-agents.gemini-cli
+          llm-agents.antigravity-cli
           llm-agents.codex
           container
           maccy

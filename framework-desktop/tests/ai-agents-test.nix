@@ -10,7 +10,7 @@ let
   hostName = cfg.networking.hostName;
 
   vms = cfg.microvm.vms or {};
-  expected = [ "ai-claude" "ai-codex" "ai-gemini" ];
+  expected = [ "ai-claude" "ai-codex" "ai-antigravity" ];
 
   vmOf = name: vms.${name} or null;
   guestOf = name:
@@ -44,15 +44,15 @@ let
         ok = hasPackage "ai-claude" "claude-code"; }
       { name = "ai-codex guest has codex package";
         ok = hasPackage "ai-codex" "codex"; }
-      { name = "ai-gemini guest has gemini-cli package";
-        ok = hasPackage "ai-gemini" "gemini-cli"; }
+      { name = "ai-antigravity guest has antigravity-cli package";
+        ok = hasPackage "ai-antigravity" "antigravity-cli"; }
 
       { name = "ai-claude guest sshd listens on 2201";
         ok = hasSshPort "ai-claude" 2201; }
       { name = "ai-codex guest sshd listens on 2202";
         ok = hasSshPort "ai-codex" 2202; }
-      { name = "ai-gemini guest sshd listens on 2203";
-        ok = hasSshPort "ai-gemini" 2203; }
+      { name = "ai-antigravity guest sshd listens on 2203";
+        ok = hasSshPort "ai-antigravity" 2203; }
 
       { name = "ai-claude guest shares /home/jason/code";
         ok = hasShare "ai-claude" "/home/jason/code"; }
