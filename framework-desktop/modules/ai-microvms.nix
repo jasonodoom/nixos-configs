@@ -53,7 +53,14 @@ let
       imports = [
         inputs.microvm.nixosModules.microvm
         ../../modules/shared/ai-agent-guest.nix
+        ../../modules/shared/ai-agent-orphan-reaper.nix
       ];
+
+      # Reaper for orphaned test-tool children (vitest workers,
+      # playwright, headless browsers) whose parent was OOM-killed.
+      # Default to warn-only across all ai-* microvms so I can watch
+      # journal output before enabling enforcement per-vm.
+      my.orphanReaper.enable = true;
 
       nixpkgs.overlays = [ (import ../overlays/default.nix { inherit inputs; }) ];
 
