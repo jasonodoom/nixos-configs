@@ -94,7 +94,7 @@
       inherit (import ./overlays/claude-code.nix final prev) claude-code;
       llm-agents = llm-agents.packages.${final.stdenv.hostPlatform.system};
       codex = llm-agents.packages.${final.stdenv.hostPlatform.system}.codex;
-      gemini-cli = llm-agents.packages.${final.stdenv.hostPlatform.system}.gemini-cli;
+      antigravity-cli = llm-agents.packages.${final.stdenv.hostPlatform.system}.antigravity-cli;
     };
 
     # NixOS configurations

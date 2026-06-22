@@ -5,9 +5,10 @@ let
   yolo = import ../../../modules/shared/yolo-agent-wrappers.nix { inherit lib; };
 in
 {
-  # `claude` / `codex` / `gemini` on perdurabo always SSH into the matching
-  # microvm. The wrapper detects the bypass flag in the user's args and
-  # colors the Ghostty tab (OSC passes through SSH) only in that case.
+  # `claude` / `codex` / `antigravity` on perdurabo always SSH into the
+  # matching microvm. The wrapper detects the bypass flag in the user's
+  # args and colors the Ghostty tab (OSC passes through SSH) only in
+  # that case.
   #
   # /home/jason/code is virtiofs-shared into the guests as /home/agent/code,
   # so when the user invokes an agent from anywhere under that tree we cd
@@ -26,9 +27,13 @@ in
       esac
     }
 
-    claude() { __yolo_wrap claude "ssh -qt ai-claude $(printf '%q' "$(__ai_remote_cmd claude)")" "$@"; }
-    codex()  { __yolo_wrap codex  "ssh -qt ai-codex  $(printf '%q' "$(__ai_remote_cmd codex)")"  "$@"; }
-    gemini() { __yolo_wrap gemini "ssh -qt ai-gemini $(printf '%q' "$(__ai_remote_cmd gemini)")" "$@"; }
+    claude()       { __yolo_wrap claude      "ssh -qt ai-claude      $(printf '%q' "$(__ai_remote_cmd claude)")"      "$@"; }
+    codex()        { __yolo_wrap codex       "ssh -qt ai-codex       $(printf '%q' "$(__ai_remote_cmd codex)")"       "$@"; }
+    # antigravity-cli's binary is `agy` (not `antigravity`). The yolo
+    # wrapper still keys on the human-friendly name so the Ghostty tint
+    # macro and tab title stay consistent across claude/codex/antigravity.
+    antigravity()  { __yolo_wrap antigravity "ssh -qt ai-antigravity $(printf '%q' "$(__ai_remote_cmd agy)")"        "$@"; }
+    agy()          { antigravity "$@"; }
   '';
 
   programs.bash.shellAliases = {
@@ -90,13 +95,13 @@ in
     "killgpg" = "gpgconf --kill gpg-agent";
     "fixssh" = "chmod 700 ~/.ssh && chmod 644 ~/.ssh/authorized_keys && chmod 600 ~/.ssh/*_rsa";
 
-    # AI agents in sandboxed microvms: `claude`/`codex`/`gemini` are defined
-    # as functions above (see interactiveShellInit) so they can detect
-    # bypass flags and tint the Ghostty tab. No alias needed here.
-    "claude-restart" = "doas systemctl restart microvm@claude";
-    "codex-restart"  = "doas systemctl restart microvm@codex";
-    "gemini-restart" = "doas systemctl restart microvm@gemini";
-    "ai-restart-all" = "doas systemctl restart microvm@claude microvm@codex microvm@gemini";
+    # AI agents in sandboxed microvms: `claude`/`codex`/`antigravity`
+    # are defined as functions above (see interactiveShellInit) so they
+    # can detect bypass flags and tint the Ghostty tab. No alias needed.
+    "claude-restart"      = "doas systemctl restart microvm@ai-claude";
+    "codex-restart"       = "doas systemctl restart microvm@ai-codex";
+    "antigravity-restart" = "doas systemctl restart microvm@ai-antigravity";
+    "ai-restart-all"      = "doas systemctl restart microvm@ai-claude microvm@ai-codex microvm@ai-antigravity";
 
     # File generation utilities
     "100mb" = "dd if=/dev/zero of=100mb.file bs=100 count=1024000";

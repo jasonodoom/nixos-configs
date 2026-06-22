@@ -87,7 +87,7 @@
       tmp="$(mktemp)"
       {
         echo "$MARKER_BEGIN"
-        echo "Host perdurabo ai-claude ai-codex ai-gemini"
+        echo "Host perdurabo ai-claude ai-codex ai-antigravity"
         echo "  LogLevel ERROR"
         echo "$MARKER_END"
         echo ""

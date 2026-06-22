@@ -15,10 +15,10 @@ final: prev: {
   llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
 
   # Promote individual agents to top-level pkgs attrs so the AI microvm
-  # module can reference pkgs.codex / pkgs.gemini-cli uniformly alongside
-  # pkgs.claude-code.
+  # module can reference pkgs.codex / pkgs.antigravity-cli uniformly
+  # alongside pkgs.claude-code.
   codex = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.codex;
-  gemini-cli = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.gemini-cli;
+  antigravity-cli = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.antigravity-cli;
 
   # The .deb unpack tries to preserve the setuid bit on chrome-sandbox,
   # which fails outside a CAP_FSETID context (any nix build sandbox,

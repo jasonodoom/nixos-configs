@@ -10,7 +10,7 @@ let
   hostName = cfg.networking.hostName;
 
   containers = cfg.containers or {};
-  expected = [ "claude" "codex" "gemini" ];
+  expected = [ "claude" "codex" "antigravity" ];
 
   containerOf = name: containers.${name} or null;
   guestOf = name:
@@ -44,15 +44,15 @@ let
         ok = hasPackage "claude" "claude-code"; }
       { name = "codex guest has codex package";
         ok = hasPackage "codex" "codex"; }
-      { name = "gemini guest has gemini-cli package";
-        ok = hasPackage "gemini" "gemini-cli"; }
+      { name = "antigravity guest has antigravity-cli package";
+        ok = hasPackage "antigravity" "antigravity-cli"; }
 
       { name = "claude guest sshd listens on 2201";
         ok = hasSshPort "claude" 2201; }
       { name = "codex guest sshd listens on 2202";
         ok = hasSshPort "codex" 2202; }
-      { name = "gemini guest sshd listens on 2203";
-        ok = hasSshPort "gemini" 2203; }
+      { name = "antigravity guest sshd listens on 2203";
+        ok = hasSshPort "antigravity" 2203; }
 
       { name = "claude container bind-mounts /home/agent/code";
         ok = hasBindMount "claude" "/home/agent/code"; }
