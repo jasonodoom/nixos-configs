@@ -5,8 +5,8 @@
 # seen within the snapshot's TTL window.
 #
 # Usage:
-#   agent-sessions-restore
-#   tmux attach -t agents
+#   agent-sessions-restore           # rebuild and attach
+#   agent-sessions-restore --no-attach
 #
 # Override snapshot file: AGENT_SNAPSHOT=/path/to/snap agent-sessions-restore
 
@@ -15,6 +15,28 @@ set -euo pipefail
 SESSION=agents
 STATE_DIR="$HOME/.local/state/agent-sessions"
 SNAPSHOT="${AGENT_SNAPSHOT:-$STATE_DIR/snapshot}"
+ATTACH=1
+
+for arg in "$@"; do
+  case "$arg" in
+    --no-attach) ATTACH=0 ;;
+    -h|--help) echo "usage: agent-sessions-restore [--no-attach]"; exit 0 ;;
+    *) echo "unknown argument: $arg" >&2; exit 2 ;;
+  esac
+done
+
+# Attach to the session if we have a terminal. From inside tmux, switch the
+# client instead of nesting; otherwise just print how to attach.
+attach_session() {
+  if [ "$ATTACH" -eq 0 ] || [ ! -t 1 ]; then
+    echo "Attach with: tmux attach -t $SESSION"
+  elif [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "$SESSION" 2>/dev/null \
+      || echo "Already in tmux. Switch with: tmux switch-client -t $SESSION"
+  else
+    exec tmux attach -t "$SESSION"
+  fi
+}
 
 if [ ! -f "$SNAPSHOT" ]; then
   echo "No snapshot at $SNAPSHOT. Run agent-sessions-snapshot while sessions are live."
@@ -30,7 +52,8 @@ if [ "${#SESSIONS[@]}" -eq 0 ]; then
 fi
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-  echo "tmux session '$SESSION' already exists. Attach with: tmux attach -t $SESSION"
+  echo "tmux session '$SESSION' already exists."
+  attach_session
   exit 0
 fi
 
@@ -48,4 +71,4 @@ for entry in "${SESSIONS[@]}"; do
 done
 
 echo "Restored tmux session '$SESSION' with ${#SESSIONS[@]} windows from snapshot ($SNAPSHOT_AT)."
-echo "Attach with: tmux attach -t $SESSION"
+attach_session
