@@ -7,6 +7,7 @@
     ./aliases.nix
     ./functions.nix
     ./vocab.nix
+    ./agent-sessions.nix
   ];
 
   programs.bash = {
@@ -34,69 +35,13 @@
     set visible-stats on
   '';
 
-  environment.systemPackages = with pkgs; [
-    starship
-    bashInteractive
-  ];
+  environment.systemPackages = [ pkgs.bashInteractive ];
 
   # Register Nix bash as a valid login shell
   environment.shells = [ pkgs.bashInteractive ];
 
-  # Set bash as default shell and write starship config
+  # Set bash as default shell
   system.activationScripts.postActivation.text = ''
-    # Set default shell to Nix bash
     dscl . -create /Users/${config.system.primaryUser} UserShell "/run/current-system/sw/bin/bash"
-
-    # Write starship configuration
-    USER_HOME="/Users/${config.system.primaryUser}"
-    mkdir -p "$USER_HOME/.config"
-    cat > "$USER_HOME/.config/starship.toml" << 'STARSHIP_EOF'
-format = """$directory$git_branch$git_status$character"""
-
-[character]
-success_symbol = "[➜](bold green)"
-error_symbol = "[➜](bold red)"
-
-[directory]
-style = "bold cyan"
-truncation_length = 1
-truncate_to_repo = true
-
-[git_branch]
-format = "[($branch)]($style) "
-style = "bold red"
-
-[git_status]
-# Don't use $all_status — starship 1.25 prepends a literal '$' to its output.
-# Listing the individual status variables explicitly renders cleanly.
-format = "[$conflicted$stashed$deleted$renamed$modified$staged$untracked$ahead_behind]($style) "
-style = "bold red"
-modified = "✗"
-untracked = "?"
-staged = "+"
-ahead = "⇡"
-behind = "⇣"
-diverged = "⇕"
-
-[cmd_duration]
-disabled = true
-
-[package]
-disabled = true
-
-[nodejs]
-disabled = true
-
-[python]
-disabled = true
-
-[rust]
-disabled = true
-
-[golang]
-disabled = true
-STARSHIP_EOF
-    chmod 644 "$USER_HOME/.config/starship.toml"
-    chown ${config.system.primaryUser}:staff "$USER_HOME/.config/starship.toml"
   '';
 }
