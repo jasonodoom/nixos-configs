@@ -57,6 +57,7 @@
           ./modules/security/defaults.nix
           ./modules/security/travel-hardening.nix
           # Shell
+          ./modules/shell/starship.nix
           ./modules/shell/bash/bash.nix
           ./modules/shell/zsh/zsh.nix
           ./modules/shell/screen.nix
