@@ -40,10 +40,10 @@ for entry in "${SESSIONS[@]}"; do
   IFS='|' read -r name cwd cmd _last <<<"$entry"
   full="cd $(printf '%q' "$cwd") && $cmd"
   if (( first )); then
-    tmux new-session -d -s "$SESSION" -n "$name" -c "$cwd" "bash -lc $(printf '%q' "$full")"
+    tmux new-session -d -s "$SESSION" -n "$name" -c "$cwd" "bash -lic $(printf '%q' "$full")"
     first=0
   else
-    tmux new-window -t "$SESSION" -n "$name" -c "$cwd" "bash -lc $(printf '%q' "$full")"
+    tmux new-window -t "$SESSION" -n "$name" -c "$cwd" "bash -lic $(printf '%q' "$full")"
   fi
 done
 
