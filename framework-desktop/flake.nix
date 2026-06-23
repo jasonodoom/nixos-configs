@@ -143,7 +143,10 @@
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
         ./modules/agentic-tmux.nix
-        { services.agenticTmux.enable = true; }
+        # Disabled: at-daemon recreates tmux session 0, which collided with
+        # the bosun panes living there. Paused during the current travel
+        # window; re-enable when resuming agentic-tmux development.
+        { services.agenticTmux.enable = false; }
       ];
     };
   in

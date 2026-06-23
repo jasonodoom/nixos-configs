@@ -14,6 +14,13 @@
 # --update so I don't overwrite a newer remote file with an older
 # local one. --omit-dir-times so /recent's mtime sort isn't broken.
 # No --delete, so guest-side appends survive.
+#
+# --update compares mtimes, so clock skew between the Mac and a guest
+# can make a freshly-appended transcript look older and get replaced.
+# To make that non-destructive, every claude transcript rsync also
+# writes any file it would replace into a timestamped .sync-backups dir
+# on the remote first, so a mistimed overwrite is always recoverable.
+# Backups older than 14 days are pruned.
 
 { config, pkgs, lib, ... }:
 
@@ -26,6 +33,10 @@ let
 
     REMOTE=perdurabo
     REMOTE_BASE=/home/jason/.local/state/ai-agents
+
+    # Per-run backup root for claude transcripts. Kept outside
+    # .claude/projects so claude never lists a backup as a session.
+    BK_BASE="$REMOTE_BASE/claude/.sync-backups/$(date -u +%Y%m%dT%H%M%SZ)"
 
     SSH="${pkgs.openssh}/bin/ssh \
       -o IdentityAgent=none \
@@ -54,12 +65,14 @@ let
         [ -d "$dir" ] || continue
         name=$(basename "$dir")
         target="''${name/-Users-jason-code-/-home-agent-code-}"
-        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial -e "$SSH" \
+        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial \
+          --backup --backup-dir="$BK_BASE/$target" -e "$SSH" \
           "$dir/" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/$target/" || true
       done
       bare="$HOME/.claude/projects/-Users-jason-code"
       if [ -d "$bare" ]; then
-        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial -e "$SSH" \
+        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial \
+          --backup --backup-dir="$BK_BASE/-home-agent-code" -e "$SSH" \
           "$bare/" "$REMOTE:$REMOTE_BASE/claude/.claude/projects/-home-agent-code/" || true
         # The bare ~/code sessions intentionally stay in their own
         # project dir on the remote. Previous versions of this script
@@ -78,10 +91,14 @@ let
       # conversation found" even when the .jsonl is in the right
       # project dir.
       if [ -f "$HOME/.claude/history.jsonl" ]; then
-        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial -e "$SSH" \
+        ${pkgs.rsync}/bin/rsync -a --omit-dir-times --update --partial \
+          --backup --backup-dir="$BK_BASE/registry" -e "$SSH" \
           "$HOME/.claude/history.jsonl" \
           "$REMOTE:$REMOTE_BASE/claude/.claude/history.jsonl" || true
-        $SSH "$REMOTE" "${pkgs.gnused}/bin/sed -i 's|\"project\":\"/Users/jason/code\"|\"project\":\"/home/agent/code\"|g; s|\"project\":\"/Users/jason/code/|\"project\":\"/home/agent/code/|g' $REMOTE_BASE/claude/.claude/history.jsonl" || true
+        # sed runs ON perdurabo, so it must use the remote's own binary
+        # (PATH resolves GNU sed at /run/current-system/sw/bin), not the
+        # Mac store path this script was built with.
+        $SSH "$REMOTE" "sed -i 's|\"project\":\"/Users/jason/code\"|\"project\":\"/home/agent/code\"|g; s|\"project\":\"/Users/jason/code/|\"project\":\"/home/agent/code/|g' $REMOTE_BASE/claude/.claude/history.jsonl" || true
       fi
     fi
 
@@ -94,6 +111,9 @@ let
     sync "$HOME/.codex/sessions/"   "$REMOTE_BASE/codex/.codex/sessions/"
     sync "$HOME/.codex/auth.json"   "$REMOTE_BASE/codex/.codex/auth.json"
     sync "$HOME/.codex/config.toml" "$REMOTE_BASE/codex/.codex/config.toml"
+
+    # Prune transcript backups older than 14 days.
+    $SSH "$REMOTE" "find $REMOTE_BASE/claude/.sync-backups -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} + 2>/dev/null" || true
 
     echo "[$(date '+%F %T')] done"
   '';
