@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# Restore agent sessions (claude, codex, agy) into a named tmux session
-# so they survive reboots and terminal close. Reads its session list from
-# the most recent snapshot written by agent-sessions-snapshot.sh.
+# Restore agent sessions into a named tmux session so they survive
+# reboots and terminal close. Reads the snapshot maintained by
+# agent-sessions-snapshot.sh — includes both live sessions and ones
+# seen within the snapshot's TTL window.
 #
 # Usage:
-#   bash ~/bin/agent-sessions-restore.sh
+#   agent-sessions-restore
 #   tmux attach -t agents
 #
-# Override snapshot file: AGENT_SNAPSHOT=/path/to/snap bash ~/bin/agent-sessions-restore.sh
-# Pin sessions manually: edit ~/.local/state/agent-sessions/snapshot directly
-# (will be overwritten on next auto-snapshot unless you disable the trigger).
+# Override snapshot file: AGENT_SNAPSHOT=/path/to/snap agent-sessions-restore
 
 set -euo pipefail
 
@@ -18,11 +17,10 @@ STATE_DIR="$HOME/.local/state/agent-sessions"
 SNAPSHOT="${AGENT_SNAPSHOT:-$STATE_DIR/snapshot}"
 
 if [ ! -f "$SNAPSHOT" ]; then
-  echo "No snapshot at $SNAPSHOT. Run agent-sessions-snapshot.sh while agent sessions are live."
+  echo "No snapshot at $SNAPSHOT. Run agent-sessions-snapshot while sessions are live."
   exit 1
 fi
 
-# Source the snapshot (defines SESSIONS=(...) and SNAPSHOT_AT)
 # shellcheck source=/dev/null
 . "$SNAPSHOT"
 
@@ -38,7 +36,8 @@ fi
 
 first=1
 for entry in "${SESSIONS[@]}"; do
-  IFS='|' read -r name cwd cmd <<<"$entry"
+  # Entry: name|cwd|cmd|last_seen. last_seen is optional (older format).
+  IFS='|' read -r name cwd cmd _last <<<"$entry"
   full="cd $(printf '%q' "$cwd") && $cmd"
   if (( first )); then
     tmux new-session -d -s "$SESSION" -n "$name" -c "$cwd" "bash -lc $(printf '%q' "$full")"
