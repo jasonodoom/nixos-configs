@@ -1,43 +1,43 @@
 { config, pkgs, lib, ... }:
 
 let
-  snapshotBin = "$HOME/bin/agent-sessions-snapshot.sh";
-  restoreBin = "$HOME/bin/agent-sessions-restore.sh";
+  snapshotScript = pkgs.writeShellScriptBin "agent-sessions-snapshot"
+    (builtins.readFile ./agent-sessions-snapshot.sh);
+  restoreScript = pkgs.writeShellScriptBin "agent-sessions-restore"
+    (builtins.readFile ./agent-sessions-restore.sh);
   snapshotFile = "$HOME/.local/state/agent-sessions/snapshot";
-  daemonLabel = "com.jason.agent-sessions-snapshot";
 in
 {
+  environment.systemPackages = [ snapshotScript restoreScript ];
+
   programs.bash.interactiveShellInit = ''
-    # Agent session restore hint: only on interactive non-tmux shells when
-    # we have a snapshot with at least one session and no live 'agents'
-    # tmux session yet. Reads snapshot's own SESSIONS count for accuracy.
-    if [[ $- == *i* ]] && [ -z "''${TMUX:-}" ] && [ -x "${restoreBin}" ] && [ -f "${snapshotFile}" ]; then
-      __as_count=$(awk -F= '/^# Sessions captured:/ {print $1; exit}' "${snapshotFile}" 2>/dev/null | awk '{print $NF}')
+    # Agent session restore hint: interactive non-tmux shells, snapshot
+    # exists with at least one session, no live 'agents' tmux yet.
+    if [[ $- == *i* ]] && [ -z "''${TMUX:-}" ] && command -v agent-sessions-restore >/dev/null 2>&1 && [ -f "${snapshotFile}" ]; then
+      __as_count=$(awk '/^# Sessions captured:/ {print $NF; exit}' "${snapshotFile}" 2>/dev/null)
       if [ -n "$__as_count" ] && [ "$__as_count" -gt 0 ] 2>/dev/null \
          && ! tmux has-session -t agents 2>/dev/null; then
-        printf '\n🤖 \033[1;33mAgent sessions (%d):\033[0m run \033[1;36mbash %s\033[0m to restore.\n' \
-          "$__as_count" "${restoreBin}"
+        printf '\n🤖 \033[1;33mAgent sessions (%d):\033[0m run \033[1;36magent-sessions-restore\033[0m to restore.\n' \
+          "$__as_count"
       fi
       unset __as_count
     fi
 
-    # Snapshot agent sessions on shell exit. Captures pre-reboot state and
-    # any post-snapshot edits the user made (closed sessions, new ones).
-    # Backgrounded + disowned so a slow scan never delays logout.
-    if [[ $- == *i* ]] && [ -x "${snapshotBin}" ]; then
+    # Snapshot on shell exit. Backgrounded so logout isn't delayed.
+    if [[ $- == *i* ]] && command -v agent-sessions-snapshot >/dev/null 2>&1; then
       __as_snap_on_exit() {
-        ( "${snapshotBin}" >/dev/null 2>&1 & ) 2>/dev/null
+        ( agent-sessions-snapshot >/dev/null 2>&1 & ) 2>/dev/null
       }
       trap __as_snap_on_exit EXIT
     fi
   '';
 
-  # Periodic snapshot via launchd — safety net for hard crashes / sleeps
-  # where the bash EXIT trap never fires. Every 5 minutes (300s).
+  # Periodic snapshot via launchd. Safety net for hard crashes / sleeps
+  # where the bash EXIT trap never fires. Every 5 minutes.
   launchd.user.agents.agent-sessions-snapshot = {
     serviceConfig = {
-      Label = daemonLabel;
-      ProgramArguments = [ "/bin/bash" "-lc" "${snapshotBin}" ];
+      Label = "com.jason.agent-sessions-snapshot";
+      ProgramArguments = [ "${snapshotScript}/bin/agent-sessions-snapshot" ];
       StartInterval = 300;
       RunAtLoad = true;
       StandardOutPath = "/tmp/agent-sessions-snapshot.log";
