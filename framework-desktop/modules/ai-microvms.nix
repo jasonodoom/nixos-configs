@@ -105,11 +105,13 @@ let
         # observed hard crashes. Host has 32 cores / 62GB so three
         # of these still leaves room for the host + bosun-browser.
         vcpu = 6;
-        # 8 GiB per guest. 12 GiB was too generous (no host headroom
-        # for vscode/chromium builds), 6 GiB was too tight (claude
-        # crashed via guest-kernel OOM during long agentic sessions).
-        # balloon stays on so the VM releases when idle.
-        mem = 8192;
+        # 12 GiB per guest. 8 GiB proved too tight in practice: long
+        # agentic sessions plus test-runner worker pools (e.g. the
+        # cloudflare vitest-pool workerd swarm) exhaust the guest and
+        # OOM-kill claude mid-session. Host has 32 cores / 62 GiB, so
+        # three 12 GiB guests plus the 4 GiB bosun-browser leave ample
+        # headroom. balloon stays on so the VM releases when idle.
+        mem = 12288;
         balloon = true;
 
         interfaces = [{
