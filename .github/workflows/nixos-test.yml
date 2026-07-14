@@ -290,14 +290,17 @@ jobs:
           fi
 
           cd ${{ matrix.host }}
-          # I drop any line starting with `warning:` before scanning for
-          # failure patterns. Nix surfaces transient substituter fallbacks
-          # (e.g. a github.com 401 followed by a successful cache.nixos.org
-          # fetch) as a single-line warning that embeds the words "error:"
-          # and "Failed" in its prose. The build exit codes above are the
-          # authoritative signal; this grep is just defense-in-depth.
+          # The build exit codes above are the authoritative signal; this
+          # grep is just defense-in-depth for a test runner that exits 0
+          # but prints a failure. I drop lines that are transient
+          # substituter / network-fetch noise before scanning: nix emits
+          # a non-fatal `error: unable to download ...: Timeout ...` (and
+          # its retry/warning variants) when a binary cache is slow, then
+          # falls back and succeeds — so those must not count as failures.
+          # Real build errors (builder ... failed, hash mismatch) don't
+          # match these phrases and stay flagged.
           if grep -hE "error:|failed|FAILED" flake-check-output.log darwin-build-output.log 2>/dev/null \
-               | grep -vE "^warning:|warning: error:|retrying" \
+               | grep -vE "^warning:|warning: error:|retrying|unable to download|unable to connect|Couldn't connect|Timeout was reached|Connection timed out|Temporary failure in name resolution|Transferred a partial file|will try to substitute" \
                | grep -q .; then
             TEST_FAILED=true
             echo "Test failure patterns detected"
@@ -374,7 +377,7 @@ jobs:
           echo "Disk usage after cleanup:"
           df -h
 
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31.10.7
         with:
           enable_kvm: false
           extra_nix_config: |

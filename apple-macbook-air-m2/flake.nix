@@ -48,6 +48,7 @@
           agenix.darwinModules.default
           # Network
           ./modules/network/network.nix
+          ./modules/network/ssh-tailnet.nix
           # Security
           ./modules/security/pam.nix
           ./modules/security/ssh.nix

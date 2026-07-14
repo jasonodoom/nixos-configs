@@ -72,7 +72,7 @@ jobs:
       # installable, and pushes only paths the upstream cache does not already serve.
       - name: Build and publish (hosted runner)
         if: ${{ !matrix.selfhosted }}
-        uses: Ad-Astra-Computing/vega-agent/agent@8936bf25520408c8378b6e8507cf30b219f92e82 # subflake provenance
+        uses: Ad-Astra-Computing/vega-agent/agent@2170753a7f63d07f1dc53ab24f97585ccece9a7c # subflake provenance
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
@@ -95,6 +95,11 @@ jobs:
       # `sandbox = true` works end-to-end.
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
+        # Fail this leg fast if it wedges, rather than hanging to the 180-min job
+        # timeout. reuse-cache means a healthy run finishes well inside this; a run
+        # still going at 90 min is stuck (lost-communication or a runaway rebuild),
+        # so cut it here and surface the failure early.
+        timeout-minutes: 90
         run: |
           rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter || true
           HOOK=/tmp/nix-pre-build-clean-shelter.sh
@@ -110,6 +115,8 @@ jobs:
           VEGA_SKIP_UPSTREAM: "true"
           VEGA_REUSE_CACHE: "true"
           # The agent streams each NAR from disk (v0.4.x), so concurrency no
-          # longer buffers whole NARs in memory. Raise it from the OOM-era 1 to
-          # speed the push of this heavy closure.
-          VEGA_UPLOAD_CONCURRENCY: "4"
+          # longer buffers whole NARs in memory. Kept low (2) because this leg
+          # shares the perdurabo host with other guests: at 4 the runner was
+          # killed mid-build (lost communication ~10 min in) under memory
+          # pressure. 2 keeps some upload parallelism without the peak.
+          VEGA_UPLOAD_CONCURRENCY: "2"
