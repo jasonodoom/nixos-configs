@@ -61,6 +61,13 @@
       # nested processes pass through tmux to the outer terminal.
       set -g allow-passthrough on
 
+      # Forward copies to the outer terminal's clipboard via OSC 52 so
+      # copy/paste works over ssh. The yank plugin only reaches a local
+      # Wayland session (wl-copy), which a remote client does not have,
+      # so a mouse-selection never landed in the client's clipboard.
+      set -g set-clipboard on
+      set -ga terminal-features "*:clipboard"
+
       # 256 color support (like your screen-256color)
       set -g default-terminal "screen-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
