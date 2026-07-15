@@ -7,7 +7,7 @@
     ./aliases.nix
     ./colors.nix
     ./functions.nix
-    ./vocab.nix
+    ../../../modules/shared/vocab.nix
   ];
 
   # Enable bash completion and colors
