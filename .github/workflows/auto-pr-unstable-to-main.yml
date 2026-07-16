@@ -247,16 +247,26 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
           set -eu
+          # Classic branch protection.
           PROT=$(gh api "repos/${{ github.repository }}/branches/main/protection" 2>/dev/null || echo '{}')
-          REQUIRED=$(echo "$PROT" | jq -r '
+          CLASSIC=$(echo "$PROT" | jq -r '
             (.required_status_checks.contexts // [])
             + ((.required_status_checks.checks // []) | map(.context))
             | unique | length')
+          # Required checks now live in a repository ruleset, not classic
+          # protection; the rules/branches endpoint returns whatever applies
+          # to main from every active ruleset.
+          RULES=$(gh api "repos/${{ github.repository }}/rules/branches/main" 2>/dev/null || echo '[]')
+          RULESET=$(echo "$RULES" | jq -r '
+            [ .[] | select(.type == "required_status_checks")
+              | .parameters.required_status_checks[]?.context ]
+            | unique | length')
+          REQUIRED=$(( CLASSIC + RULESET ))
           if [ "$REQUIRED" -lt 1 ]; then
-            echo "::error::Branch protection on main does not require any status checks; refusing to auto-merge."
+            echo "::error::main requires no status checks (classic or ruleset); refusing to auto-merge."
             exit 1
           fi
-          echo "Required checks on main: $REQUIRED"
+          echo "Required checks on main: $REQUIRED (classic=$CLASSIC ruleset=$RULESET)"
 
       - name: Enable auto-merge
         if: steps.check-protection.outcome == 'success'
