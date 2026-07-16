@@ -13,6 +13,10 @@
       REPO_DIR="/var/lib/darwin-config"
       BRANCH="main"
 
+      # root's git refuses the jason-owned checkout without safe.directory;
+      # macOS resolves /var/lib through /private so I allow both spellings.
+      GIT="${pkgs.git}/bin/git -c safe.directory=$REPO_DIR -c safe.directory=/private$REPO_DIR"
+
       log() {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
       }
@@ -59,6 +63,15 @@
         rm -f "$body_file"
       }
 
+      # set -e aborts before the failure paths below can file an issue;
+      # I catch those aborts here so they still surface.
+      on_error() {
+        log "Update aborted unexpectedly"
+        create_failure_issue "[script] $(tail -50 "$LOG_FILE")" "''${CURRENT_COMMIT:-unknown}" || log "Failed to create GitHub issue"
+        exit 1
+      }
+      trap on_error ERR
+
       # Check if on AC power
       if ! /usr/bin/pmset -g ps | grep -q "AC Power"; then
         log "Not on AC power, skipping update"
@@ -74,7 +87,10 @@
       # rebuild rather than chasing a known-bad activation.
       if [ -x /opt/homebrew/bin/mas ]; then
         MAS_ACCOUNT=$(/opt/homebrew/bin/mas account 2>&1 || true)
-        if [ -z "$MAS_ACCOUNT" ] || echo "$MAS_ACCOUNT" | grep -qiE "not signed in|no account"; then
+        if echo "$MAS_ACCOUNT" | grep -qi "unexpected argument"; then
+          # newer mas dropped the account subcommand
+          log "mas has no account subcommand, skipping sign-in check"
+        elif [ -z "$MAS_ACCOUNT" ] || echo "$MAS_ACCOUNT" | grep -qiE "not signed in|no account"; then
           log "WARNING: mas account not signed in (output: $MAS_ACCOUNT)"
           log "Skipping rebuild — masApps activation will fail until you sign in to the App Store"
           create_failure_issue "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to create GitHub issue"
@@ -91,12 +107,12 @@
       if [ -d "$REPO_DIR/.git" ]; then
         log "Updating existing repo"
         cd "$REPO_DIR"
-        ${pkgs.git}/bin/git fetch origin "$BRANCH"
-        ${pkgs.git}/bin/git reset --hard "origin/$BRANCH"
+        $GIT fetch origin "$BRANCH"
+        $GIT reset --hard "origin/$BRANCH"
       else
         log "Cloning repo"
         rm -rf "$REPO_DIR"
-        ${pkgs.git}/bin/git clone --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"
+        $GIT clone --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"
         cd "$REPO_DIR"
       fi
 
@@ -109,7 +125,7 @@
       # repo to a private GitHub URL later.
       ${pkgs.coreutils}/bin/chown -R jason:staff "$REPO_DIR"
 
-      CURRENT_COMMIT=$(${pkgs.git}/bin/git rev-parse --short HEAD)
+      CURRENT_COMMIT=$($GIT rev-parse --short HEAD)
       log "Current commit: $CURRENT_COMMIT"
 
       # Verify commit signature directly in the repo using safe.directory
