@@ -240,9 +240,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
+      # I run this even when the PR already exists so a push after a failed
+      # run still re-arms auto-merge on the open PR.
       - name: Verify main has required status checks before auto-merge
         id: check-protection
-        if: steps.check-pr.outputs.pr_exists == '0' && steps.check-commits.outputs.needs_pr == 'true'
+        if: steps.check-commits.outputs.needs_pr == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
         run: |
@@ -276,3 +278,23 @@ jobs:
           sleep 2
           PR_NUMBER=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq '.[0].number')
           gh pr merge "${PR_NUMBER}" --auto --merge
+
+      - name: Open tracking issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: |
+          set -eu
+          TITLE="auto-pr unstable to main failed"
+          # one open issue is enough; I skip if it is already filed
+          EXISTING=$(gh api "repos/${{ github.repository }}/issues?state=open&per_page=100" \
+            --jq "[.[] | select(.title == \"$TITLE\")] | length")
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Open failure issue already exists"
+            exit 0
+          fi
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "$TITLE" \
+            --body "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --assignee jasonodoom
