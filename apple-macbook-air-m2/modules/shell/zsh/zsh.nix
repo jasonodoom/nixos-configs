@@ -5,7 +5,7 @@
   imports = [
     ./profile.nix
     ./aliases.nix
-    ./vocab.nix
+    ../../../../modules/shared/vocab.nix
   ];
 
   programs.zsh = {

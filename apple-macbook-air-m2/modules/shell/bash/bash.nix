@@ -6,7 +6,7 @@
     ./profile.nix
     ./aliases.nix
     ./functions.nix
-    ./vocab.nix
+    ../../../../modules/shared/vocab.nix
     ./agent-sessions.nix
   ];
 

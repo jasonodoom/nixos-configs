@@ -139,6 +139,7 @@
         ./modules/services/verify-commits.nix
         ./modules/services/forgejo.nix
         ./modules/services/forgejo-runner-vm.nix
+        ./modules/services/vega-runner-watchdog.nix
         ./modules/ai-microvms.nix
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
