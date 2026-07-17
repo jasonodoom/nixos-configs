@@ -34,8 +34,9 @@ let
       share_context=1; shift
     fi
     if [ $# -lt 2 ]; then
-      echo "usage: ask-peer [--share-context] <claude|codex|antigravity> <prompt...>" >&2
-      echo "       ask-peer <claude|codex> 'resume:<session-id> <prompt...>'" >&2
+      echo "usage: ask-peer [--share-context] <peer> <prompt...>" >&2
+      echo "       peers: claude codex antigravity (+ any model-tier alias, e.g. fable)" >&2
+      echo "       ask-peer <peer> 'resume:<session-id> <prompt...>'" >&2
       exit 2
     fi
     to=$1; shift
@@ -85,38 +86,46 @@ let
   inboxWatcher = pkgs.writeShellScriptBin "ai-peer-inbox-watcher" ''
     set -u
     self=$(${pkgs.inetutils}/bin/hostname | sed 's/^ai-//')
-    my_inbox=${inboxDir}/$self
-    ${pkgs.coreutils}/bin/mkdir -p "$my_inbox"
+
+    # Inbox names this host answers: its own name, served with the CLI's
+    # default model, plus any model-tier aliases from config, each served
+    # by pinning the CLI to that model. A new model tier becomes a
+    # reachable peer via one config string, not a broker edit.
+    aliases="${lib.concatStringsSep " " cfg.modelAliases}"
 
     # A prompt prefixed with "resume:<session-id> ..." continues that
     # recorded session instead of starting a fresh one. antigravity-cli
     # uses --continue for the most-recent session; per-id resume is via
-    # --conversation, mirrored here.
+    # --conversation, mirrored here. invoke takes <model> <session-id>
+    # <prompt>; an empty model means the CLI's own default.
     case "$self" in
       claude) invoke() {
-        if [ -n "$1" ]; then claude --resume "$1" -p "$2" 2>&1
-        else                  claude -p "$2" 2>&1
+        margs=""; [ -n "$1" ] && margs="--model $1"
+        if [ -n "$2" ]; then claude $margs --resume "$2" -p "$3" 2>&1
+        else                  claude $margs -p "$3" 2>&1
         fi
       } ;;
       codex)  invoke() {
         # /home/agent isn't a git repo; bypass flag skips approval prompts
         # that would hang a non-interactive exec. --all so sessions
-        # recorded in any cwd remain resumable.
+        # recorded in any cwd remain resumable. codex exposes no model-tier
+        # alias here, so the model arg ($1) is unused.
         FLAGS="--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check"
-        if [ -n "$1" ]; then codex exec $FLAGS resume --all "$1" "$2" 2>&1
-        else                  codex exec $FLAGS "$2" 2>&1
+        if [ -n "$2" ]; then codex exec $FLAGS resume --all "$2" "$3" 2>&1
+        else                  codex exec $FLAGS "$3" 2>&1
         fi
       } ;;
       antigravity) invoke() {
-        if [ -n "$1" ]; then agy --conversation "$1" -p "$2" 2>&1
-        else                  agy -p "$2" 2>&1
+        if [ -n "$2" ]; then agy --conversation "$2" -p "$3" 2>&1
+        else                  agy -p "$3" 2>&1
         fi
       } ;;
       *) echo "unknown agent $self" >&2; exit 1 ;;
     esac
 
+    # process <request-file> <inbox-name> <model>
     process() {
-      req=$1
+      req=$1; iam=$2; model=$3
       [ -f "$req" ] || return
       case "$req" in *.response.json|*.processing) return ;; esac
 
@@ -152,12 +161,12 @@ let
         prompt="''${preamble}''${prompt}"
       fi
 
-      response=$(invoke "$sid" "$prompt" || true)
+      response=$(invoke "$model" "$sid" "$prompt" || true)
 
       out=${inboxDir}/$from
       ${pkgs.coreutils}/bin/mkdir -p "$out"
       ${pkgs.jq}/bin/jq -n \
-        --arg id "$id" --arg from "$self" --arg to "$from" --arg r "$response" \
+        --arg id "$id" --arg from "$iam" --arg to "$from" --arg r "$response" \
         '{id:$id, from:$from, to:$to, response:$r, created_at: (now|todate)}' \
         > "$out/$id.response.json.tmp"
       ${pkgs.coreutils}/bin/mv "$out/$id.response.json.tmp" "$out/$id.response.json"
@@ -165,14 +174,22 @@ let
       ${pkgs.coreutils}/bin/rm -f "$processing"
     }
 
-    # Poll the inbox. inotify doesn't fire when the writer is on the other
-    # side of a virtiofs (perdurabo) or bind mount (congo), so cross-vm
-    # asks would queue forever waiting for an event that never arrives.
-    while :; do
-      for f in "$my_inbox"/*.json; do
+    # Poll each served inbox. inotify doesn't fire when the writer is on
+    # the other side of a virtiofs (perdurabo) or bind mount (congo), so
+    # cross-vm asks would queue forever waiting for an event that never
+    # arrives. serve <inbox-name> <model>.
+    serve() {
+      d=${inboxDir}/$1
+      ${pkgs.coreutils}/bin/mkdir -p "$d"
+      for f in "$d"/*.json; do
         [ -e "$f" ] || continue
-        process "$f"
+        process "$f" "$1" "$2"
       done
+    }
+
+    while :; do
+      serve "$self" ""
+      for a in $aliases; do serve "$a" "$a"; done
       sleep 2
     done
   '';
@@ -206,6 +223,18 @@ in
         give the watcher API keys the agent CLI needs when invoked
         non-interactively (the service is neither login nor interactive,
         so ~/.bashrc and ~/.profile are not sourced).
+      '';
+    };
+    modelAliases = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        Extra peer inbox names this agent answers by invoking its CLI
+        pinned to that name as a model tier. A message to `ask-peer
+        <alias>` lands in the alias inbox and this host replies with
+        `<cli> --model <alias>`, so a new model tier is reachable as a
+        peer via one config string rather than a broker edit. Only the
+        claude backend applies the model pin today.
       '';
     };
   };
@@ -342,9 +371,13 @@ in
       You can consult the codex or antigravity agent running in a sibling
       microvm via the `ask-peer` command:
 
-          ask-peer <claude|codex|antigravity> "<prompt>"
-          ask-peer <claude|codex|antigravity> "resume:<session-id> <prompt>"
-          ask-peer --share-context <claude|codex|antigravity> "<prompt>"
+          ask-peer <peer> "<prompt>"
+          ask-peer <peer> "resume:<session-id> <prompt>"
+          ask-peer --share-context <peer> "<prompt>"
+
+      A `<peer>` is a sibling agent (`claude`, `codex`, `antigravity`) or
+      a model-tier alias one of them answers (for example `fable`, served
+      by claude as `claude --model fable`).
 
       The call blocks until the peer responds (default 5min timeout). Use it
       when you need a second opinion, a different model's reasoning, or to
