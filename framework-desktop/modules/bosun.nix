@@ -43,6 +43,13 @@ in {
       HOME = "/home/jason";
       XDG_RUNTIME_DIR = runtimeDir;
       TMUX_TMPDIR = runtimeDir;
+      # The browser planner registry registers an agent only when its
+      # CLI is on PATH or its ssh host is named here. The agent CLIs
+      # live inside the ai-* microvms, so point the planners at them;
+      # without this the browser "plan with" dropdown shows every
+      # agent as not registered.
+      BOSUN_PLANNER_CLAUDE_SSH = "ai-claude";
+      BOSUN_PLANNER_CODEX_SSH = "ai-codex";
     };
 
     serviceConfig = {
