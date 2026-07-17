@@ -1,43 +1,55 @@
 { config, lib, pkgs, ... }:
 
-# bosun supervisor — runs the tmux AI-agent supervisor as a
-# systemd user service so it survives logout/login. The binary
-# itself is currently deployed out-of-band to ~/.local/bin/bosun.
-# When I add bosun as a flake input the ExecStart path moves to
-# ${bosunPkg}/bin/bosun.
+# bosun supervisor — runs the tmux AI-agent supervisor as a system
+# service pinned to the jason user. The binary itself is currently
+# deployed out-of-band to ~/.local/bin/bosun. When I add bosun as a
+# flake input the ExecStart path moves to ${bosunPkg}/bin/bosun.
 #
-# The unit content mirrors what `bosun service install --manager
-# systemd` writes when bosun owns the file. Keeping it declarative
-# means I don't need to re-run install after a host rebuild.
+# It has to run as jason, not root: the supervised agent panes live
+# in jason's tmux server (socket $XDG_RUNTIME_DIR/tmux-1000/default),
+# and tmux derives the socket dir from the caller's EUID. A root
+# instance looks for tmux-0 and sees an empty server, so every pane
+# capture returns nothing and every pane classifies "unknown". A
+# system service with User=jason keeps a single instance bound to the
+# right runtime dir regardless of who is logged in.
 
 let
   binary = "/home/jason/.local/bin/bosun";
   configFile = "/home/jason/.config/bosun/bosun.toml";
+  runtimeDir = "/run/user/1000";
 in {
-  systemd.user.services.bosun = {
-    description = "Bosun supervisor (user instance)";
+  # jason's user runtime dir ($XDG_RUNTIME_DIR) must exist before an
+  # interactive login for the boot-time service to reach the tmux
+  # socket, so keep the user manager lingering.
+  users.users.jason.linger = true;
+
+  systemd.services.bosun = {
+    description = "Bosun supervisor";
     documentation = [ "https://github.com/Ad-Astra-Computing/bosun" ];
-    wantedBy = [ "default.target" ];
-    after = [ "default.target" ];
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
 
     # bosun shells out to tmux on every supervisor tick for
-    # capture-pane and send-keys. NixOS gives user units a minimal
-    # PATH (coreutils, findutils, grep, sed, systemd) and strips
-    # the operator's nix-profile, so without injecting tmux here
-    # every capture would fail "tmux: command not found".
-    path = [ pkgs.tmux ];
+    # capture-pane and send-keys, and to ssh/openssh for the planner
+    # and ask-peer bridges into the ai-* microvms. A system unit gets
+    # a minimal PATH and none of jason's nix-profile, so both have to
+    # be injected or the calls fail "command not found".
+    path = [ pkgs.tmux pkgs.openssh ];
 
-    # %t expands to $XDG_RUNTIME_DIR. tmux derives its socket from
-    # TMUX_TMPDIR; interactive shells inherit it via pam_systemd,
-    # but a user-unit's env is stripped, so without this the unit
-    # would look at /tmp/tmux-UID/default and miss the live socket.
+    # A system unit has no session, so pam_systemd never populates
+    # these. tmux derives its socket from TMUX_TMPDIR; point both at
+    # jason's runtime dir so capture/send-keys hit the live server.
     environment = {
-      TMUX_TMPDIR = "%t";
+      HOME = "/home/jason";
+      XDG_RUNTIME_DIR = runtimeDir;
+      TMUX_TMPDIR = runtimeDir;
     };
 
     serviceConfig = {
       Type = "simple";
-      WorkingDirectory = "%h";
+      User = "jason";
+      Group = "users";
+      WorkingDirectory = "/home/jason";
       ExecStart = "${binary} run --config ${configFile}";
       Restart = "on-failure";
       RestartSec = "10s";
