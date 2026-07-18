@@ -72,7 +72,7 @@ jobs:
       # installable, and pushes only paths the upstream cache does not already serve.
       - name: Build and publish (hosted runner)
         if: ${{ !matrix.selfhosted }}
-        uses: Ad-Astra-Computing/vega-agent/agent@2170753a7f63d07f1dc53ab24f97585ccece9a7c # subflake provenance
+        uses: Ad-Astra-Computing/vega-agent/agent@7c37e25ed66161c3711d05f2648ad93eb81aa3b7 # subflake provenance
         with:
           installable: "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
           control-plane: https://vega-cache.dev
@@ -82,17 +82,12 @@ jobs:
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
 
-      # The self-hosted runner container can't user-namespace
-      # (sandbox = relaxed falls back to no-sandbox per derivation),
-      # so every build uses HOME=/homeless-shelter and fails the
-      # purity check if the directory exists. The pre-build-hook
-      # reaper clears it between derivations, but under parallelism
-      # (max-jobs > 1) we race: hook fires → derivation A populates
-      # /homeless-shelter → derivation B's purity check sees it and
-      # fails. Serialize with max-jobs = 1 so only one derivation
-      # ever holds /homeless-shelter at a time. Slow but correct.
-      # Drop this once the container ships with user namespaces and
-      # `sandbox = true` works end-to-end.
+      # The self-hosted runner container now builds with a full nix
+      # sandbox (userns-capable, VEGA_NIX_SANDBOX=true), so the old
+      # relaxed-sandbox workaround is gone. A full sandbox gives each
+      # build its own userns and private HOME, which fixes the
+      # /homeless-shelter purity race and restores max-jobs parallelism
+      # (and lets setuid unpacks like slack's chrome-sandbox succeed).
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
         # Fail this leg fast if it wedges, rather than hanging to the 180-min job
@@ -101,14 +96,6 @@ jobs:
         # so cut it here and surface the failure early.
         timeout-minutes: 90
         run: |
-          rm -rf /homeless-shelter || sudo rm -rf /homeless-shelter || true
-          HOOK=/tmp/nix-pre-build-clean-shelter.sh
-          cat > "$HOOK" <<'SH'
-          #!/bin/sh
-          rm -rf /homeless-shelter 2>/dev/null || true
-          SH
-          chmod +x "$HOOK"
-          export NIX_CONFIG="sandbox = relaxed"$'\n'"max-jobs = 1"$'\n'"pre-build-hook = $HOOK"
           vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
         env:
           VEGA_URL: https://vega-cache.dev

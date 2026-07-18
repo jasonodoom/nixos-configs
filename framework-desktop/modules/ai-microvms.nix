@@ -27,7 +27,10 @@ let
   # large persistent dirs (~/.claude, ~/.codex, ~/.antigravity) keep
   # their paths stable.
   agents = {
-    ai-claude       = { short = "claude";      mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; };
+    # modelAliases: extra peer names this agent answers as a model tier,
+    # so `ask-peer fable` reaches claude pinned to that model without a
+    # broker edit. claude serves the fable tier; the others have none.
+    ai-claude       = { short = "claude";      mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; modelAliases = [ "fable" ]; };
     ai-codex        = { short = "codex";       mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
     ai-antigravity  = { short = "antigravity"; mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
   };
@@ -89,6 +92,7 @@ let
         name = agent.short;
         packages = allAgentPackages;
         sshPort = agent.sshPort;
+        modelAliases = agent.modelAliases or [];
         hostPublicKeys = hostAuthorizedKeys;
         # antigravity-cli uses an OAuth login flow that caches creds
         # under ~/.antigravity; claude does the same and codex reads
