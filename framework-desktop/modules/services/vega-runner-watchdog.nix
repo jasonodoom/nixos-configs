@@ -71,4 +71,66 @@
       AccuracySec = "30s";
     };
   };
+
+  # The container's /nix is a named volume that grows with every CI build
+  # and its in-container GC does not keep up: on 20 July the accumulated
+  # store filled the host root FS to 100%. This collects the container's
+  # dead store paths on a schedule so the volume stays bounded.
+  #
+  # nix-collect-garbage inside the container deletes the container's own
+  # nix tooling as it runs, because nothing in the container roots it (the
+  # same mechanism the recover service above documents). So this reseeds
+  # the tooling from the image first — additive cp -an, so it only restores
+  # what a prior GC removed — and then collects. It skips while a job is in
+  # flight so it never races a live build.
+  systemd.services.vega-runner-nix-gc = {
+    description = "Garbage-collect the vega-runner container's nix store";
+    serviceConfig.Type = "oneshot";
+    path = [ config.virtualisation.docker.package pkgs.coreutils pkgs.gnugrep ];
+    script = ''
+      name=vega-runner
+
+      docker inspect "$name" >/dev/null 2>&1 || {
+        echo "container $name does not exist; skipping GC" >&2
+        exit 0
+      }
+      [ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" = "true" ] || {
+        echo "$name not running; skipping GC" >&2
+        exit 0
+      }
+
+      # A job in flight spawns Runner.Worker; leave the store alone until
+      # it finishes so GC never contends with a live build.
+      if docker top "$name" 2>/dev/null | grep -q Runner.Worker; then
+        echo "$name has a job in flight; skipping GC this cycle" >&2
+        exit 0
+      fi
+
+      # Restore the nix tooling a prior GC removed, so nix-collect-garbage
+      # can run. Additive; a no-op when the tooling is already present.
+      vol=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/nix"}}{{.Name}}{{end}}{{end}}' "$name" 2>/dev/null)
+      img=$(docker inspect -f '{{.Image}}' "$name" 2>/dev/null)
+      if [ -n "$vol" ] && [ -n "$img" ]; then
+        docker run --rm --entrypoint /bin/sh -v "$vol":/vol "$img" \
+          -c 'cp -an /nix/store/. /vol/store/ 2>/dev/null' || true
+      fi
+
+      echo "$name idle; collecting dead store paths. df /nix before:" >&2
+      docker exec "$name" df -h /nix 2>/dev/null | tail -1 >&2
+      # sh -lc so nix-collect-garbage resolves via the container's nix
+      # profile PATH; a bare exec uses a minimal PATH without it.
+      docker exec "$name" sh -lc nix-collect-garbage 2>&1 | tail -3 \
+        || echo "GC in $name returned non-zero" >&2
+    '';
+  };
+
+  systemd.timers.vega-runner-nix-gc = {
+    description = "Garbage-collect the vega-runner nix store daily";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+      RandomizedDelaySec = "30m";
+    };
+  };
 }
