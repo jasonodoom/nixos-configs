@@ -1,7 +1,7 @@
 name: NixOS Configuration CI
 
 # Cache strategy:
-# - Perdurabo: Pushes to Garnix (automatic via garnix.yaml), pulls from garnix + cachix + nixos.org
+# - Perdurabo: Pulls from cachix + nixos.org
 # - Congo: Pushes to Cachix, pulls from cachix + nixos.org
 # - Theophany: Pushes to Cachix, pulls from cachix + other configured caches
 
@@ -59,8 +59,8 @@ jobs:
         extra-conf: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-          substituters = https://cache.garnix.io https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
-          trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+          substituters = https://odoom-nixos-configs.cachix.org https://cache.nixos.org/
+          trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
     - name: Install Nix with cache configuration (Congo)
       if: matrix.config == 'congo'

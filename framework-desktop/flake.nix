@@ -6,13 +6,11 @@
       "https://install.determinate.systems"
       "https://cache.nixos.org/"
       "https://vega-cache.dev"
-      "https://cache.garnix.io"
     ];
     trusted-public-keys = [
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ="
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
     ];
   };
 
@@ -286,9 +284,9 @@
 
         # Infrastructure/DevOps environment. Uses opentofu instead of
         # terraform because Hashicorp's BSL license marked terraform
-        # unfree in nixpkgs, which trips Garnix's allowUnfree=false
-        # evaluator. opentofu is the OSS Apache-2.0 fork and is a
-        # drop-in CLI replacement.
+        # unfree in nixpkgs, which trips allowUnfree=false evaluation.
+        # opentofu is the OSS Apache-2.0 fork and is a drop-in CLI
+        # replacement.
         devops = pkgs.mkShell {
           buildInputs = with pkgs; [
             opentofu
