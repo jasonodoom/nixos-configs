@@ -222,7 +222,6 @@ jobs:
           cat >> pr-body.md << 'EOF'
 
           ### CI Checks Required:
-          - build-with-garnix
           - format-check
           - security-check
           - test-gnome-desktop
