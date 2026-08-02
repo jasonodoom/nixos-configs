@@ -66,6 +66,61 @@ in
   environment.systemPackages = [
     pkgs.blueutil
 
+    # Single front door. The travel-mode-* scripts below stay installed
+    # because launchd jobs invoke them by absolute path and they are the
+    # implementations this dispatches to, but everything an operator
+    # types goes through one verb-oriented command.
+    #
+    # Sibling lookup goes through PATH rather than a hardcoded
+    # /run/current-system: a freshly built (not yet activated) system
+    # must dispatch to ITS OWN scripts, or testing a build silently
+    # exercises the previous generation.
+    (pkgs.writeScriptBin "travel-mode" ''
+      #!${pkgs.bash}/bin/bash
+      set -u
+      # Prefer siblings next to this script (same sw/bin as the build
+      # being run), then fall back to PATH.
+      SELF_BIN=$(cd "$(dirname "$0")" && pwd)
+      if [ -x "$SELF_BIN/travel-mode-on" ]; then
+        SW="$SELF_BIN"
+      else
+        SW=$(dirname "$(command -v travel-mode-on 2>/dev/null || echo /run/current-system/sw/bin/travel-mode-on)")
+      fi
+      usage() {
+        cat <<'USAGE'
+      travel-mode — harden this Mac for hostile networks
+
+      Usage:
+        travel-mode on [--dry-run]        apply travel hardening now
+        travel-mode off [--dry-run]       restore normal settings
+        travel-mode status                report the actual state of every knob
+        travel-mode schedule <start> <end>
+                                          arm an automatic on/off window,
+                                          e.g. travel-mode schedule "2026-08-03 14:00" "2026-08-10 09:00"
+        travel-mode list                  show armed transitions
+        travel-mode cancel                remove armed transitions
+
+      Scopes (mostly for the scheduled jobs; both default to everything):
+        --system-only   firewall, Bonjour, location, wake-on-net, wifi purge
+        --user-only     bluetooth, AirDrop, AirPlay, Handoff, Siri, Spotlight
+
+      A missed transition (lid closed) fires at the next wake.
+      USAGE
+      }
+      cmd="''${1:-}"
+      [ $# -gt 0 ] && shift
+      case "$cmd" in
+        on)       exec "$SW/travel-mode-on" "$@" ;;
+        off)      exec "$SW/travel-mode-off" "$@" ;;
+        status)   exec "$SW/travel-mode-status" "$@" ;;
+        schedule) exec "$SW/travel-mode-schedule" "$@" ;;
+        list)     exec "$SW/travel-mode-schedule" --list ;;
+        cancel)   exec "$SW/travel-mode-schedule" --cancel ;;
+        ""|-h|--help|help) usage; [ -z "$cmd" ] && exit 2 || exit 0 ;;
+        *) echo "travel-mode: unknown subcommand '$cmd'" >&2; echo >&2; usage >&2; exit 2 ;;
+      esac
+    '')
+
     (pkgs.writeScriptBin "travel-mode-on" ''
       #!${pkgs.bash}/bin/bash
       set -u
