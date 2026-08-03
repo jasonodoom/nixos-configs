@@ -17,13 +17,12 @@
       # build-time fills that the scheduled timer would miss.
       min-free = 5 * 1024 * 1024 * 1024;
       max-free = 25 * 1024 * 1024 * 1024;
+      # cache.nixos.org is a default and these lists merge, not replace.
       substituters = [
-        "https://cache.nixos.org/"
         "https://vega-cache.dev"
         "https://odoom-nixos-configs.cachix.org"
       ];
       trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ="
         "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU="
       ];
