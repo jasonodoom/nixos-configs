@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Scan currently-running agent CLI processes (claude, agy) and merge them
-# into a rolling snapshot. Sessions seen alive in the last TTL_SECONDS
+# Scan currently-running agent CLI processes (claude, codex, agy) and merge
+# them into a rolling snapshot. Sessions seen alive in the last TTL_SECONDS
 # remain in the snapshot even after their process exits — closing a
 # terminal does not drop the session from the restore list.
 #
@@ -133,7 +133,46 @@ for pid in $(list_pids_named claude); do
   upsert_entry "$name" "$cwd" "claude${flags}" "$now_epoch"
 done
 
-# 4. Scan agy --conversation.
+# 4. Scan codex resume sessions. Codex spells resume as a subcommand
+# (`codex [--yolo] resume <uuid>`), so extract the uuid and rebuild a
+# canonical resume command, preserving the dangerous-mode flag.
+codex_covered=" "
+seen_codex=" "
+for pid in $(list_pids_named codex); do
+  is_ancestor "$pid" && continue
+  cmd=$(ps -o command= -p "$pid" 2>/dev/null)
+  case "$cmd" in *" resume"*) ;; *) continue ;; esac
+  uuid=$(printf '%s' "$cmd" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+  [ -z "$uuid" ] && continue
+  case "$seen_codex" in *" $uuid "*) continue ;; esac
+  seen_codex+="$uuid "
+  cwd=$(pid_cwd "$pid")
+  [ -z "$cwd" ] && continue
+  codex_covered+="$cwd "
+  flags=""
+  case "$cmd" in *--yolo*) flags="--yolo " ;; esac
+  name=$(slug "codex-$(basename "$cwd")")
+  upsert_entry "$name" "$cwd" "codex ${flags}resume $uuid" "$now_epoch"
+done
+
+# 5. Scan bare codex (no resume subcommand). Skip cwds a codex resume
+# entry already covers; a fresh `codex` in the right cwd is the best
+# restore available when no session id is visible in argv.
+for pid in $(list_pids_named codex); do
+  is_ancestor "$pid" && continue
+  cmd=$(ps -o command= -p "$pid" 2>/dev/null)
+  case "$cmd" in *" resume"*|*" exec"*|*mcp*|*proto*) continue ;; esac
+  cwd=$(pid_cwd "$pid")
+  [ -z "$cwd" ] && continue
+  case "$codex_covered" in *" $cwd "*) continue ;; esac
+  codex_covered+="$cwd "
+  flags=""
+  case "$cmd" in *--yolo*) flags=" --yolo" ;; esac
+  name=$(slug "codex-$(basename "$cwd")")
+  upsert_entry "$name" "$cwd" "codex${flags}" "$now_epoch"
+done
+
+# 6. Scan agy --conversation.
 for pid in $(list_pids_named agy); do
   is_ancestor "$pid" && continue
   cmd=$(ps -o command= -p "$pid" 2>/dev/null)
@@ -146,7 +185,7 @@ for pid in $(list_pids_named agy); do
   upsert_entry "$name" "$cwd" "agy --conversation $conv" "$now_epoch"
 done
 
-# 5. Write merged snapshot atomically. snapshot.prev is backup.
+# 7. Write merged snapshot atomically. snapshot.prev is backup.
 # Count how many entries were refreshed in THIS scan (live right now)
 # vs how many are retained from prior snapshots (within TTL but not seen
 # in this scan). Hint uses both to be unambiguous.

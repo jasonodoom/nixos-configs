@@ -26,7 +26,12 @@ in {
   systemd.services.bosun = {
     description = "Bosun supervisor";
     documentation = [ "https://github.com/Ad-Astra-Computing/bosun" ];
-    wantedBy = [ "multi-user.target" ];
+    # Kept installed but NOT auto-started: the fleet-wake auto-resume was
+    # draining the shared Claude weekly pool, so the operator runs bosun
+    # only on demand (systemctl start bosun) until the pacing work lands.
+    # An empty wantedBy also stops nixos-rebuild switch from resurrecting
+    # a manually stopped instance.
+    wantedBy = lib.mkForce [ ];
     after = [ "network.target" ];
 
     # bosun shells out to tmux on every supervisor tick for
