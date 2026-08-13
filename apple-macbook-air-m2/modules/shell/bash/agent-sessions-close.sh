@@ -15,6 +15,10 @@ SESSION="${AGENT_SESSION:-agents}"
 GRACE_SECONDS="${AGENT_CLOSE_GRACE:-12}"
 FORCE=0
 
+# Same socket as the snapshot and the user's shell; see tmux.nix.
+export TMUX_TMPDIR="${TMUX_TMPDIR:-$HOME/.local/run}"
+[ -d "$TMUX_TMPDIR" ] || mkdir -p "$TMUX_TMPDIR"
+
 for arg in "$@"; do
   case "$arg" in
     --force|-f) FORCE=1 ;;
@@ -47,11 +51,21 @@ fi
 # 2. Graceful quit per pane. A leading C-c clears any half-typed input or
 # interrupts a running turn, then /exit asks the agent to quit cleanly so
 # the transcript is flushed.
+# Skip ssh panes: C-c and "/exit" would be typed into whatever is running
+# on the far end, which is someone else's tmux, not ours.
+agent_panes=""
 for p in $panes; do
+  case "$(tmux display-message -p -t "$p" '#{pane_current_command}' 2>/dev/null)" in
+    ssh|mosh) continue ;;
+  esac
+  agent_panes+="$p "
+done
+
+for p in $agent_panes; do
   tmux send-keys -t "$p" C-c 2>/dev/null || true
 done
 sleep 1
-for p in $panes; do
+for p in $agent_panes; do
   tmux send-keys -t "$p" "/exit" Enter 2>/dev/null || true
 done
 
@@ -62,7 +76,7 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
   for p in $(tmux list-panes -s -t "$SESSION" -F '#{pane_id}' 2>/dev/null); do
     cmd=$(tmux display-message -p -t "$p" '#{pane_current_command}' 2>/dev/null)
     case "$cmd" in
-      *claude*|*agy*|*node*) busy=1 ;;
+      *claude*|*codex*|*agy*|*node*) busy=1 ;;
     esac
   done
   [ "$busy" -eq 0 ] && break
@@ -73,7 +87,7 @@ still_busy=0
 for p in $(tmux list-panes -s -t "$SESSION" -F '#{pane_id}' 2>/dev/null); do
   cmd=$(tmux display-message -p -t "$p" '#{pane_current_command}' 2>/dev/null)
   case "$cmd" in
-    *claude*|*agy*|*node*) still_busy=$((still_busy + 1)) ;;
+    *claude*|*codex*|*agy*|*node*) still_busy=$((still_busy + 1)) ;;
   esac
 done
 

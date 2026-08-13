@@ -30,8 +30,20 @@ idx=0
 for entry in "${SESSIONS[@]}"; do
   IFS='|' read -r name cwd cmd last_seen <<<"$entry"
   uuid=$(printf '%s' "$cmd" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+  # Not every entry is a claude session, so say which kind it is rather
+  # than reporting an ssh window as "bare claude, no resume target".
+  case "$cmd" in
+    claude*) kind="claude" ;;
+    codex*)  kind="codex" ;;
+    agy*)    kind="agy" ;;
+    ssh*)    kind="ssh" ;;
+    *)       kind="${cmd%% *}" ;;
+  esac
   perms="default"
-  case "$cmd" in *--dangerously-skip-permissions*) perms="--dangerously-skip-permissions" ;; esac
+  case "$cmd" in
+    *--dangerously-skip-permissions*) perms="--dangerously-skip-permissions" ;;
+    *--yolo*)                         perms="--yolo" ;;
+  esac
   age=""
   case "$last_seen" in
     ''|*[!0-9]*) age="?" ;;
@@ -46,8 +58,13 @@ for entry in "${SESSIONS[@]}"; do
   esac
   printf '  %d. [%s]\n' "$idx" "$name"
   printf '       cwd:   %s\n' "$cwd"
-  printf '       uuid:  %s\n' "${uuid:-(bare claude, no resume target)}"
-  printf '       perms: %s\n' "$perms"
+  printf '       kind:  %s\n' "$kind"
+  if [ "$kind" = "ssh" ]; then
+    printf '       cmd:   %s\n' "$cmd"
+  else
+    printf '       uuid:  %s\n' "${uuid:-(bare $kind, no resume target)}"
+    printf '       perms: %s\n' "$perms"
+  fi
   printf '       seen:  %s\n\n' "$age"
   idx=$((idx+1))
 done

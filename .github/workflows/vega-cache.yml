@@ -81,6 +81,9 @@ jobs:
           # runner pulls cached paths instead of rebuilding. Safe here: tenant-cache
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
+          # Overlay packages (codex) are in no public cache.
+          extra-substituters: "https://odoom-nixos-configs.cachix.org"
+          extra-trusted-public-keys: "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU="
 
       # The self-hosted runner container now builds with a full nix
       # sandbox (userns-capable, VEGA_NIX_SANDBOX=true), so the old

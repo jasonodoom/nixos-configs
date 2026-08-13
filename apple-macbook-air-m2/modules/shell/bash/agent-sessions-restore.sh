@@ -12,10 +12,15 @@
 
 set -euo pipefail
 
-SESSION=agents
+SESSION="${AGENT_SESSION:-agents}"
 STATE_DIR="$HOME/.local/state/agent-sessions"
 SNAPSHOT="${AGENT_SNAPSHOT:-$STATE_DIR/snapshot}"
 ATTACH=1
+
+# Must match the socket the snapshot and the user's shell use, or this
+# rebuilds the session on a second server instead of finding the live one.
+export TMUX_TMPDIR="${TMUX_TMPDIR:-$HOME/.local/run}"
+[ -d "$TMUX_TMPDIR" ] || mkdir -p "$TMUX_TMPDIR"
 
 for arg in "$@"; do
   case "$arg" in
