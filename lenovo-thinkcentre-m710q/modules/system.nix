@@ -19,11 +19,11 @@
       max-free = 25 * 1024 * 1024 * 1024;
       # cache.nixos.org is a default and these lists merge, not replace.
       substituters = [
-        "https://vega-cache.dev"
+        "https://vega-cache.dev/tenant/jasonodoom/nixos-configs"
         "https://odoom-nixos-configs.cachix.org"
       ];
       trusted-public-keys = [
-        "vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ="
+        "vega-jasonodoom-nixos-configs-1:OrD5r55n02TvdLMeFppwnTH5nciTy44UnxwC8kQuKqE="
         "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU="
       ];
     };
