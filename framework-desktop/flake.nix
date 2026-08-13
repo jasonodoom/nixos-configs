@@ -5,12 +5,12 @@
     substituters = [
       "https://install.determinate.systems"
       "https://cache.nixos.org/"
-      "https://vega-cache.dev"
+      "https://vega-cache.dev/tenant/jasonodoom/nixos-configs"
     ];
     trusted-public-keys = [
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      "vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ="
+      "vega-jasonodoom-nixos-configs-1:OrD5r55n02TvdLMeFppwnTH5nciTy44UnxwC8kQuKqE="
     ];
   };
 
@@ -65,22 +65,17 @@
             self.overlays.default
           ];
 
-          # The Determinate NixOS module assigns
-          # `nix.package = inputs.nix.packages.<system>.default` (its
-          # own nix-src build). That nix's functional test suite needs
-          # unprivileged user namespaces to drive `unshare`, which the
-          # self-hosted vega container can't give it — the tests crash
-          # and Nix leaves /homeless-shelter behind. I reach into the
-          # same input Determinate uses and strip the check phase, so
-          # CI doesn't try to rebuild + test nix from source on the
-          # cache-miss path. Referencing config.nix.package here would
-          # self-recurse, so I source from the transitive flake input.
-          nix.package = lib.mkForce (
-            inputs.determinate.inputs.nix.packages.${pkgs.stdenv.system}.default.overrideAttrs (_: {
-              doCheck = false;
-              doInstallCheck = false;
-            })
-          );
+          # No nix.package override here on purpose. Stripping the check
+          # phase used to guard against the self-hosted vega container
+          # lacking user namespaces for nix's functional tests, but
+          # overrideAttrs changes the derivation hash, so the overridden
+          # nix matched no cache and was rebuilt from source on every run
+          # — causing the very rebuild it was meant to prevent, plus a
+          # boehm-gc source build (the aggregate needs boehmgc's `debug`
+          # output, which no cache publishes). Determinate's own nix
+          # substitutes whole from install.determinate.systems, and the
+          # runner now has a userns-capable sandbox, so the workaround
+          # costs hours and buys nothing.
         })
 
         # Hardware configuration
