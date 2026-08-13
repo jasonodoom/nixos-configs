@@ -6,6 +6,10 @@ final: prev: {
   # LLM agents from numtide/llm-agents.nix
   llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system};
 
+  # vega-agent: the `vega` CLI (dashboard, attest, reproduce) that talks to
+  # vega-cache.dev. Same cache the hosts substitute from.
+  vega-agent = inputs.vega-agent.packages.${final.stdenv.hostPlatform.system}.default;
+
   # wrangler from the pin until 4.93.0 builds on macos.
   wrangler = (import inputs.nixpkgs-wrangler-pin {
     inherit (final.stdenv.hostPlatform) system;

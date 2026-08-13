@@ -4,13 +4,13 @@
     nixConfig = {
       substituters = [
         "https://cache.nixos.org/"
-        "https://vega-cache.dev"
+        "https://vega-cache.dev/tenant/jasonodoom/nixos-configs"
         "https://odoom-nixos-configs.cachix.org"
         "https://nix-community.cachix.org"
       ];
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-        "vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ="
+        "vega-jasonodoom-nixos-configs-1:OrD5r55n02TvdLMeFppwnTH5nciTy44UnxwC8kQuKqE="
         "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
@@ -34,6 +34,13 @@
 
       llm-agents = {
         url = "github:numtide/llm-agents.nix";
+      };
+
+      # Deliberately not following nixpkgs: the agent is published against
+      # its own pin, and overriding it would force a source build instead
+      # of substituting the upstream binary.
+      vega-agent = {
+        url = "github:Ad-Astra-Computing/vega-agent";
       };
     };
 
@@ -85,6 +92,7 @@
           claude-code
           llm-agents.antigravity-cli
           llm-agents.codex
+          vega-agent
           container
           maccy
           rectangle
@@ -171,8 +179,8 @@
             timeout = 6 * 60 * 60; # hard cap any single build at 6 h
             connect-timeout = 5; # fail fast on an unreachable substituter
             stalled-download-timeout = 300; # fail a download stalled 5 min
-            substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org https://vega-cache.dev";
-            trusted-public-keys = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= vega-cache-1:cPagS1g69NQGwlBCyTTeKav/NhlN8a7ixuj2uLOkHrQ=";
+            substituters = "https://cache.nixos.org/ https://odoom-nixos-configs.cachix.org https://nix-community.cachix.org https://vega-cache.dev/tenant/jasonodoom/nixos-configs";
+            trusted-public-keys = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= vega-jasonodoom-nixos-configs-1:OrD5r55n02TvdLMeFppwnTH5nciTy44UnxwC8kQuKqE=";
             builders-use-substitutes = true;
             # Fields (space-separated): uri system ssh-key max-jobs speed-factor
             # supported-features required-features base64-host-key. The 8th field
