@@ -19,6 +19,70 @@ TMPFILE="$STATE_DIR/snapshot.tmp.$$"
 
 mkdir -p "$STATE_DIR"
 
+# Resolve the same tmux socket the user's shell does. launchd runs this with
+# none of the shell environment, and the /tmp default would point at a
+# different server (or silently start one) rather than fail.
+export TMUX_TMPDIR="${TMUX_TMPDIR:-$HOME/.local/run}"
+[ -d "$TMUX_TMPDIR" ] || mkdir -p "$TMUX_TMPDIR"
+
+# Rescue a server whose socket went missing underneath it. Deleting the
+# socket does not kill tmux: the server keeps running with every session
+# intact, but nothing can reach it, `tmux attach` reports "no server
+# running", and the sessions are lost whenever it finally exits. tmux
+# recreates its socket on SIGUSR1, so this is recoverable right up until
+# that moment — which is the whole reason this ran too late once already.
+#
+# Only ever signal the server. SIGUSR1's default disposition is terminate,
+# so hitting a client would kill it. The server is the daemonised one:
+# reparented to init and holding no controlling terminal. A client always
+# has the tty it was launched from.
+#
+# Narrow it further to servers bound to *our* socket directory. A server on
+# some other socket (tmux -L, or one predating a TMUX_TMPDIR change) is not
+# orphaned just because we cannot see it, and signalling it every five
+# minutes would be noise. lsof still reports the bound path after the socket
+# file is unlinked, which is precisely the case being detected.
+tmux_server_pids() {
+  local pid
+  for pid in $(ps -axo pid,ppid,tty,comm 2>/dev/null \
+                 | awk '$2 == 1 && $3 == "??" && $4 ~ /(^|\/)tmux$/ { print $1 }'); do
+    if lsof -p "$pid" 2>/dev/null | grep -q "unix.*${TMUX_TMPDIR%/}/"; then
+      printf '%s\n' "$pid"
+    fi
+  done
+}
+
+rescue_orphaned_server() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  tmux ls >/dev/null 2>&1 && return 0   # reachable; nothing to rescue
+
+  local pids
+  pids=$(tmux_server_pids | tr '\n' ' ')
+  [ -z "${pids// /}" ] && return 0      # no server at all; a cold start
+
+  mkdir -p "$TMUX_TMPDIR"
+
+  # One at a time, stopping as soon as the socket answers. There may be
+  # unrelated servers on other sockets; signalling those is harmless (they
+  # just rewrite a socket they already have) but pointless, and signalling
+  # all of them makes it impossible to say which one was actually stuck.
+  local pid
+  for pid in $pids; do
+    kill -USR1 "$pid" 2>/dev/null || continue
+    sleep 1
+    if tmux ls >/dev/null 2>&1; then
+      printf 'agent-sessions: rescued orphaned tmux server (pid %s) — socket was missing from %s, recreated via SIGUSR1\n' \
+        "$pid" "$TMUX_TMPDIR" >&2
+      return 0
+    fi
+  done
+
+  printf 'agent-sessions: tmux server(s) alive (pid %s) but still unreachable at %s after SIGUSR1 — they may have been started under a different TMUX_TMPDIR\n' \
+    "${pids% }" "$TMUX_TMPDIR" >&2
+}
+
+rescue_orphaned_server
+
 SELF_PID=$$
 is_ancestor() {
   local pid=$1
@@ -43,6 +107,30 @@ slug() {
 
 list_pids_named() {
   ps -axo pid,comm 2>/dev/null | awk -v n="$1" '$2==n {print $1}'
+}
+
+# First non-option argv word of an ssh command line is [user@]host. Options
+# that take a separate value have to be stepped over or their value gets
+# mistaken for the host (ssh -p 2222 host would otherwise yield "2222").
+ssh_host_from_cmd() {
+  local skip=0 first=1 tok
+  # Word-splitting is wanted here, globbing is not: a remote command like
+  # `ls *.log` would otherwise expand against the local cwd. `local -`
+  # keeps the -f confined to this function.
+  local -
+  set -f
+  for tok in $1; do
+    # Skip argv0 by position. Matching it by name would also swallow a
+    # host that happens to end in "ssh".
+    if [ "$first" -eq 1 ]; then first=0; continue; fi
+    if [ "$skip" -eq 1 ]; then skip=0; continue; fi
+    case "$tok" in
+      -[BbcDEeFIiJLlmOopQRSWw]) skip=1 ;;
+      -*) ;;
+      *) printf '%s' "${tok#*@}"; return 0 ;;
+    esac
+  done
+  return 1
 }
 
 now_epoch=$(date -u +%s)
@@ -185,7 +273,78 @@ for pid in $(list_pids_named agy); do
   upsert_entry "$name" "$cwd" "agy --conversation $conv" "$now_epoch"
 done
 
-# 7. Write merged snapshot atomically. snapshot.prev is backup.
+# 7. Scan ssh sessions. An ssh window is as much a part of the working set
+# as an agent one — losing it costs whatever remote tmux was on the other
+# end — but there is no session id to resume, so the honest restore is to
+# run the same command again. Skip the plumbing: multiplex control
+# commands, forwarders, ProxyCommand hops, git transport and scripted
+# probes are not windows anyone wants back.
+ssh_covered=$'\n'
+for pid in $(list_pids_named ssh); do
+  is_ancestor "$pid" && continue
+  cmd=$(ps -o command= -p "$pid" 2>/dev/null)
+  case "$cmd" in
+    *" -W "*|*" -O "*|*" -N "*|*" -D "*) continue ;;
+    *git-upload-pack*|*git-receive-pack*) continue ;;
+    *BatchMode=yes*) continue ;;
+  esac
+  case "$cmd" in *" "*) ;; *) continue ;; esac
+  # '|' is the record separator, so a remote command containing one would
+  # truncate the entry on read and restore something else entirely.
+  case "$cmd" in *"|"*) continue ;; esac
+  host=$(ssh_host_from_cmd "$cmd") || continue
+  [ -z "$host" ] && continue
+  # Dedupe on the command, not the host. Keying on host alone means a
+  # throwaway `ssh perdurabo` can suppress the long-lived
+  # `ssh -t perdurabo tmux a` window, which then ages out while alive.
+  case "$ssh_covered" in *$'\n'"$cmd"$'\n'*) continue ;; esac
+  ssh_covered+="$cmd"$'\n'
+  cwd=$(pid_cwd "$pid")
+  [ -z "$cwd" ] && cwd="$HOME"
+  # Name after the host, not the cwd. A window called "perdurabo" says what
+  # it is; one called "jason" (the local cwd basename) says nothing.
+  name=$(slug "${host%%.*}")
+  [ -z "$name" ] && continue
+  upsert_entry "$name" "$cwd" "ssh ${cmd#* }" "$now_epoch"
+done
+
+# 8. Let live tmux window names win. Renaming a window is the obvious way
+# to name a session, but the names above are guessed from the cwd
+# basename, so without this a rename silently reverts on the next scan.
+# Keyed on cwd + kind because one cwd can hold several windows (a claude
+# and a codex in ~/code are different sessions).
+entry_kind() {
+  case "$1" in
+    claude*) printf 'claude' ;;
+    codex*)  printf 'codex' ;;
+    ssh*)    printf 'ssh' ;;
+    agy*)    printf 'agy' ;;
+    *)       return 1 ;;
+  esac
+}
+
+SESSION="${AGENT_SESSION:-agents}"
+declare -A tmux_names=()
+if command -v tmux >/dev/null 2>&1 && tmux has-session -t "$SESSION" 2>/dev/null; then
+  while IFS=$'\t' read -r w_name w_path w_cmd; do
+    [ -z "$w_path" ] && continue
+    w_kind=$(entry_kind "$w_cmd") || continue
+    tmux_names["$w_path"$'\t'"$w_kind"]="$w_name"
+  done < <(tmux list-windows -t "$SESSION" \
+             -F '#{window_name}'$'\t''#{pane_current_path}'$'\t''#{pane_current_command}' 2>/dev/null)
+fi
+
+for key in "${entry_keys[@]}"; do
+  e_cwd="${key%%$'\t'*}"
+  e_cmd="${key#*$'\t'}"
+  e_kind=$(entry_kind "$e_cmd") || continue
+  live_name="${tmux_names["$e_cwd"$'\t'"$e_kind"]:-}"
+  [ -z "$live_name" ] && continue
+  value="${entry_data[$key]}"
+  entry_data["$key"]="$live_name|${value#*|}"
+done
+
+# 9. Write merged snapshot atomically. snapshot.prev is backup.
 # Count how many entries were refreshed in THIS scan (live right now)
 # vs how many are retained from prior snapshots (within TTL but not seen
 # in this scan). Hint uses both to be unambiguous.

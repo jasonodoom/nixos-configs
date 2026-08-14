@@ -1,5 +1,5 @@
 # Tmux Configuration - Session Restoration and Screen-like Keybindings
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   # Tmux for persistent sessions with screen-compatible keybindings
@@ -14,17 +14,12 @@
       set -g clock-mode-style 24
 
       # =============================================================================
-      # Session restoration settings (macOS-like persistence)
+      # Session restoration
       # =============================================================================
-      set -g @resurrect-save 'S'
-      set -g @resurrect-restore 'R'
-      set -g @resurrect-capture-pane-contents 'on'
-      set -g @resurrect-strategy-vim 'session'
-      set -g @resurrect-processes 'ssh vim nvim man less more tail top htop watch'
-
-      # Auto-save sessions every 15 minutes
-      set -g @continuum-restore 'on'
-      set -g @continuum-save-interval '15'
+      # No @resurrect-* / @continuum-* settings here on purpose. nix-darwin's
+      # programs.tmux has no plugins option, so tpm never loads and those
+      # settings are inert user options that read like a working safety net.
+      # Restoration on this host is agent-sessions-snapshot/-restore instead.
 
       # =============================================================================
       # Screen-compatible keybindings (from your .screenrc)
@@ -122,6 +117,30 @@
       # This will be handled in the terminal keybindings, not here
     '';
   };
+
+  # The server's socket lives under $TMUX_TMPDIR, which defaults to /tmp.
+  # macOS prunes /tmp, and losing the socket does not kill the server: it
+  # keeps running, unreachable, while every `tmux attach` reports "no server
+  # running" until the session eventually dies with it. Keep the socket
+  # somewhere nothing sweeps.
+  #
+  # This has to be an environment variable, not a shell hook. bash, zsh, the
+  # launchd snapshot job and anything non-interactive all have to resolve
+  # the same socket; if one of them falls back to /tmp it does not fail
+  # loudly, it starts a second server alongside the real one.
+  environment.variables.TMUX_TMPDIR = "$HOME/.local/run";
+
+  # The mkdir is load-bearing: tmux does not create $TMUX_TMPDIR, and if it
+  # is missing tmux does not fail, it silently falls back to /tmp. Without
+  # this the whole change quietly reverts to the behaviour that lost the
+  # session. mkBefore so it runs ahead of the agent-sessions restore hint,
+  # which probes `tmux has-session` during init.
+  programs.bash.interactiveShellInit = lib.mkBefore ''
+    [ -d "$TMUX_TMPDIR" ] || mkdir -p "$TMUX_TMPDIR"
+  '';
+  programs.zsh.interactiveShellInit = lib.mkBefore ''
+    [ -d "$TMUX_TMPDIR" ] || mkdir -p "$TMUX_TMPDIR"
+  '';
 
   # Ensure tmux is available system-wide
   environment.systemPackages = with pkgs; [
