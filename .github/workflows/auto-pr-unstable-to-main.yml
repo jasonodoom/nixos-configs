@@ -10,6 +10,15 @@ permissions:
   pull-requests: write
   issues: write
 
+# Two pushes in quick succession start two runs, and the loser creates its
+# PR in the window between the winner's exists-check and its own create,
+# then files a failure issue about a state that is exactly what we want.
+# Serialize the runs; the newest push wins and the superseded run's work
+# is covered by the open PR absorbing every later push anyway.
+concurrency:
+  group: auto-pr-unstable-to-main
+  cancel-in-progress: true
+
 jobs:
   create-pr:
     runs-on: ubuntu-latest
@@ -230,12 +239,21 @@ jobs:
           Auto-generated PR from unstable branch
           EOF
 
-          gh pr create \
+          # Tolerate losing the create race: concurrency above narrows the
+          # window but a run already past the guard can still collide.
+          if ! gh pr create \
             --title "Merge unstable to main" \
             --body "$(cat pr-body.md)" \
             --base main \
             --head unstable \
-            --label "automated"
+            --label "automated"; then
+            EXISTING_PR=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq '.[0].number // empty')
+            if [ -n "$EXISTING_PR" ]; then
+              echo "Lost the create race to PR #$EXISTING_PR; it will absorb this push"
+              exit 0
+            fi
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
 
