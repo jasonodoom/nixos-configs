@@ -74,6 +74,18 @@ in
 
       running() { docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null; }
 
+      # GitHub deprecates old runner versions server-side; a deprecated
+      # listener is refused before it can self-update, exits, and docker
+      # restarts it forever. No reseed or restart can recover that — only
+      # a new image can — and on 16 Aug 2026 this watchdog spent hours
+      # dressing that loop up as the gutted-binaries case. Say what it
+      # actually is and stand down.
+      if docker logs --tail 50 "$name" 2>&1 \
+           | grep -q "is deprecated and cannot receive messages"; then
+        echo "$name runner version is DEPRECATED by GitHub; reseed/restart cannot help — pull an updated vega-builder image and recreate the container" >&2
+        exit 0
+      fi
+
       if [ "$(running)" = "true" ]; then
         runner_binaries_present && exit 0
 

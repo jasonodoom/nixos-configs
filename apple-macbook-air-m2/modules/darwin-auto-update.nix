@@ -139,6 +139,13 @@
       fi
       log "Commit signature verified"
 
+      # Hand the repo back to root before the rebuild. The chown to jason
+      # exists only so the su-based verify above can use jason's keyring;
+      # leaving it jason-owned makes nix's libgit2 refuse the git+file
+      # flake fetch as root ("not owned by current user", code 7) — which
+      # silently failed every nightly run from Aug 2 to Aug 13, 2026.
+      ${pkgs.coreutils}/bin/chown -R root:wheel "$REPO_DIR"
+
       # Run darwin-rebuild and capture output
       log "Running darwin-rebuild switch"
       cd "$REPO_DIR/apple-macbook-air-m2"
