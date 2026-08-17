@@ -50,6 +50,16 @@
       # nested processes pass through tmux to the outer terminal.
       set -g allow-passthrough on
 
+      # Clipboard. The NixOS hosts get this from the yank plugin; darwin
+      # had nothing wired, so copies landed in tmux's buffer and never
+      # reached the system clipboard. Pipe through pbcopy for vi-mode and
+      # mouse selections, and let OSC 52 work for programs inside tmux.
+      set -g set-clipboard on
+      set -as terminal-features "xterm-ghostty:clipboard"
+      bind -T copy-mode-vi y send -X copy-pipe-and-cancel /usr/bin/pbcopy
+      bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel /usr/bin/pbcopy
+      bind -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel /usr/bin/pbcopy
+
       # 256 color support (like your screen-256color)
       set -g default-terminal "screen-256color"
       set -ga terminal-overrides ",xterm-256color:Tc"
