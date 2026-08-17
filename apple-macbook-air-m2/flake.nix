@@ -100,6 +100,7 @@
           flyctl
           nmap
           tshark
+          wireshark
           tree
           wget
           fastfetch

@@ -61,7 +61,6 @@
       "stats"
       "tailscale-app"
       "transmission"
-      "wireshark-app"
 
       # Terminal
       "ghostty"

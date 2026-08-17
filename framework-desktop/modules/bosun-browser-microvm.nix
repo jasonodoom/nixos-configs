@@ -46,6 +46,11 @@ in
   ];
 
   microvm.vms.bosun-browser = {
+    # Bosun is on-demand only (f2281b5 stopped the supervisor autostart,
+    # but the VM kept autostarting and resurrected the stack on every
+    # boot). Start manually with:
+    #   systemctl start microvm@bosun-browser bosun-browser-proxy
+    autostart = false;
     specialArgs = { inherit inputs nodejsPkg; };
     config = { config, pkgs, lib, nodejsPkg, ... }: {
       imports = [ inputs.microvm.nixosModules.microvm ];
@@ -160,7 +165,7 @@ in
   # the runner without exposing the VM bridge to the LAN.
   systemd.services.bosun-browser-proxy = {
     description = "Forward 127.0.0.1:${toString hostForwardPort} to bosun-browser microvm";
-    wantedBy = [ "multi-user.target" ];
+    # No wantedBy: on-demand alongside the microvm, see autostart above.
     after = [ "microvm@bosun-browser.service" "network-online.target" ];
     serviceConfig = {
       ExecStart = "${pkgs.socat}/bin/socat -d TCP-LISTEN:${toString hostForwardPort},bind=127.0.0.1,reuseaddr,fork TCP:${vmIp}:8755";
