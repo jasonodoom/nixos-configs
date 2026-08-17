@@ -21,53 +21,32 @@
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
       }
 
-      create_failure_issue() {
+      # Alert locally instead of filing a GitHub issue. The issue path
+      # needed a PAT in an agenix secret, and when that token expired the
+      # alerts died silently: eleven consecutive nightly failures
+      # (Aug 2-13, 2026) each got HTTP 401 and nobody heard a thing. A
+      # notification on the machine itself has no credential to expire.
+      # The details stay in $LOG_FILE; this only has to say "look there".
+      # If the Mac is asleep at the scheduled time the update did not run
+      # either, so there is no failure to miss.
+      notify_failure() {
         local log_content="$1"
         local commit="$2"
 
-        log "Creating GitHub issue for update failure"
+        log "Alerting: update failed at commit $commit"
 
-        # gh auth uses macOS keyring which is not available in launchd context
-        # Token is managed by agenix and decrypted at activation time
-        GH_TOKEN_FILE="${config.age.secrets.gh-token.path}"
-        if [ ! -f "$GH_TOKEN_FILE" ]; then
-          log "No GitHub token at $GH_TOKEN_FILE (agenix secret missing)"
-          return 1
-        fi
-
-        local body_file
-        body_file=$(mktemp)
-        {
-          echo "The scheduled darwin-auto-update failed on theophany."
-          echo ""
-          echo "**Commit:** $commit"
-          echo "**Time:** $(date)"
-          echo ""
-          echo "<details>"
-          echo "<summary>Build log (last 100 lines)</summary>"
-          echo ""
-          echo '```'
-          echo "$log_content"
-          echo '```'
-          echo ""
-          echo "</details>"
-        } > "$body_file"
-
-        export GH_TOKEN=$(cat "$GH_TOKEN_FILE")
-        ${pkgs.gh}/bin/gh issue create \
-          --repo jasonodoom/nixos-configs \
-          --title "darwin-auto-update failed on theophany ($(date +%Y-%m-%d))" \
-          --body-file "$body_file" \
-          --assignee jasonodoom
-
-        rm -f "$body_file"
+        # Root cannot post to the user's notification center directly;
+        # asuser runs osascript inside jason's GUI session.
+        /bin/launchctl asuser "$(/usr/bin/id -u jason)" /usr/bin/osascript \
+          -e 'display notification "See /var/log/darwin-auto-update.log" with title "darwin-auto-update failed" sound name "Basso"' \
+          || log "Notification failed (no GUI session?); details are in $LOG_FILE"
       }
 
       # set -e aborts before the failure paths below can file an issue;
       # I catch those aborts here so they still surface.
       on_error() {
         log "Update aborted unexpectedly"
-        create_failure_issue "[script] $(tail -50 "$LOG_FILE")" "''${CURRENT_COMMIT:-unknown}" || log "Failed to create GitHub issue"
+        notify_failure "[script] $(tail -50 "$LOG_FILE")" "''${CURRENT_COMMIT:-unknown}" || log "Failed to send failure notification"
         exit 1
       }
       trap on_error ERR
@@ -93,7 +72,7 @@
         elif [ -z "$MAS_ACCOUNT" ] || echo "$MAS_ACCOUNT" | grep -qiE "not signed in|no account"; then
           log "WARNING: mas account not signed in (output: $MAS_ACCOUNT)"
           log "Skipping rebuild — masApps activation will fail until you sign in to the App Store"
-          create_failure_issue "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to create GitHub issue"
+          notify_failure "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to send failure notification"
           exit 0
         fi
         log "mas account: $MAS_ACCOUNT"
@@ -134,7 +113,7 @@
       if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
         log "ERROR: Commit not signed by jasonodoom - aborting update"
         log "Verification output: $VERIFY_OUTPUT"
-        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        notify_failure "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to send failure notification"
         exit 1
       fi
       log "Commit signature verified"
@@ -168,7 +147,7 @@
         else
           ISSUE_PREFIX="[rebuild]"
         fi
-        create_failure_issue "$ISSUE_PREFIX $LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        notify_failure "$ISSUE_PREFIX $LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to send failure notification"
         rm -f "$BUILD_OUTPUT"
         exit 1
       fi
