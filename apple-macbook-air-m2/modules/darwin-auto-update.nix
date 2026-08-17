@@ -1,6 +1,47 @@
 # Darwin auto-update from GitHub repository
 { config, pkgs, lib, ... }:
 
+let
+  # Notification banners show the sending app bundle's icon; modern macOS
+  # ignores terminal-notifier's -appIcon/-contentImage flags. So ship a
+  # rebranded copy of terminal-notifier.app carrying the Nix snowflake as
+  # its bundle icon, under its own bundle id — Notification Center caches
+  # icons per id, so reusing the original id would keep showing the old
+  # terminal icon. Ad-hoc signed. Uses the system sips/iconutil/codesign,
+  # which works because this host builds with sandbox = false.
+  nixNotifier = pkgs.runCommand "nix-update-notifier" { } ''
+    mkdir -p $out/Applications $out/bin
+    cp -R ${pkgs.terminal-notifier}/Applications/terminal-notifier.app \
+      "$out/Applications/Nix Update.app"
+    chmod -R u+w "$out/Applications/Nix Update.app"
+
+    png=${pkgs.nixos-icons}/share/icons/hicolor/256x256/apps/nix-snowflake.png
+    mkdir "$TMPDIR/nix.iconset"
+    /usr/bin/sips -z 16 16     "$png" --out "$TMPDIR/nix.iconset/icon_16x16.png"
+    /usr/bin/sips -z 32 32     "$png" --out "$TMPDIR/nix.iconset/icon_16x16@2x.png"
+    /usr/bin/sips -z 32 32     "$png" --out "$TMPDIR/nix.iconset/icon_32x32.png"
+    /usr/bin/sips -z 64 64     "$png" --out "$TMPDIR/nix.iconset/icon_32x32@2x.png"
+    /usr/bin/sips -z 128 128   "$png" --out "$TMPDIR/nix.iconset/icon_128x128.png"
+    /usr/bin/sips -z 256 256   "$png" --out "$TMPDIR/nix.iconset/icon_128x128@2x.png"
+    /usr/bin/sips -z 256 256   "$png" --out "$TMPDIR/nix.iconset/icon_256x256.png"
+    /usr/bin/sips -z 512 512   "$png" --out "$TMPDIR/nix.iconset/icon_256x256@2x.png"
+    /usr/bin/iconutil -c icns "$TMPDIR/nix.iconset" \
+      -o "$out/Applications/Nix Update.app/Contents/Resources/Terminal.icns"
+
+    /usr/libexec/PlistBuddy -c \
+      "Set :CFBundleIdentifier com.jasonodoom.nix-update-notifier" \
+      "$out/Applications/Nix Update.app/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleName Nix Update" \
+      "$out/Applications/Nix Update.app/Contents/Info.plist"
+    /usr/bin/codesign --force --deep -s - "$out/Applications/Nix Update.app"
+
+    cat > $out/bin/nix-update-notifier <<WRAP
+    #!/bin/sh
+    exec "$out/Applications/Nix Update.app/Contents/MacOS/terminal-notifier" "\$@"
+    WRAP
+    chmod +x $out/bin/nix-update-notifier
+  '';
+in
 {
   # Create update script
   environment.systemPackages = [
@@ -21,53 +62,35 @@
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
       }
 
-      create_failure_issue() {
+      # Alert locally instead of filing a GitHub issue. The issue path
+      # needed a PAT in an agenix secret, and when that token expired the
+      # alerts died silently: eleven consecutive nightly failures
+      # (Aug 2-13, 2026) each got HTTP 401 and nobody heard a thing. A
+      # notification on the machine itself has no credential to expire.
+      # The details stay in $LOG_FILE; this only has to say "look there".
+      # If the Mac is asleep at the scheduled time the update did not run
+      # either, so there is no failure to miss.
+      notify_failure() {
         local log_content="$1"
         local commit="$2"
 
-        log "Creating GitHub issue for update failure"
+        log "Alerting: update failed at commit $commit"
 
-        # gh auth uses macOS keyring which is not available in launchd context
-        # Token is managed by agenix and decrypted at activation time
-        GH_TOKEN_FILE="${config.age.secrets.gh-token.path}"
-        if [ ! -f "$GH_TOKEN_FILE" ]; then
-          log "No GitHub token at $GH_TOKEN_FILE (agenix secret missing)"
-          return 1
-        fi
-
-        local body_file
-        body_file=$(mktemp)
-        {
-          echo "The scheduled darwin-auto-update failed on theophany."
-          echo ""
-          echo "**Commit:** $commit"
-          echo "**Time:** $(date)"
-          echo ""
-          echo "<details>"
-          echo "<summary>Build log (last 100 lines)</summary>"
-          echo ""
-          echo '```'
-          echo "$log_content"
-          echo '```'
-          echo ""
-          echo "</details>"
-        } > "$body_file"
-
-        export GH_TOKEN=$(cat "$GH_TOKEN_FILE")
-        ${pkgs.gh}/bin/gh issue create \
-          --repo jasonodoom/nixos-configs \
-          --title "darwin-auto-update failed on theophany ($(date +%Y-%m-%d))" \
-          --body-file "$body_file" \
-          --assignee jasonodoom
-
-        rm -f "$body_file"
+        # Root cannot post to the user's notification center directly;
+        # asuser runs the notifier inside jason's GUI session.
+        /bin/launchctl asuser "$(/usr/bin/id -u jason)" \
+          ${nixNotifier}/bin/nix-update-notifier \
+          -title "darwin-auto-update failed" \
+          -message "See /var/log/darwin-auto-update.log" \
+          -sound Basso \
+          || log "Notification failed (no GUI session?); details are in $LOG_FILE"
       }
 
       # set -e aborts before the failure paths below can file an issue;
       # I catch those aborts here so they still surface.
       on_error() {
         log "Update aborted unexpectedly"
-        create_failure_issue "[script] $(tail -50 "$LOG_FILE")" "''${CURRENT_COMMIT:-unknown}" || log "Failed to create GitHub issue"
+        notify_failure "[script] $(tail -50 "$LOG_FILE")" "''${CURRENT_COMMIT:-unknown}" || log "Failed to send failure notification"
         exit 1
       }
       trap on_error ERR
@@ -93,7 +116,7 @@
         elif [ -z "$MAS_ACCOUNT" ] || echo "$MAS_ACCOUNT" | grep -qiE "not signed in|no account"; then
           log "WARNING: mas account not signed in (output: $MAS_ACCOUNT)"
           log "Skipping rebuild — masApps activation will fail until you sign in to the App Store"
-          create_failure_issue "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to create GitHub issue"
+          notify_failure "mas account not signed in. Open App Store, sign in, then re-run darwin-auto-update." "preflight" || log "Failed to send failure notification"
           exit 0
         fi
         log "mas account: $MAS_ACCOUNT"
@@ -134,7 +157,7 @@
       if ! echo "$VERIFY_OUTPUT" | grep -qE "Good signature from.*(jasonodoom|GitHub)"; then
         log "ERROR: Commit not signed by jasonodoom - aborting update"
         log "Verification output: $VERIFY_OUTPUT"
-        create_failure_issue "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        notify_failure "Commit signature verification failed. This commit is not signed by jasonodoom.\n\n$VERIFY_OUTPUT" "$CURRENT_COMMIT" || log "Failed to send failure notification"
         exit 1
       fi
       log "Commit signature verified"
@@ -168,7 +191,7 @@
         else
           ISSUE_PREFIX="[rebuild]"
         fi
-        create_failure_issue "$ISSUE_PREFIX $LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to create GitHub issue"
+        notify_failure "$ISSUE_PREFIX $LOG_TAIL" "$CURRENT_COMMIT" || log "Failed to send failure notification"
         rm -f "$BUILD_OUTPUT"
         exit 1
       fi
