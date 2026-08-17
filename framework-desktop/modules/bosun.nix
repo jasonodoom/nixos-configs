@@ -78,7 +78,8 @@ in {
     description = "Publish bosun dashboard over tailscale (port 8443)";
     after = [ "tailscaled.service" "network-online.target" ];
     wants = [ "tailscaled.service" "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
+    # No wantedBy: bosun is on-demand only; publishing the dashboard on
+    # every boot re-exposed a stack that was not supposed to be running.
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
