@@ -188,7 +188,11 @@ in
       docker exec "$name" df -h /nix 2>/dev/null | tail -1 >&2
       # sh -lc so nix-collect-garbage resolves via the container's nix
       # profile PATH; a bare exec uses a minimal PATH without it.
-      docker exec "$name" sh -lc nix-collect-garbage 2>&1 | tail -3 \
+      # --delete-older-than, not a bare collect: every build result is held
+      # by a gcroot, so a plain collect frees nothing (1.4 MiB on 18 Aug
+      # while the volume sat at 54 GB). Releasing roots older than three
+      # days is what actually bounds it.
+      docker exec "$name" sh -lc "nix-collect-garbage --delete-older-than 3d" 2>&1 | tail -3 \
         || echo "GC in $name returned non-zero" >&2
 
       # Put back what the collection just took. This is the step whose

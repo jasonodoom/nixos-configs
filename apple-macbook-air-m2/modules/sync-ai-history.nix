@@ -112,8 +112,8 @@ let
     sync "$HOME/.codex/auth.json"   "$REMOTE_BASE/codex/.codex/auth.json"
     sync "$HOME/.codex/config.toml" "$REMOTE_BASE/codex/.codex/config.toml"
 
-    # Prune transcript backups older than 14 days.
-    $SSH "$REMOTE" "find $REMOTE_BASE/claude/.sync-backups -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} + 2>/dev/null" || true
+    # Prune transcript backups older than 3 days.
+    $SSH "$REMOTE" "find $REMOTE_BASE/claude/.sync-backups -mindepth 1 -maxdepth 1 -type d -mtime +3 -exec rm -rf {} + 2>/dev/null" || true
 
     echo "[$(date '+%F %T')] done"
   '';
