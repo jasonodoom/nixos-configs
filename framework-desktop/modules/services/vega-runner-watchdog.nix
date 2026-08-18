@@ -188,7 +188,7 @@ in
       docker exec "$name" df -h /nix 2>/dev/null | tail -1 >&2
       # sh -lc so nix-collect-garbage resolves via the container's nix
       # profile PATH; a bare exec uses a minimal PATH without it.
-      docker exec "$name" sh -lc nix-collect-garbage 2>&1 | tail -3 \
+      docker exec "$name" sh -lc "nix-collect-garbage --delete-older-than 3d" 2>&1 | tail -3 \
         || echo "GC in $name returned non-zero" >&2
 
       # Put back what the collection just took. This is the step whose
