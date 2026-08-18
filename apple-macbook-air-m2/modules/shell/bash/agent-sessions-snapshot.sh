@@ -344,7 +344,29 @@ for key in "${entry_keys[@]}"; do
   entry_data["$key"]="$live_name|${value#*|}"
 done
 
-# 9. Write merged snapshot atomically. snapshot.prev is backup.
+# 9. Drop anything on the ignore list. These are live sessions the scan
+# legitimately found but that are not part of the agents session — an
+# agent in its own terminal tab, say — so capturing them means restore
+# opens a duplicate. Keyed on cwd + kind so a changed --resume id does
+# not defeat it. Managed with agent-sessions-forget.
+IGNORE_FILE="$STATE_DIR/ignored"
+if [ -s "$IGNORE_FILE" ]; then
+  kept_keys=()
+  for key in "${entry_keys[@]}"; do
+    i_cwd="${key%%$'\t'*}"
+    i_cmd="${key#*$'\t'}"
+    i_kind=$(entry_kind "$i_cmd") || i_kind=""
+    if [ -n "$i_kind" ] && grep -qF "$i_cwd"$'\t'"$i_kind" "$IGNORE_FILE" 2>/dev/null; then
+      unset 'entry_data[$key]'
+      continue
+    fi
+    kept_keys+=("$key")
+  done
+  entry_keys=("${kept_keys[@]:-}")
+  [ -z "${entry_keys[0]:-}" ] && entry_keys=()
+fi
+
+# 10. Write merged snapshot atomically. snapshot.prev is backup.
 # Count how many entries were refreshed in THIS scan (live right now)
 # vs how many are retained from prior snapshots (within TTL but not seen
 # in this scan). Hint uses both to be unambiguous.

@@ -9,10 +9,12 @@ let
     (builtins.readFile ./agent-sessions-list.sh);
   closeScript = pkgs.writeShellScriptBin "agent-sessions-close"
     (builtins.readFile ./agent-sessions-close.sh);
+  forgetScript = pkgs.writeShellScriptBin "agent-sessions-forget"
+    (builtins.readFile ./agent-sessions-forget.sh);
   snapshotFile = "$HOME/.local/state/agent-sessions/snapshot";
 in
 {
-  environment.systemPackages = [ snapshotScript restoreScript listScript closeScript ];
+  environment.systemPackages = [ snapshotScript restoreScript listScript closeScript forgetScript ];
 
   programs.bash.interactiveShellInit = ''
     # Agent session restore hint: interactive non-tmux shells, snapshot
