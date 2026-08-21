@@ -349,6 +349,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-runner": {
+      "locked": {
+        "lastModified": 1786719841,
+        "narHash": "sha256-QcpQOT0NQEFkI77t+YXPZqDJc35iIodG7zinieOwFUg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "8be7bd0c83f12e2e3bbba07c9044d6fed9e66f7f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "8be7bd0c83f12e2e3bbba07c9044d6fed9e66f7f",
+        "type": "github"
+      }
+    },
     "nixpkgs-wrangler-pin": {
       "locked": {
         "lastModified": 1778794387,
@@ -413,11 +429,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1779560665,
-        "narHash": "sha256-tpyBcxPpcQb8ukyNF7DoCwfSY3VPsxHoYwj00Cayv5o=",
+        "lastModified": 1786862985,
+        "narHash": "sha256-FBJRXmbGXiSUDvYEbfLYRkckayyZ6SK1UEqhCrIZ2Cs=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "64c08a7ca051951c8eae34e3e3cb1e202fe36786",
+        "rev": "e5bdc4a41d4c072fe1e3787eaa0320a384741d44",
         "type": "github"
       },
       "original": {
@@ -491,14 +507,15 @@
     },
     "vega-agent": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_5",
+        "nixpkgs-runner": "nixpkgs-runner"
       },
       "locked": {
-        "lastModified": 1786602557,
-        "narHash": "sha256-LSpf0h6snf6V7hKZHgiEnCjm2Bmiw9BLQRZud/qfyYs=",
+        "lastModified": 1786945302,
+        "narHash": "sha256-jJqNAWb3j9+l3LXQCEKvmcemPPrxkU17XsiW7dlrPJI=",
         "owner": "Ad-Astra-Computing",
         "repo": "vega-agent",
-        "rev": "a5462a3c5041072a82363a6df462f856ba581f94",
+        "rev": "63856e804ba1a395b24ce7b21c03db689824b2bf",
         "type": "github"
       },
       "original": {
