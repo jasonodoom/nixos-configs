@@ -17,7 +17,7 @@ in {
       Environment = [
         "XDG_RUNTIME_DIR=${runtimeDir}"
         "BOSUN_MONITOR_DIR=${stateDir}/monitor"
-        "BOSUN_PANELEDGER_DIR=${stateDir}/paneledger"
+        "BOSUN_PANELEDGER_DIR=${stateDir}/cost-ledger"
       ];
       ExecStart = "${binary} monitor sample --config ${configFile}";
       NoNewPrivileges = true;
