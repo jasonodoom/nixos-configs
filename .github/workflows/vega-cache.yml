@@ -93,11 +93,13 @@ jobs:
       # (and lets setuid unpacks like slack's chrome-sandbox succeed).
       - name: Build and publish (self-hosted, baked agent)
         if: ${{ matrix.selfhosted }}
-        # Fail this leg fast if it wedges, rather than hanging to the 180-min job
-        # timeout. reuse-cache means a healthy run finishes well inside this; a run
-        # still going at 90 min is stuck (lost-communication or a runaway rebuild),
-        # so cut it here and surface the failure early.
-        timeout-minutes: 90
+        # Matches the job timeout. 90 was set on the assumption that a run
+        # still going by then was stuck; on 24 Aug a healthy run spent 41 min
+        # building and 49 min publishing and was killed 33s after its last
+        # path, with half the job budget unused. The multi-GB microvm erofs
+        # images upload at ~1.6 MiB/s, so publishing legitimately takes most
+        # of an hour on this uplink.
+        timeout-minutes: 180
         run: |
           vega-attest "${{ github.workspace }}/${{ matrix.host }}#${{ matrix.attr }}"
         env:
