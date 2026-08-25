@@ -137,6 +137,7 @@
         ./modules/bosun-browser-microvm.nix
         ./modules/bosun.nix
         ./modules/bosun-monitor.nix
+        ./modules/bosun-limit-resume.nix
         ./modules/agentic-tmux.nix
         # Disabled: at-daemon recreates tmux session 0, which collided with
         # the bosun panes living there. Paused during the current travel
