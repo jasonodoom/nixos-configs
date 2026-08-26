@@ -145,7 +145,11 @@ jobs:
           else
             echo "warning=false" >> $GITHUB_OUTPUT
           fi
-          if [ "$days_left" -le 3 ]; then
+          # Escalation starts at 5 days, not 3. Rotation needs a key
+          # minted in the admin console, tailnet-lock signed, the
+          # agenix secret re-encrypted and the host redeployed — three
+          # days leaves no room for that to land across a weekend.
+          if [ "$days_left" -le 5 ]; then
             echo "followup=true" >> $GITHUB_OUTPUT
           else
             echo "followup=false" >> $GITHUB_OUTPUT
