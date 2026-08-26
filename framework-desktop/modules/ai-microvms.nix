@@ -71,12 +71,9 @@ let
       system.stateVersion = "25.11";
       networking.hostName = name;
 
-      nix.gc = {
-        automatic = true;
-        dates = "weekly";
-        randomizedDelaySec = "30m";
-        options = "--delete-older-than 14d";
-      };
+      # See ai-agent-guest.nix: gc under a read-only erofs store frees
+      # nothing and whiteouts everything it thinks is dead.
+      nix.gc.automatic = false;
 
       # Compressed in-memory swap absorbs claude's transient spikes
       # before the guest OOM killer fires. Sized at 50% of guest RAM;

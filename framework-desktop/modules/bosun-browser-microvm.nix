@@ -60,15 +60,11 @@ in
       system.stateVersion = "25.11";
       networking.hostName = "bosun-browser";
 
-      # Periodic GC inside the guest store. Host-level GC can't
-      # reach in, so without this the guest store accumulates
-      # forever. auto-optimise-store can't run alongside the
-      # microvm writable store overlay.
-      nix.gc = {
-        automatic = true;
-        dates = "weekly";
-        options = "--delete-older-than 14d";
-      };
+      # Garbage collection cannot free anything under a read-only erofs
+      # store, but it can record an overlayfs whiteout for every path it
+      # believes unreachable. 797 of those masked the boot files and this
+      # guest stopped booting. Nothing to collect, so nothing lost.
+      nix.gc.automatic = false;
 
       microvm = {
         hypervisor = "qemu";
