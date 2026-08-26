@@ -28,6 +28,7 @@ jobs:
           set -euo pipefail
           : > /tmp/keys.tsv
           : > /tmp/untracked.txt
+          : > /tmp/expiring.txt
 
           scan_host() {
             local host="$1" secrets_file="$2"
@@ -69,17 +70,35 @@ jobs:
           earliest_date=""
           earliest_host=""
           earliest_key=""
+          today_epoch=$(date +%s)
           while IFS=$'\t' read -r host key expiry; do
             if [ -z "$expiry" ] || [ "$expiry" = "TODO" ]; then
               echo "$host  $key  (no Expires comment)" >> /tmp/untracked.txt
               continue
             fi
-            if [ -z "$earliest_date" ] || [ "$(date -d "$expiry" +%s)" -lt "$(date -d "$earliest_date" +%s)" ]; then
+            # Every key inside the window is listed, not just the
+            # soonest. Hosts routinely share a rotation date, and a
+            # single-winner report hides the rest behind it: congo and
+            # perdurabo both expired 2026-08-29 and only congo was
+            # named, so rotating the named host would have left the
+            # other unable to unlock its disk remotely.
+            key_epoch=$(date -d "$expiry" +%s)
+            key_days=$(( (key_epoch - today_epoch) / 86400 ))
+            if [ "$key_days" -le 7 ]; then
+              printf '%s  %s  expires %s (%s days)\n' "$host" "$key" "$expiry" "$key_days" >> /tmp/expiring.txt
+            fi
+            if [ -z "$earliest_date" ] || [ "$key_epoch" -lt "$(date -d "$earliest_date" +%s)" ]; then
               earliest_date="$expiry"
               earliest_host="$host"
               earliest_key="$key"
             fi
           done < /tmp/keys.tsv
+
+          expiring_count=$(wc -l < /tmp/expiring.txt | tr -d ' ')
+          expiring_block=""
+          if [ "$expiring_count" -gt 0 ]; then
+            expiring_block=$(cat /tmp/expiring.txt)
+          fi
 
           untracked_count=$(wc -l < /tmp/untracked.txt | tr -d ' ')
           untracked_block=""
@@ -92,6 +111,10 @@ jobs:
             echo "earliest_host=$earliest_host"
             echo "earliest_key=$earliest_key"
             echo "untracked_count=$untracked_count"
+            echo "expiring_count=$expiring_count"
+            echo "expiring_block<<EOF"
+            echo "$expiring_block"
+            echo "EOF"
             echo "untracked_block<<EOF"
             echo "$untracked_block"
             echo "EOF"
@@ -122,7 +145,11 @@ jobs:
           else
             echo "warning=false" >> $GITHUB_OUTPUT
           fi
-          if [ "$days_left" -le 3 ]; then
+          # Escalation starts at 5 days, not 3. Rotation needs a key
+          # minted in the admin console, tailnet-lock signed, the
+          # agenix secret re-encrypted and the host redeployed — three
+          # days leaves no room for that to land across a weekend.
+          if [ "$days_left" -le 5 ]; then
             echo "followup=true" >> $GITHUB_OUTPUT
           else
             echo "followup=false" >> $GITHUB_OUTPUT
@@ -140,15 +167,34 @@ jobs:
             const key        = '${{ steps.scan.outputs.earliest_key }}';
             const untracked  = parseInt('${{ steps.scan.outputs.untracked_count }}', 10);
             const untrackedBlock = `${{ steps.scan.outputs.untracked_block }}`;
+            const expiring   = parseInt('${{ steps.scan.outputs.expiring_count }}', 10);
+            const expiringBlock = `${{ steps.scan.outputs.expiring_block }}`;
             const untrackedOnly = '${{ steps.scan.outputs.untracked_only_warning }}' === 'true';
 
             const title = untrackedOnly
               ? `Tailscale auth keys with no Expires tracking (${untracked} untracked)`
-              : `[URGENT] Tailscale auth key expires in ${daysLeft} days (${host}/${key})`;
+              : expiring > 1
+                ? `[URGENT] ${expiring} tailscale auth keys expire in ${daysLeft} days`
+                : `[URGENT] Tailscale auth key expires in ${daysLeft} days (${host}/${key})`;
 
             const expiryInfo = untrackedOnly
               ? `No tailscale auth key has a tracked Expires comment.`
               : `**Next to expire:** \`${host}/${key}\` on **${expiry}** (${daysLeft} days)`;
+
+            // Every key inside the window, so a shared rotation date
+            // cannot hide one host behind another.
+            let expiringSection = '';
+            if (expiring > 0) {
+              expiringSection = `
+
+            ### Expiring within 7 days (${expiring})
+
+            \`\`\`
+            ${expiringBlock}
+            \`\`\`
+
+            Rotate **each** of these. Hosts often share a rotation date, so finishing the first one does not clear the rest.`;
+            }
 
             let untrackedSection = '';
             if (untracked > 0) {
@@ -165,7 +211,7 @@ jobs:
 
             const body = `## Tailscale Auth Key Expiry Status
 
-            ${expiryInfo}${untrackedSection}
+            ${expiryInfo}${expiringSection}${untrackedSection}
 
             ### Action Required (for soon-to-expire keys)
 
