@@ -30,7 +30,7 @@ in
   "ssh-config.age".publicKeys = all;
 
   # Tailscale auth key for initrd remote LUKS unlock
-  # Expires: 2026-08-29
+  # Expires: 2026-11-23
   "tailscale-initrd-key.age".publicKeys = all;
 
   # Forgejo actions runner registration token
