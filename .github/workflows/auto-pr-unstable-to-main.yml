@@ -294,7 +294,18 @@ jobs:
         run: |
           sleep 2
           PR_NUMBER=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:unstable&base=main&state=open" --jq '.[0].number')
-          gh pr merge "${PR_NUMBER}" --auto --merge
+          for attempt in 1 2 3; do
+            if gh pr merge "${PR_NUMBER}" --auto --merge; then
+              exit 0
+            fi
+            if gh pr view "${PR_NUMBER}" --json autoMergeRequest --jq '.autoMergeRequest != null' | grep -qx true; then
+              echo "auto-merge already enabled on #${PR_NUMBER}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; retrying"
+            sleep $(( attempt * 10 ))
+          done
+          exit 1
 
       - name: Open tracking issue on failure
         if: failure()
