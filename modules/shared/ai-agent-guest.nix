@@ -325,6 +325,16 @@ in
     # can actually materialize at runtime.
     nix.nixPath = [ "nixpkgs=${pkgs.path}" ];
 
+    # The guest store is a read-only erofs image with a small writable
+    # overlay on top. Garbage collection cannot free anything in the
+    # lower layer, so it walks the store, finds paths it thinks are
+    # unreachable, and records an overlayfs whiteout for each one. The
+    # files are still there; they are now masked. Enough whiteouts and
+    # the guest stops booting, which is exactly how bosun-browser died
+    # with 797 of them. The runs are already no-ops ("0 store paths
+    # deleted, 0.0 KiB freed"), so this costs nothing.
+    nix.gc.automatic = false;
+
     # Stop claude-code's self-updater from downloading a parallel binary
     # into ~/.local/share/claude. The overlay version is bumped by
     # .github/workflows/update-claude-code.yml.
@@ -450,17 +460,5 @@ in
 
     time.timeZone = "UTC";
 
-    # Each agent guest carries its own /nix store. Without periodic
-    # GC the guest's store keeps every old generation forever, and
-    # since the host can't see inside the guest store, host-level
-    # GC won't help. Weekly is plenty for a sandbox that only gets
-    # nixos-rebuild touches. auto-optimise-store can't be enabled
-    # here because microvm.writableStoreOverlay isn't compatible
-    # with it.
-    nix.gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 14d";
-    };
   };
 }
