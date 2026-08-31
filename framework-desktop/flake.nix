@@ -128,6 +128,7 @@
         ./modules/unfree.nix
         ./modules/user-config.nix
         ./modules/virtualization.nix
+        ./modules/services/congo-watchdog.nix
         ./modules/vscode.nix
         ./modules/services/verify-commits.nix
         ./modules/services/forgejo.nix

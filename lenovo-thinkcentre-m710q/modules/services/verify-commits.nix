@@ -143,8 +143,6 @@ in
 
   systemd.services.nixos-upgrade-failure-notify = {
     description = "Notify on nixos-upgrade failure";
-    after = [ "nixos-upgrade.service" ];
-    bindsTo = [ "nixos-upgrade.service" ];
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = config.age.secrets.gh-token.path;
@@ -168,5 +166,6 @@ in
     '';
   };
 
-  systemd.services.nixos-upgrade.serviceConfig.OnFailure = [ "nixos-upgrade-failure-notify.service" ];
+  # OnFailure is a [Unit] directive; systemd ignores it under [Service].
+  systemd.services.nixos-upgrade.unitConfig.OnFailure = [ "nixos-upgrade-failure-notify.service" ];
 }

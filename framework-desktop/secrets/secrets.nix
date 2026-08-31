@@ -46,4 +46,7 @@ in
 
   # Bearer token bosun sends to the browser-runner microvm
   "bosun-browser-runner-token.age".publicKeys = all;
+
+  # Congo pihole watchdog alerts
+  "gh-token.age".publicKeys = all;
 }
