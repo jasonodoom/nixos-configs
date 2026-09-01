@@ -162,7 +162,9 @@
   # System upgrades
   system.autoUpgrade = {
     enable = true;
-    operation = "switch";
+    # Stage upgrades for the next reboot; this box serves DNS for the
+    # whole network, so no live switches.
+    operation = "boot";
     allowReboot = false;
     flake = "git+ssh://git@github-deploy.com/jasonodoom/nixos-configs.git?dir=lenovo-thinkcentre-m710q";
     flags = [ "--no-write-lock-file" ];
