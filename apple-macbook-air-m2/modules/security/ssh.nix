@@ -83,19 +83,32 @@
     chown ${config.system.primaryUser}:staff "$SSH_CFG"
     chmod 600 "$SSH_CFG"
 
-    if ! grep -qF "$MARKER_BEGIN" "$SSH_CFG"; then
-      tmp="$(mktemp)"
-      {
-        echo "$MARKER_BEGIN"
-        echo "Host perdurabo ai-claude ai-codex ai-antigravity"
-        echo "  LogLevel ERROR"
-        echo "$MARKER_END"
-        echo ""
-        cat "$SSH_CFG"
-      } > "$tmp"
-      mv "$tmp" "$SSH_CFG"
-      chown ${config.system.primaryUser}:staff "$SSH_CFG"
-      chmod 600 "$SSH_CFG"
-    fi
+    # Rewrite the block every activation rather than only creating it
+    # when absent. The previous guard skipped an existing block
+    # entirely, so a rename never propagated: the module said
+    # ai-antigravity while live configs still said ai-gemini.
+    tmp="$(mktemp)"
+    ${pkgs.gnused}/bin/sed "/^$MARKER_BEGIN$/,/^$MARKER_END$/d" "$SSH_CFG" > "$tmp.stripped"
+    {
+      echo "$MARKER_BEGIN"
+      echo "Host perdurabo"
+      echo "  LogLevel ERROR"
+      echo ""
+      # The agent microvms carry tag:ai-agent, whose tailnet SSH policy
+      # permits only the agent and root logins. Without this the guests
+      # inherit the jason default and every connection is refused with
+      # "tailnet policy does not permit you to SSH as user jason",
+      # which reads like a broken host rather than a wrong username.
+      echo "Host ai-claude ai-codex ai-antigravity"
+      echo "  User agent"
+      echo "  LogLevel ERROR"
+      echo "$MARKER_END"
+      echo ""
+      cat "$tmp.stripped"
+    } > "$tmp"
+    mv "$tmp" "$SSH_CFG"
+    rm -f "$tmp.stripped"
+    chown ${config.system.primaryUser}:staff "$SSH_CFG"
+    chmod 600 "$SSH_CFG"
   '';
 }
