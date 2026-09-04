@@ -69,6 +69,8 @@
 	minus-empty-line-marker-style = normal normal
 	plus-empty-line-marker-style = normal normal
 	line-numbers-right-format = "{np:^4}│ "
+[credential "https://github.com"]
+	helper = !${pkgs.gh}/bin/gh auth git-credential
 [github]
 	user = jasonodoom
 	token = token
