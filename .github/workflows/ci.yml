@@ -1,5 +1,9 @@
 name: NixOS Configuration CI
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Cache strategy:
 # - Perdurabo: Pulls from cachix + nixos.org
 # - Congo: Pushes to Cachix, pulls from cachix + nixos.org
