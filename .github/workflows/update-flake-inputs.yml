@@ -1,0 +1,115 @@
+name: Update flake inputs
+
+on:
+  schedule:
+    - cron: '0 19 * * 5'
+  workflow_dispatch:
+    inputs:
+      flake_inputs:
+        description: 'Space-separated inputs to update (default: llm-agents)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: unstable
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update inputs
+        id: update
+        run: |
+          set -euo pipefail
+          INPUTS="${{ github.event.inputs.flake_inputs }}"
+          INPUTS="${INPUTS:-llm-agents}"
+          CHANGED=""
+          for dir in framework-desktop lenovo-thinkcentre-m710q apple-macbook-air-m2; do
+            for input in $INPUTS; do
+              if ! grep -q "\"$input\"" "$dir/flake.lock"; then
+                echo "$dir: no $input, skipping"
+                continue
+              fi
+              nix flake update "$input" --flake "./$dir" || {
+                echo "::warning::$dir: updating $input failed"
+                continue
+              }
+            done
+            if ! git diff --quiet -- "$dir/flake.lock"; then
+              CHANGED="$CHANGED $dir"
+            fi
+          done
+          CHANGED="$(echo "$CHANGED" | xargs || true)"
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED" ]; then
+            echo "nothing to update"
+          fi
+
+      - name: Commit and open PR
+        if: steps.update.outputs.changed != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y%m%d)"
+          BRANCH="update-flake-inputs-${STAMP}"
+
+          git fetch origin
+          BASE_OID="$(git rev-parse origin/unstable)"
+
+          if git ls-remote --heads origin "${BRANCH}" | grep -q "${BRANCH}"; then
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${BRANCH}" || true
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/heads/${BRANCH}" \
+            -f sha="${BASE_OID}" >/dev/null
+
+          ADDITIONS="[]"
+          for dir in ${{ steps.update.outputs.changed }}; do
+            ADDITIONS=$(jq -n \
+              --argjson acc "$ADDITIONS" \
+              --arg path "$dir/flake.lock" \
+              --rawfile body "$dir/flake.lock" \
+              '$acc + [{ path: $path, contents: ($body | @base64) }]')
+          done
+
+          INPUT=$(jq -n \
+            --arg repo "${GITHUB_REPOSITORY}" \
+            --arg branch "${BRANCH}" \
+            --arg msg "deps: update flake inputs" \
+            --arg oid "${BASE_OID}" \
+            --argjson additions "$ADDITIONS" \
+            '{
+              branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+              message: { headline: $msg },
+              expectedHeadOid: $oid,
+              fileChanges: { additions: $additions }
+            }')
+
+          jq -n --argjson input "${INPUT}" '{
+            query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url oid } } }",
+            variables: { input: $input }
+          }' | gh api graphql --input - >/dev/null
+
+          BODY=$(printf '%s\n\n%s\n' \
+            "Updated in: ${{ steps.update.outputs.changed }}" \
+            "Dependabot stopped bumping llm-agents on 2026-07-24 with no ignore rule and no rejected PR, so this updates it directly.")
+
+          gh pr create \
+            --title "deps: update flake inputs" \
+            --body "$BODY" \
+            --base unstable \
+            --head "${BRANCH}" \
+            --label "dependencies" \
+            --assignee jasonodoom
