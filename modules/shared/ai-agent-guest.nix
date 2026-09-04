@@ -360,10 +360,12 @@ in
       agy()         { antigravity "$@"; }
     '');
 
-    # claude-code still nags "Native installation exists but ~/.local/bin
-    # is not in your PATH" on every startup even with the autoupdater off.
-    # Putting the dir on PATH satisfies the check; it stays empty because
-    # the autoupdater can't write to it.
+    # claude-code nags "Native installation exists but ~/.local/bin is not
+    # in your PATH" on startup even with the autoupdater off, so the dir is
+    # on PATH to satisfy the check. The autoupdater cannot write here, but a
+    # manual `claude install` can, and since this dir is early in PATH that
+    # native binary then shadows the nix one. The tmpfiles rule below clears
+    # it at boot so nix wins after every restart.
     environment.sessionVariables = {
       PATH = [ "$HOME/.local/bin" ];
     };
@@ -412,6 +414,8 @@ in
       "L+ /home/agent/.claude/CLAUDE.md            - - - - /etc/ai-agent/peer-doc.md"
       "L+ /home/agent/.codex/AGENTS.md             - - - - /etc/ai-agent/peer-doc.md"
       "L+ /home/agent/.antigravity/ANTIGRAVITY.md  - - - - /etc/ai-agent/peer-doc.md"
+      "r! /home/agent/.local/bin/claude"
+      "R! /home/agent/.local/share/claude/versions"
     ];
 
     # OpenPGP signing with the key in ~/.gnupg is the default. SSH signing
