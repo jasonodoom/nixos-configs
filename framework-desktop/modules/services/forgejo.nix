@@ -30,6 +30,10 @@
 
       actions = {
         ENABLED = true;
+        # Resolve owner/repo action references (actions/checkout,
+        # DeterminateSystems/nix-installer-action) from GitHub. Without this
+        # the runner looks to data.forgejo.org, which does not mirror them.
+        DEFAULT_ACTIONS_URL = "https://github.com";
       };
 
       log = {
