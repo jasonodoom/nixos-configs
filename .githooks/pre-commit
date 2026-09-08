@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Repo-tracked pre-commit entry, active via core.hooksPath=.githooks. Runs
+# the adastra guards when installed, then nix-flake-check.sh.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+adastra="$HOME/.local/share/adastra-hooks"
+if [ -d "$adastra" ]; then
+  for guard in check-invisible check-prose check-secrets check-stray; do
+    if [ -x "$adastra/$guard.sh" ]; then
+      "$adastra/$guard.sh" || exit 1
+    fi
+  done
+fi
+
+exec "$here/nix-flake-check.sh"
