@@ -30,13 +30,21 @@ let
   askPeer = pkgs.writeShellScriptBin "ask-peer" ''
     set -eu
     share_context=0
-    if [ "''${1:-}" = "--share-context" ]; then
-      share_context=1; shift
-    fi
+    new_session=0
+    session_name=default
+    while :; do
+      case "''${1:-}" in
+        --share-context) share_context=1; shift ;;
+        --new) new_session=1; shift ;;
+        --session) session_name=''${2:-default}; if [ $# -ge 2 ]; then shift 2; else shift; fi ;;
+        *) break ;;
+      esac
+    done
     if [ $# -lt 2 ]; then
-      echo "usage: ask-peer [--share-context] <peer> <prompt...>" >&2
+      echo "usage: ask-peer [--share-context] [--new] [--session NAME] <peer> <prompt...>" >&2
       echo "       peers: claude codex antigravity (+ any model-tier alias, e.g. fable)" >&2
-      echo "       ask-peer <peer> 'resume:<session-id> <prompt...>'" >&2
+      echo "       a thread with each peer auto-continues; --new starts fresh," >&2
+      echo "       --session NAME keeps parallel threads, resume:<id> overrides once" >&2
       exit 2
     fi
     to=$1; shift
@@ -44,6 +52,17 @@ let
     self=$(${pkgs.inetutils}/bin/hostname | sed 's/^ai-//')
 
     ${pkgs.coreutils}/bin/mkdir -p "${inboxDir}/$to" "${inboxDir}/$self"
+
+    # Asker-owned pointer to the ongoing thread with this peer: a session id
+    # the peer's CLI recorded. Kept guest-local, not on the shared mount, so
+    # each asker owns its own continuity. Losing it only starts a new thread.
+    sdir="''${XDG_CACHE_HOME:-$HOME/.cache}/ask-peer/sessions"
+    ${pkgs.coreutils}/bin/mkdir -p "$sdir"
+    sfile="$sdir/''${to}.''${session_name}.sid"
+    sid=""
+    if [ "$new_session" = "0" ] && [ -f "$sfile" ]; then
+      sid=$(${pkgs.coreutils}/bin/cat "$sfile")
+    fi
 
     id=$(${pkgs.util-linux}/bin/uuidgen)
     req="${inboxDir}/$to/$id.json"
@@ -66,13 +85,15 @@ let
 
     ${pkgs.jq}/bin/jq -n \
       --arg id "$id" --arg from "$self" --arg to "$to" --arg p "$prompt" \
-      --argjson context "$context_json" \
-      '{id:$id, from:$from, to:$to, prompt:$p, context:$context, created_at: (now|todate)}' \
+      --arg sid "$sid" --argjson context "$context_json" \
+      '{id:$id, from:$from, to:$to, prompt:$p, session_id:$sid, context:$context, created_at: (now|todate)}' \
       > "$req.tmp"
     ${pkgs.coreutils}/bin/mv "$req.tmp" "$req"
 
     for _ in $(seq 1 300); do
       if [ -f "$resp" ]; then
+        newsid=$(${pkgs.jq}/bin/jq -r '.session_id // empty' "$resp")
+        [ -n "$newsid" ] && printf '%s' "$newsid" > "$sfile"
         ${pkgs.jq}/bin/jq -r '.response' "$resp"
         ${pkgs.coreutils}/bin/rm -f "$resp"
         exit 0
@@ -93,32 +114,42 @@ let
     # reachable peer via one config string, not a broker edit.
     aliases="${lib.concatStringsSep " " cfg.modelAliases}"
 
-    # A prompt prefixed with "resume:<session-id> ..." continues that
-    # recorded session instead of starting a fresh one. antigravity-cli
-    # uses --continue for the most-recent session; per-id resume is via
-    # --conversation, mirrored here. invoke takes <model> <session-id>
-    # <prompt>; an empty model means the CLI's own default.
+    # invoke <model> <session-id-in> <prompt> <sidfile-out>: runs the local
+    # CLI in JSON mode, prints the reply text to stdout, and writes the
+    # session id the CLI recorded to <sidfile-out> so the asker can continue
+    # the thread on the next ask. A non-empty <session-id-in> resumes that
+    # thread; empty starts fresh. An empty model means the CLI's own default.
     case "$self" in
       claude) invoke() {
         margs=""; [ -n "$1" ] && margs="--model $1"
-        if [ -n "$2" ]; then claude $margs --resume "$2" -p "$3" 2>&1
-        else                  claude $margs -p "$3" 2>&1
-        fi
+        ridarg=""; [ -n "$2" ] && ridarg="--resume $2"
+        raw=$(claude $margs $ridarg -p "$3" --output-format json 2>&1)
+        printf '%s' "$raw" | ${pkgs.jq}/bin/jq -r '.session_id // empty' 2>/dev/null > "$4"
+        text=$(printf '%s' "$raw" | ${pkgs.jq}/bin/jq -r '.result // empty' 2>/dev/null)
+        if [ -n "$text" ]; then printf '%s' "$text"; else printf '%s' "$raw"; fi
       } ;;
       codex)  invoke() {
         # /home/agent isn't a git repo; bypass flag skips approval prompts
         # that would hang a non-interactive exec. --all so sessions
         # recorded in any cwd remain resumable. codex exposes no model-tier
-        # alias here, so the model arg ($1) is unused.
+        # alias here, so the model arg ($1) is unused. The resumable handle
+        # is thread_id from the thread.started event, not the text "session
+        # id:" line, which is a different value.
         FLAGS="--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check"
-        if [ -n "$2" ]; then codex exec $FLAGS resume --all "$2" "$3" 2>&1
-        else                  codex exec $FLAGS "$3" 2>&1
+        if [ -n "$2" ]; then raw=$(codex exec $FLAGS --json resume --all "$2" "$3" 2>&1)
+        else                  raw=$(codex exec $FLAGS --json "$3" 2>&1)
         fi
+        printf '%s\n' "$raw" | ${pkgs.jq}/bin/jq -rn 'inputs | select(.type=="thread.started") | .thread_id' 2>/dev/null | ${pkgs.coreutils}/bin/head -1 > "$4"
+        text=$(printf '%s\n' "$raw" | ${pkgs.jq}/bin/jq -rn 'inputs | select(.type=="item.completed" and .item.type=="agent_message") | .item.text' 2>/dev/null)
+        if [ -n "$text" ]; then printf '%s' "$text"; else printf '%s' "$raw"; fi
       } ;;
       antigravity) invoke() {
-        if [ -n "$2" ]; then agy --conversation "$2" -p "$3" 2>&1
-        else                  agy -p "$3" 2>&1
+        if [ -n "$2" ]; then raw=$(agy --conversation "$2" -p "$3" --output-format json 2>&1)
+        else                  raw=$(agy -p "$3" --output-format json 2>&1)
         fi
+        printf '%s' "$raw" | ${pkgs.jq}/bin/jq -r '.conversation_id // empty' 2>/dev/null > "$4"
+        text=$(printf '%s' "$raw" | ${pkgs.jq}/bin/jq -r '.response // empty' 2>/dev/null)
+        if [ -n "$text" ]; then printf '%s' "$text"; else printf '%s' "$raw"; fi
       } ;;
       *) echo "unknown agent $self" >&2; exit 1 ;;
     esac
@@ -135,9 +166,11 @@ let
       id=$(${pkgs.jq}/bin/jq -r '.id' "$processing")
       from=$(${pkgs.jq}/bin/jq -r '.from' "$processing")
       prompt=$(${pkgs.jq}/bin/jq -r '.prompt' "$processing")
+      sid=$(${pkgs.jq}/bin/jq -r '.session_id // empty' "$processing")
       has_context=$(${pkgs.jq}/bin/jq -r '.context != null' "$processing" 2>/dev/null || echo false)
 
-      sid=""
+      # A resume:<id> prefix overrides the auto-threaded session id for this
+      # one ask.
       case "$prompt" in
         resume:*' '*)
           rest=''${prompt#resume:}
@@ -161,13 +194,17 @@ let
         prompt="''${preamble}''${prompt}"
       fi
 
-      response=$(invoke "$model" "$sid" "$prompt" || true)
+      sidfile=$(${pkgs.coreutils}/bin/mktemp)
+      response=$(invoke "$model" "$sid" "$prompt" "$sidfile" || true)
+      newsid=$(${pkgs.coreutils}/bin/cat "$sidfile" 2>/dev/null || true)
+      [ -n "$newsid" ] || newsid="$sid"
+      ${pkgs.coreutils}/bin/rm -f "$sidfile"
 
       out=${inboxDir}/$from
       ${pkgs.coreutils}/bin/mkdir -p "$out"
       ${pkgs.jq}/bin/jq -n \
-        --arg id "$id" --arg from "$iam" --arg to "$from" --arg r "$response" \
-        '{id:$id, from:$from, to:$to, response:$r, created_at: (now|todate)}' \
+        --arg id "$id" --arg from "$iam" --arg to "$from" --arg r "$response" --arg sid "$newsid" \
+        '{id:$id, from:$from, to:$to, response:$r, session_id:$sid, created_at: (now|todate)}' \
         > "$out/$id.response.json.tmp"
       ${pkgs.coreutils}/bin/mv "$out/$id.response.json.tmp" "$out/$id.response.json"
 
@@ -384,16 +421,21 @@ in
       microvm via the `ask-peer` command:
 
           ask-peer <peer> "<prompt>"
-          ask-peer <peer> "resume:<session-id> <prompt>"
+          ask-peer --new <peer> "<prompt>"
+          ask-peer --session <name> <peer> "<prompt>"
           ask-peer --share-context <peer> "<prompt>"
 
       A `<peer>` is a sibling agent (`claude`, `codex`, `antigravity`) or
       a model-tier alias one of them answers (for example `fable`, served
       by claude as `claude --model fable`).
 
-      The call blocks until the peer responds (default 5min timeout). Use it
-      when you need a second opinion, a different model's reasoning, or to
-      continue a recorded session on another agent.
+      Each peer keeps one running thread that auto-continues, so the peer
+      remembers your earlier asks without you tracking anything. `--new`
+      starts a fresh thread, `--session <name>` keeps parallel threads with
+      the same peer, and a `resume:<id>` prompt prefix overrides the thread
+      for one ask. The call blocks until the peer responds (default 5min
+      timeout). Use it when you need a second opinion or a different model's
+      reasoning.
 
       The `--share-context` flag attaches a snapshot of your current working
       state (cwd, git branch, `git status --short`, `git diff --stat`, last
