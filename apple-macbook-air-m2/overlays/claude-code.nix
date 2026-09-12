@@ -1,9 +1,9 @@
 # Claude Code overlay - native binary from Anthropic
 # Updated automatically by .github/workflows/update-claude-code.yml
 let
-  version = "2.1.260";
+  version = "2.1.268";
   platform = "darwin-arm64";
-  hash = "sha256-PCafZoAQKII+JKY87Z/dOYjLhs+F/M2fA/h+RjudPjw=";
+  hash = "sha256-BqltVCP4N3DxIIWfHFjmDXJSzEwSKqEwQ7fnzXFrx2o=";
 in
 final: prev: {
   claude-code = final.stdenv.mkDerivation {
