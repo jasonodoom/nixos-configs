@@ -105,8 +105,8 @@ in
         url = forgejoUrl;
         tokenFile = "/run/host-secrets/runner-token";
         labels = [
-          "nixos-podman:docker://node:20-bookworm"
-          "ubuntu-latest:docker://node:20-bookworm"
+          "nixos-podman:docker://node:24-bookworm"
+          "ubuntu-latest:docker://node:24-bookworm"
         ];
         settings = {
           container = {
