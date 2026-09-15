@@ -27,6 +27,10 @@ let
   # CLI and drops _inbox/<from>/<id>.response.json.
   inboxDir = "/home/agent/peers/_inbox";
 
+  # Python env for the litmus detector service (ai-claude only): onnxruntime
+  # runs the DeBERTa ONNX model, tokenizers does the tokenisation, no torch.
+  litmusPython = pkgs.python3.withPackages (ps: with ps; [ onnxruntime tokenizers numpy ]);
+
   askPeer = pkgs.writeShellScriptBin "ask-peer" ''
     set -eu
     share_context=0
@@ -307,6 +311,31 @@ in
         RestartSec = "5s";
       } // lib.optionalAttrs (cfg.envFile != null) {
         EnvironmentFile = cfg.envFile;
+      };
+    };
+
+    # litmus AI-text detector, ai-claude only (it runs the paraphraser and holds
+    # the model). Loopback :8137; the paraphraser's default-on detector calls it
+    # and skips gracefully when it is down. ConditionPathExists keeps the unit
+    # from fail-looping before the 1.7 GB model is fetched (litmus/fetch-model.sh).
+    systemd.services.litmus = lib.mkIf (config.networking.hostName == "ai-claude") {
+      description = "litmus AI-text detector service";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      unitConfig.ConditionPathExists = "/home/agent/code/litmus/models/onnx/model.onnx";
+      serviceConfig = {
+        Type = "simple";
+        User = "agent";
+        Group = "agent";
+        Environment = [
+          "LITMUS_MODEL=/home/agent/code/litmus/models/onnx/model.onnx"
+          "LITMUS_TOKENIZER=/home/agent/code/litmus/models/tokenizer.json"
+          "PYTHONPATH=/home/agent/code/litmus/src"
+          "LITMUS_THREADS=6"
+        ];
+        ExecStart = "${litmusPython}/bin/python3 -m litmus.server";
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
     };
 
