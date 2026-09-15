@@ -5,6 +5,15 @@
   # System version
   system.stateVersion = "25.05";
 
+  # The agent microVMs commit most of the 62 GiB (claude alone holds 20),
+  # and the 16 GiB swap partition runs full, so a CI toolchain build tipped
+  # the host into a global OOM that killed nix on 12 Sep. The volume group
+  # has no free extents to grow the swap LV, so add a disk-backed swapfile
+  # on the ext4 root for headroom under peak load.
+  swapDevices = [
+    { device = "/var/swapfile"; size = 32 * 1024; }
+  ];
+
   # Nix configuration
   nix = {
     settings = {

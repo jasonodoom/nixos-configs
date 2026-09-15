@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Fast local gate: run `nix flake check --no-build` for each host flake
-# whose files were staged. Catches module-eval errors (wrong option names,
-# type mismatches, failed assertions) before they reach CI.
+# Local gate for each host flake whose files were staged: eval check for
+# all, plus a sandbox-forced darwin build when an apple .nix is staged.
 set -euo pipefail
 
 staged=$(git diff --cached --name-only)
@@ -29,5 +28,16 @@ for host in "${hosts[@]}"; do
     fail=1
   fi
 done
+
+if grep -qE "^(apple-macbook-air-m2/|modules/).*\.nix$" <<< "$staged"; then
+  echo "==> sandboxed build apple-macbook-air-m2 (purity gate)"
+  if ! (cd apple-macbook-air-m2 && nix build --no-link --accept-flake-config \
+      --option sandbox true .#darwinConfigurations.theophany.system 2>&1); then
+    echo "pre-commit: darwin system fails to build under the sandbox." >&2
+    echo "pre-commit: a derivation reaches outside the store. Build it from" >&2
+    echo "pre-commit: store tools, or use a system tool at runtime not build time." >&2
+    fail=1
+  fi
+fi
 
 exit $fail

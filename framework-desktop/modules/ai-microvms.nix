@@ -30,7 +30,7 @@ let
     # modelAliases: extra peer names this agent answers as a model tier,
     # so `ask-peer fable` reaches claude pinned to that model without a
     # broker edit. claude serves the fable tier; the others have none.
-    ai-claude       = { short = "claude";      mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; modelAliases = [ "fable" ]; };
+    ai-claude       = { short = "claude";      mac = "02:00:00:00:ae:01"; ip = "10.0.42.11"; sshPort = 2201; mem = 20480; modelAliases = [ "fable" ]; };
     ai-codex        = { short = "codex";       mac = "02:00:00:00:ae:02"; ip = "10.0.42.12"; sshPort = 2202; };
     ai-antigravity  = { short = "antigravity"; mac = "02:00:00:00:ae:03"; ip = "10.0.42.13"; sshPort = 2203; };
   };
@@ -106,13 +106,13 @@ let
         # observed hard crashes. Host has 32 cores / 62GB so three
         # of these still leaves room for the host + bosun-browser.
         vcpu = 6;
-        # 12 GiB per guest. 8 GiB proved too tight in practice: long
-        # agentic sessions plus test-runner worker pools (e.g. the
-        # cloudflare vitest-pool workerd swarm) exhaust the guest and
-        # OOM-kill claude mid-session. Host has 32 cores / 62 GiB, so
-        # three 12 GiB guests plus the 4 GiB bosun-browser leave ample
-        # headroom. balloon stays on so the VM releases when idle.
-        mem = 12288;
+        # 12 GiB default per guest, overridable per-agent via mem.
+        # 8 GiB proved too tight: long agentic sessions plus test-runner
+        # worker pools OOM-kill claude mid-session. ai-claude runs 20 GiB
+        # because resuming several 300-400 MB sessions at once exceeded
+        # 12 and OOM-killed the VM. Host has 32 cores / 62 GiB. balloon
+        # stays on so the VM releases when idle.
+        mem = agent.mem or 12288;
         balloon = true;
 
         interfaces = [{
@@ -277,12 +277,12 @@ in
       serviceConfig = {
         PermissionsStartOnly = true;
         # Hard memory cap enforced by cgroup v2 that also accounts
-        # for qemu's shmem-rss for VirtIO devices. Sized at guest
-        # mem + ~3 GiB host overhead. MemorySwapMax tracks the
-        # ceiling so qemu can spill briefly under spikes without
-        # the cgroup OOM-killer taking the VM out.
-        MemoryMax = "11G";
-        MemorySwapMax = "11G";
+        # for qemu's shmem-rss for VirtIO devices. Computed as guest
+        # mem + 4 GiB so it always exceeds guest RAM; a flat 11G once
+        # sat below the 12G guest and the cgroup OOM-killed qemu under
+        # load, taking the whole VM down.
+        MemoryMax = "${toString ((agent.mem or 12288) / 1024 + 4)}G";
+        MemorySwapMax = "${toString ((agent.mem or 12288) / 1024 + 4)}G";
       };
     }
   ) agents;

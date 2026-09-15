@@ -112,3 +112,9 @@ jobs:
           # killed mid-build (lost communication ~10 min in) under memory
           # pressure. 2 keeps some upload parallelism without the peak.
           VEGA_UPLOAD_CONCURRENCY: "2"
+          # The container's baked nix.conf sets cores=0 (use all 32), so a
+          # from-source toolchain build ran make -j32 and spiked into a global
+          # OOM that killed nix (twice on 12 Sep) while the agent guests held
+          # most of the RAM. Cap per-build compilers; max-jobs stays 2.
+          NIX_CONFIG: |
+            cores = 6
