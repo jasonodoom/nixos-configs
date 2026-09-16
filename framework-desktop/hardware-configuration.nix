@@ -15,6 +15,8 @@
 
 
   # Root filesystem (LVM logical volume)
+  # nixos-vg spans two PVs: /dev/mapper/crypted (LUKS on nvme0n1p2)
+  # and /dev/nvme1n1p1 (plain). Both are needed for root.
   fileSystems."/" = {
     device = "/dev/mapper/nixos--vg-root";
     fsType = "ext4";
