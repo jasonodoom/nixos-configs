@@ -106,6 +106,9 @@ jobs:
           VEGA_URL: https://vega-cache.dev
           VEGA_SKIP_UPSTREAM: "true"
           VEGA_REUSE_CACHE: "true"
+          # Host-specific microVM erofs disks: no machine substitutes them and
+          # a stalled multi-GB upload restarts from zero, so do not publish them.
+          VEGA_EXCLUDE: "*.erofs"
           # The agent streams each NAR from disk (v0.4.x), so concurrency no
           # longer buffers whole NARs in memory. Kept low (2) because this leg
           # shares the perdurabo host with other guests: at 4 the runner was
