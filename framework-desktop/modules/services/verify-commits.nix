@@ -30,6 +30,8 @@ let
     "4df13208ce74c05ce34ec46289834227e82c2922"  # 2026-04-22 chore: update flake.lock files
     "b5bf556a74567d91016bf6cdb641e1dcd3d53730"  # 2026-05-08 Update Claude Code to 2.1.133
     "256d43aef93bbe290d2252bad04238ef759c7d02"  # 2026-06-01 Update Claude Code to 2.1.156 (last unsigned auto-PR commit before 68e19b4 fixed signing)
+    "77091e8c628b09946a2eebfe521a7893b9703e49"  # 2026-09-15 forgejo-runner node 24; legit change signed with the Ad Astra key by mistake, woven into 36 GitHub merges so cannot re-sign
+    "60ea799e83c3064e61e2e3ac6d16f3418fb34491"  # 2026-09-15 litmus detector on ai-claude; same one-time Ad Astra mis-sign
   ];
 in
 {
