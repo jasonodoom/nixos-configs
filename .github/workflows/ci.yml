@@ -149,6 +149,7 @@ jobs:
           --option keep-going false \
           --option substitute true \
           --option builders-use-substitutes true \
+          --option fallback true \
           --option min-free $((5 * 1024 * 1024 * 1024)) \
           --option max-free $((15 * 1024 * 1024 * 1024)) \
           --impure
@@ -173,6 +174,7 @@ jobs:
               --option keep-going false \
               --option substitute true \
               --option builders-use-substitutes true \
+              --option fallback true \
               --option min-free $((5 * 1024 * 1024 * 1024)) \
               --option max-free $((15 * 1024 * 1024 * 1024)) \
               --impure
@@ -207,7 +209,8 @@ jobs:
         nix build .#darwinConfigurations.${{ matrix.config }}.system \
           --accept-flake-config \
           --option substitute true \
-          --option builders-use-substitutes true
+          --option builders-use-substitutes true \
+          --option fallback true
 
     - name: Test development shells
       if: matrix.host == 'framework-desktop'
