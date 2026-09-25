@@ -512,11 +512,11 @@
         "nixpkgs-runner": "nixpkgs-runner"
       },
       "locked": {
-        "lastModified": 1789435756,
-        "narHash": "sha256-LfHFDuh7aBcBEXdjq81TW1n04auxuhn4ngR/cJdsH+s=",
+        "lastModified": 1789841054,
+        "narHash": "sha256-w3aeDnyE7vVhdPDykyi0KmZmDncxNUr68YE525AARZg=",
         "owner": "Ad-Astra-Computing",
         "repo": "vega-agent",
-        "rev": "5befdbfc776de26669ff24b1f56de14a4bdbbe51",
+        "rev": "584d54eeaf8343b9b5129ca41f0717a8f92ab555",
         "type": "github"
       },
       "original": {
