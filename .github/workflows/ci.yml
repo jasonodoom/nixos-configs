@@ -36,7 +36,7 @@ jobs:
             os: ubuntu-latest
           - host: apple-macbook-air-m2
             config: theophany
-            os: macos-14
+            os: macos-15
 
     steps:
     - name: Checkout repository
@@ -83,7 +83,7 @@ jobs:
           trusted-public-keys = odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= vega-jasonodoom-nixos-configs-1:OrD5r55n02TvdLMeFppwnTH5nciTy44UnxwC8kQuKqE= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
     - name: Install Nix with cache configuration (macOS)
-      if: matrix.os == 'macos-14'
+      if: matrix.os == 'macos-15'
       uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       with:
         source-tag: "v3.12.1"
@@ -201,7 +201,7 @@ jobs:
         df -h
 
     - name: Build nix-darwin configuration
-      if: matrix.os == 'macos-14'
+      if: matrix.os == 'macos-15'
       run: |
         cd ${{ matrix.host }}
 

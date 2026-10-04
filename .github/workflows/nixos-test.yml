@@ -242,7 +242,7 @@ jobs:
           fi
 
   vm-tests-darwin:
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         include:

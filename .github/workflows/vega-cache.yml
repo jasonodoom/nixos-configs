@@ -38,8 +38,8 @@ jobs:
             os: ubuntu-latest
           - host: apple-macbook-air-m2
             attr: darwinConfigurations.theophany.system
-            runner: macos-14
-            os: macos-14
+            runner: macos-15
+            os: macos-15
     # NAR dumps + nix build temp go to /mnt on ubuntu (the small / disk is why
     # ci.yml relocates /nix to /mnt). macOS and the self-hosted container have room
     # on /tmp. (The runner context is not available in job-level env, use a literal.)
