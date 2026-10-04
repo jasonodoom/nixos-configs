@@ -140,7 +140,9 @@ in
         # on a hostile network, so it goes first.
         as_root /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
         as_root /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
-        echo "Firewall: on, stealth mode: on"
+        as_root /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall on
+        echo "Firewall: on, stealth mode: on, block all incoming: on"
+        echo "  (inbound reachability is off, including Tailscale SSH to this Mac)"
       fi
 
       if do_user; then
@@ -215,9 +217,11 @@ in
       [ "$DRY" = 1 ] && echo "(dry run — nothing will change)"
 
       if do_sys; then
-        # Stealth mode off; the firewall itself stays on (good default at home too).
+        # Block-all and stealth come off; the firewall itself stays on (good
+        # default at home too).
+        as_root /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off
         as_root /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode off
-        echo "Firewall: still on, stealth mode: off"
+        echo "Firewall: still on, stealth mode: off, block all incoming: off"
       fi
 
       if do_user; then
@@ -289,6 +293,8 @@ in
       check "Firewall on" on "$fw"
       st=$(/usr/libexec/ApplicationFirewall/socketfilterfw --getstealthmode 2>/dev/null | grep -q "enabled" && echo on || echo off)
       check "Stealth mode on" on "$st"
+      ba=$(/usr/libexec/ApplicationFirewall/socketfilterfw --getblockall 2>/dev/null | grep -qi "enabled" && echo on || echo off)
+      check "Block all incoming on" on "$ba"
 
       bt=$(${pkgs.blueutil}/bin/blueutil --power 2>/dev/null || echo "?")
       check "Bluetooth off" 0 "$bt"
