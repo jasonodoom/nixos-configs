@@ -82,8 +82,8 @@ jobs:
           # jobs, not shared-tier reproducers.
           reuse-cache: "true"
           # Overlay packages (codex) are in no public cache.
-          extra-substituters: "https://odoom-nixos-configs.cachix.org"
-          extra-trusted-public-keys: "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU="
+          extra-substituters: "https://odoom-nixos-configs.cachix.org https://cache.numtide.com"
+          extra-trusted-public-keys: "odoom-nixos-configs.cachix.org-1:ySk5iYiHKvbuE1FezCjusvvFR98rkXDLMM6bS8SH3SU= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
 
       # The self-hosted runner container now builds with a full nix
       # sandbox (userns-capable, VEGA_NIX_SANDBOX=true), so the old
