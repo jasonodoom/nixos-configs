@@ -209,7 +209,13 @@ let
         matchConfig.MACAddress = agent.mac;
         address = [ "${agent.ip}/24" ];
         routes = [ { Gateway = "10.0.42.1"; } ];
-        dns = [ "1.1.1.1" "8.8.8.8" ];
+        dns = [ "1.1.1.1" "9.9.9.9" ];
+        # DNS over TLS, port 853. Plain UDP 53 out of these guests is
+        # answered with a spoofed REFUSED from every resolver tried,
+        # and REFUSED is a valid answer so resolved never retries over
+        # TCP. Set per link, not globally: the ~ts.net route above
+        # points at MagicDNS, which does not speak DoT.
+        networkConfig.DNSOverTLS = "yes";
       };
     };
   };
