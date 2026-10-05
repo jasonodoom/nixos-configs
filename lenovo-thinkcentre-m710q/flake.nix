@@ -92,6 +92,7 @@
     # Overlays for custom packages
     overlays.default = final: prev: {
       inherit (import ./overlays/claude-code.nix final prev) claude-code;
+      inherit (import ./overlays/pihole-ftl.nix final prev) pihole-ftl;
       llm-agents = llm-agents.packages.${final.stdenv.hostPlatform.system};
       codex = llm-agents.packages.${final.stdenv.hostPlatform.system}.codex;
       antigravity-cli = llm-agents.packages.${final.stdenv.hostPlatform.system}.antigravity-cli;
